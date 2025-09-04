@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bg)" stroke="#white" stroke-width="8"/>
+  
+  <!-- Weaver symbol - stylized "W" -->
+  <g transform="translate(256,256)">
+    <!-- Letter W made of threads/weave pattern -->
+    <path d="M-120,-80 L-80,80 L-40,-40 L0,80 L40,-40 L80,80 L120,-80" 
+          stroke="white" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Decorative weave lines -->
+    <path d="M-100,-60 Q-50,-40 0,-60 Q50,-40 100,-60" 
+          stroke="white" stroke-width="4" fill="none" opacity="0.7"/>
+    <path d="M-100,60 Q-50,40 0,60 Q50,40 100,60" 
+          stroke="white" stroke-width="4" fill="none" opacity="0.7"/>
+  </g>
+  
+  <!-- App name -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="48" font-weight="bold" 
+        text-anchor="middle" fill="white">WEAVER</text>
+</svg>

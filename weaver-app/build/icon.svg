@@ -1,0 +1,120 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gravity particles moving through time">
+  <defs>
+    <!-- Core glow -->
+    <radialGradient id="coreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 128) rotate(90) scale(68)">
+      <stop offset="0" stop-color="#7EE0FF" stop-opacity="0.9"></stop>
+      <stop offset="0.55" stop-color="#4AB1FF" stop-opacity="0.25"></stop>
+      <stop offset="1" stop-color="#1B1B2E" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <!-- Particle trail stroke -->
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#A0E9FF" stop-opacity="0"></stop>
+      <stop offset="0.35" stop-color="#A0E9FF" stop-opacity="0.35"></stop>
+      <stop offset="1" stop-color="#A0E9FF" stop-opacity="0.9"></stop>
+    </linearGradient>
+
+    <!-- Clock ring stroke -->
+    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C9D7FF" stop-opacity="0.9"></stop>
+      <stop offset="1" stop-color="#9BADEB" stop-opacity="0.6"></stop>
+    </linearGradient>
+
+    <!-- Soft glow filter for particles -->
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle background grid, warped -->
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(1,0.28,-0.28,1,0,0)">
+      <path d="M0 16 H16 M16 0 V16" stroke="#5C6A96" stroke-opacity="0.18" stroke-width="0.8"></path>
+      <path d="M0 0 H16 M0 0 V16" stroke="#5C6A96" stroke-opacity="0.18" stroke-width="0.8"></path>
+    </pattern>
+
+    <!-- Dark mode override (if embedded in HTML) -->
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .bg { fill: #0B0D17; }
+        .grid { opacity: 0.35; }
+        .ring { stroke: url(#ring); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .orbit { animation: none !important; }
+      }
+      .orbit {
+        animation: spin 12s linear infinite;
+        transform-origin: 128px 128px;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+    </style>
+  </defs>
+
+  <!-- Background & warped grid -->
+  <rect class="bg" x="0" y="0" width="256" height="256" rx="56" ry="56" fill="#0F1224"></rect>
+  <rect x="24" y="24" width="208" height="208" rx="48" ry="48" fill="url(#grid)" class="grid"></rect>
+
+  <!-- Spacetime well -->
+  <circle cx="128" cy="128" r="68" fill="url(#coreGlow)"></circle>
+  <ellipse cx="128" cy="132" rx="46" ry="16" fill="#0B0D17" opacity="0.8"></ellipse>
+  <circle cx="128" cy="128" r="18" fill="#0A0A14"></circle>
+  <circle cx="128" cy="128" r="9" fill="#11182C"></circle>
+
+  <!-- Clock-like time ring with ticks -->
+  <g class="orbit">
+    <circle class="ring" cx="128" cy="128" r="88" fill="none" stroke="url(#ring)" stroke-width="1.6" opacity="0.8"></circle>
+    <!-- Ticks (12 major) -->
+    <g stroke="#C9D7FF" stroke-opacity="0.9" stroke-linecap="round">
+      <!-- Generated manually for portability -->
+      <path d="M128 36 L128 44" stroke-width="3"></path>
+      <path d="M164.5 43.5 L161 51.5" stroke-width="2.6"></path>
+      <path d="M195.5 64.5 L189 71" stroke-width="2.6"></path>
+      <path d="M212.5 96 L204.5 99.5" stroke-width="2.6"></path>
+      <path d="M220 128 L212 128" stroke-width="3"></path>
+      <path d="M212.5 160 L204.5 156.5" stroke-width="2.6"></path>
+      <path d="M195.5 191.5 L189 185" stroke-width="2.6"></path>
+      <path d="M164.5 212.5 L161 204.5" stroke-width="2.6"></path>
+      <path d="M128 220 L128 212" stroke-width="3"></path>
+      <path d="M91.5 212.5 L95 204.5" stroke-width="2.6"></path>
+      <path d="M60.5 191.5 L67 185" stroke-width="2.6"></path>
+      <path d="M43.5 160 L51.5 156.5" stroke-width="2.6"></path>
+      <path d="M36 128 L44 128" stroke-width="3"></path>
+      <path d="M43.5 96 L51.5 99.5" stroke-width="2.6"></path>
+      <path d="M60.5 64.5 L67 71" stroke-width="2.6"></path>
+      <path d="M91.5 43.5 L95 51.5" stroke-width="2.6"></path>
+    </g>
+  </g>
+
+  <!-- Curved geodesics (spacetime orbits) -->
+  <g opacity="0.65">
+    <path d="M40,126 C80,84 176,84 216,126" stroke="#89B6FF" stroke-opacity="0.35" stroke-width="1.2" fill="none"></path>
+    <path d="M56,150 C96,110 160,110 200,150" stroke="#89B6FF" stroke-opacity="0.28" stroke-width="1.2" fill="none"></path>
+    <path d="M56,104 C104,72 152,72 200,104" stroke="#89B6FF" stroke-opacity="0.22" stroke-width="1.2" fill="none"></path>
+  </g>
+
+  <!-- Particles with time-like trails -->
+  <g filter="url(#softGlow)">
+    <!-- Particle A -->
+    <path d="M72,148 C116,132 156,132 196,148" stroke="url(#trail)" stroke-width="3" fill="none" stroke-linecap="round"></path>
+    <circle cx="196" cy="148" r="4.5" fill="#E9FCFF"></circle>
+    <!-- Particle B -->
+    <path d="M60,112 C104,88 152,88 200,112" stroke="url(#trail)" stroke-width="2.6" fill="none" stroke-linecap="round"></path>
+    <circle cx="200" cy="112" r="4" fill="#E9FCFF"></circle>
+    <!-- Particle C (inner, tighter curve) -->
+    <path d="M88,132 C116,120 140,120 168,132" stroke="url(#trail)" stroke-width="2.2" fill="none" stroke-linecap="round"></path>
+    <circle cx="168" cy="132" r="3.6" fill="#E9FCFF"></circle>
+  </g>
+
+  <!-- Subtle outer vignette for focus -->
+  <radialGradient id="vignette" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 128) scale(128)">
+    <stop offset="0.75" stop-color="#000000" stop-opacity="0"></stop>
+    <stop offset="1" stop-color="#000000" stop-opacity="0.35"></stop>
+  </radialGradient>
+  <rect x="0" y="0" width="256" height="256" fill="url(#vignette)" pointer-events="none"></rect>
+</svg>

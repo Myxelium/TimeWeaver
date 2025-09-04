@@ -2,3 +2,4 @@
 node_modules
 weaver-app/release/
 weaver-app/dist/
+weaver-app/.cache/

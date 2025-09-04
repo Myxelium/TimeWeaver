@@ -1,6 +1,12 @@
 {
   "name": "weaver-app",
   "version": "0.0.0",
+  "description": "A time tracking application for productivity management",
+  "author": {
+    "name": "Weaver Team",
+    "email": "support@weaver.app"
+  },
+  "homepage": "https://github.com/Myxelium/TimeWeaver",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -16,6 +22,7 @@
     "build:prod": "ng build --configuration production --base-href='./'",
     "electron:build": "npm run build:prod && npm run build:electron && electron-builder",
     "package:linux": "npm run build:prod && npm run build:electron && electron-builder --linux",
+    "package:deb": "npm run build:prod && npm run build:electron && electron-builder --linux deb",
     "package:windows": "npm run build:prod && npm run build:electron && electron-builder --win",
     "package:all": "npm run build:prod && npm run build:electron && electron-builder --linux --win",
     "postinstall": "electron-builder install-app-deps"
@@ -41,7 +48,7 @@
     "lucide-angular": "^0.542.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "~7.8.0",
-    "sqlite3": "^5.1.7",
+    "sql.js": "^1.13.0",
     "tslib": "^2.3.0",
     "typeorm": "^0.3.26",
     "zone.js": "~0.15.0"
@@ -79,6 +86,7 @@
     "directories": {
       "output": "release"
     },
+    "icon": "build/icon",
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -100,12 +108,19 @@
       "target": "dmg"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "linux": {
-      "target": "AppImage",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Office",
-      "executableName": "weaver-app"
+      "executableName": "weaver-app",
+      "executableArgs": ["--no-sandbox"],
+      "maintainer": "Weaver Team <support@weaver.app>",
+      "synopsis": "Time tracking application for productivity management"
     },
     "nsis": {
       "oneClick": false,

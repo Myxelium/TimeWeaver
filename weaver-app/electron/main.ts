@@ -21,12 +21,21 @@ async function initializeDatabase() {
   const userDataPath = app.getPath('userData');
   const dbPath = path.join(userDataPath, 'weaver.db');
   
+  let database: Uint8Array | undefined;
+  
+  // Load existing database if it exists
+  if (fs.existsSync(dbPath)) {
+    database = fs.readFileSync(dbPath);
+  }
+  
   dataSource = new DataSource({
-    type: 'sqlite',
-    database: dbPath,
+    type: 'sqljs',
+    database: database,
     entities: [Task, TimeEntry],
     synchronize: true, // Auto-create tables
-    logging: false
+    logging: false,
+    autoSave: true,
+    location: dbPath
   });
 
   try {
