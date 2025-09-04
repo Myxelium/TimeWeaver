@@ -1,0 +1,16 @@
+<!-- Main application layout -->
+<div class="min-h-screen bg-background">
+  <!-- Header Bar -->
+  <app-header></app-header>
+  
+  <!-- Main Content Area -->
+  <div class="flex h-[calc(100vh-64px)]">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+    
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>

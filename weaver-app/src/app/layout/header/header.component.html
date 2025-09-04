@@ -1,0 +1,36 @@
+<header class="bg-card border-b border-border px-6 py-4">
+  <div class="flex items-center justify-between">
+    <!-- App Title -->
+    <div class="flex items-center space-x-4">
+      <h1 class="text-xl font-semibold text-foreground">Weaver Time Tracker</h1>
+      <div class="text-sm text-muted-foreground">
+        {{ currentDate | date:'EEEE, MMMM d, yyyy' }}
+      </div>
+    </div>
+
+    <!-- Monthly Progress & Export -->
+    <div class="flex items-center space-x-4">
+      <!-- Monthly Progress Bar -->
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-muted-foreground">Monthly Progress:</span>
+        <div class="w-32 bg-secondary rounded-full h-2">
+          <div 
+            class="bg-primary h-2 rounded-full transition-all duration-300"
+            [style.width.%]="monthlyProgressPercentage()">
+          </div>
+        </div>
+        <span class="text-sm font-medium">
+          {{ monthlyHours() }}/{{ monthlyTarget() }}h
+        </span>
+      </div>
+
+      <!-- Export Button -->
+      <button 
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+        (click)="exportToCSV()">
+        <lucide-icon name="download" class="w-4 h-4 mr-2"></lucide-icon>
+        Export CSV
+      </button>
+    </div>
+  </div>
+</header>

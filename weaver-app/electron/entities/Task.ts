@@ -1,0 +1,25 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+
+@Entity('tasks')
+export class Task {
+  @PrimaryGeneratedColumn()
+  id!: number;
+
+  @Column()
+  title!: string;
+
+  @Column({ nullable: true })
+  description!: string;
+
+  @Column()
+  date!: string; // YYYY-MM-DD format
+
+  @Column('real', { default: 0 })
+  hours!: number;
+
+  @CreateDateColumn()
+  created_at!: Date;
+
+  @UpdateDateColumn()
+  updated_at!: Date;
+}
