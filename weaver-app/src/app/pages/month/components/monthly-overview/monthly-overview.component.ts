@@ -4,6 +4,7 @@ import { LucideAngularModule, ChevronLeft, ChevronRight } from 'lucide-angular';
 import { Store } from '@ngrx/store';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
+import { selectIgnoreWeekends } from '../../../../store/settings/settings.selectors';
 import { DaySummary, DAILY_WORK_HOURS } from '../../../../shared/models';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore } from 'date-fns';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -43,6 +44,7 @@ export class MonthlyOverviewComponent {
   monthlyStats = computed(() => this.calculateMonthlyStats());
 
   private store = inject(Store);
+  private ignoreWeekendsSignal = toSignal(this.store.select(selectIgnoreWeekends), { initialValue: true });
   private monthlyDataSignal = toSignal(this.store.select(selectMonthlyData), { initialValue: [] as DaySummary[] });
   get monthlyData(): DaySummary[] { return this.monthlyDataSignal(); }
 
@@ -91,9 +93,13 @@ export class MonthlyOverviewComponent {
     const monthStart = startOfMonth(current);
     const monthEnd = endOfMonth(current);
     const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const ignoreWeekends = this.ignoreWeekendsSignal();
     const workingDays = daysInMonth.filter(day => {
-      const w = day.getDay();
-      return w !== 0 && w !== 6;
+      if (ignoreWeekends) {
+        const dow = day.getDay();
+        if (dow === 0 || dow === 6) return false;
+      }
+      return true;
     }).length;
 
     let totalHours = 0; let daysWithTasks = 0;

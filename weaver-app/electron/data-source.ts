@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { Task, TimeEntry } from './entities';
+import { Task, TimeEntry, Setting } from './entities';
 import * as path from 'path';
 import * as fs from 'fs';
 import { settings } from './settings';
@@ -18,7 +18,7 @@ if (fs.existsSync(projectRootDatabaseFilePath)) {
 export const AppDataSource = new DataSource({
   type: 'sqljs',
   database: databaseFileBuffer,
-  entities: [Task, TimeEntry],
+  entities: [Task, TimeEntry, Setting],
   migrations: [path.join(__dirname, 'migrations', '*.{ts,js}')],
   synchronize: false,
   logging: false,

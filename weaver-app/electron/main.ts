@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { Task, TimeEntry } from './entities';
+import { Task, TimeEntry, Setting } from './entities';
 import { buildCommandHandlers } from './cqrs/commands';
 import { buildQueryHandlers } from './cqrs/queries';
 import { Command, Query, CommandTypeKey, QueryTypeKey } from './cqrs/types';
@@ -34,7 +34,7 @@ async function initializeDatabase() {
   applicationDataSource = new DataSource({
     type: 'sqljs',
     database: database,
-    entities: [Task, TimeEntry],
+    entities: [Task, TimeEntry, Setting],
     migrations: [
       __dirname + '/migrations/*.js',
       __dirname + '/migrations/*.ts'

@@ -3,7 +3,8 @@ import { Task } from '../entities/Task';
 // Centralized names to avoid scattered string literals
 export const CommandType = {
   SaveTask: 'save-task',
-  DeleteTask: 'delete-task'
+  DeleteTask: 'delete-task',
+  SaveSettings: 'save-settings'
 } as const;
 
 export const QueryType = {
@@ -11,7 +12,8 @@ export const QueryType = {
   GetTasksByMonth: 'get-tasks-by-month',
   GetMonthlySummary: 'get-monthly-summary',
   GetAllTasks: 'get-all-tasks',
-  ExportCsv: 'export-csv'
+  ExportCsv: 'export-csv',
+  GetSettings: 'get-settings'
 } as const;
 
 export type CommandTypeKey = typeof CommandType[keyof typeof CommandType];
@@ -32,6 +34,16 @@ export interface SaveTaskCommand {
 export interface DeleteTaskCommand {
   type: typeof CommandType.DeleteTask;
   payload: { id: number };
+}
+
+export interface SaveSettingsCommand {
+  type: typeof CommandType.SaveSettings;
+  payload: {
+    monthlyIncome: number;
+    monthlyCost: number;
+    darkMode: boolean;
+    ignoreWeekends: boolean;
+  };
 }
 
 export interface ExportMonthCsvQuery {
@@ -56,18 +68,30 @@ export interface GetAllTasksQuery {
   type: typeof QueryType.GetAllTasks;
   payload: Record<string, never>;
 }
+export interface GetSettingsQuery {
+  type: typeof QueryType.GetSettings;
+  payload: Record<string, never>;
+}
 
-export type Command = SaveTaskCommand | DeleteTaskCommand;
+export type Command = SaveTaskCommand | DeleteTaskCommand | SaveSettingsCommand;
 export type Query =
   | GetTasksByDateQuery
   | GetTasksByMonthQuery
   | GetMonthlySummaryQuery
   | GetAllTasksQuery
-  | ExportMonthCsvQuery;
+  | ExportMonthCsvQuery
+  | GetSettingsQuery;
 
 export interface DaySummaryDTO {
   date: string;
   total_hours: number;
   task_count: number;
   tasks: Task[];
+}
+
+export interface SettingsDTO {
+  monthlyIncome: number;
+  monthlyCost: number;
+  darkMode: boolean;
+  ignoreWeekends: boolean;
 }

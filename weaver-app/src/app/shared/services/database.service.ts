@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Task, DaySummary, CreateTaskRequest, UpdateTaskRequest } from '../models';
+import { Task, DaySummary, CreateTaskRequest, UpdateTaskRequest, Settings } from '../models';
 
 interface ElectronAPI {
   query(request: { type: string; payload: unknown }): Promise<unknown>;
@@ -93,6 +93,25 @@ export class DatabaseService {
       if (!api) return of(false);
       return from(api.query({ type: 'export-csv', payload: { year, month } })).pipe(map(r => r as boolean));
     }
+  }
+
+  getSettings(): Observable<Settings> {
+    if (!this.isElectron()) {
+      return of({ monthlyIncome: 0, monthlyCost: 0, darkMode: false, ignoreWeekends: true });
+    }
+    const api = this.electronAPI;
+    if (!api) return of({ monthlyIncome: 0, monthlyCost: 0, darkMode: false, ignoreWeekends: true });
+    return from(api.query({ type: 'get-settings', payload: {} })).pipe(map(r => r as Settings));
+  }
+
+  saveSettings(settings: Settings): Observable<boolean> {
+    if (!this.isElectron()) {
+      console.log('Mock save settings', settings);
+      return of(true);
+    }
+    const api = this.electronAPI;
+    if (!api) return of(false);
+    return from(api.command({ type: 'save-settings', payload: settings })).pipe(map(() => true));
   }
 
   // ===== Private Helpers =====

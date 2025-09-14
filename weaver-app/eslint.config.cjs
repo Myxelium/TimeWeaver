@@ -7,7 +7,7 @@ const stylisticJs = require('@stylistic/eslint-plugin-js');
 
 module.exports = tseslint.config(
   {
-    ignores: ['**/generated/*','dist/**']
+    ignores: ['**/generated/*','dist/**', '**/migrations/**']
   },
   {
     files: ['**/*.ts'],
