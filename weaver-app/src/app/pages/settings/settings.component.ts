@@ -1,25 +1,36 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Settings } from '../../shared/models';
 import { SettingsActions, loadSettings } from '../../store/settings/settings.actions';
-import { selectSettings } from '../../store/settings/settings.selectors';
+import { selectLastImportResult, selectLastSaveSuccessAt, selectSettings } from '../../store/settings/settings.selectors';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
   settings$ = this.store.select(selectSettings);
+  lastSaveAt$ = this.store.select(selectLastSaveSuccessAt);
+  lastImportResult$ = this.store.select(selectLastImportResult);
   form = this.fb.group({
     monthlyIncome: [0, [Validators.min(0)]],
     monthlyCost: [0, [Validators.min(0)]],
     darkMode: [false],
     ignoreWeekends: [true]
   });
+
+  // UI state
+  saving = false;
+  justSaved = false;
+  selectedFile: File | null = null;
+  overwrite = false;
+  importing = false;
+  importResult: { imported: number; updated: number; skipped: number; total: number } | null = null;
+  importError: string | null = null;
 
   constructor(private fb: FormBuilder, private store: Store) {}
 
@@ -28,11 +39,50 @@ export class SettingsComponent implements OnInit {
     this.settings$.subscribe(s => {
       if (s) this.form.patchValue(s, { emitEvent: false });
     });
+    this.lastSaveAt$.subscribe(ts => {
+      if (ts) {
+        this.saving = false;
+        this.justSaved = true;
+        setTimeout(() => this.justSaved = false, 2000);
+      }
+    });
+    this.lastImportResult$.subscribe(r => {
+      if (r) {
+        this.importing = false;
+        this.importResult = r;
+      }
+    });
   }
 
   save(): void {
     if (this.form.invalid) return;
     const value = this.form.value as Settings;
+    this.saving = true;
     this.store.dispatch(SettingsActions.save({ settings: value }));
+  }
+
+  onFileSelected(evt: Event): void {
+    const input = evt.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+      this.importResult = null;
+      this.importError = null;
+    }
+  }
+
+  importCsv(): void {
+    if (!this.selectedFile) return;
+    this.importing = true;
+    this.importError = null;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = reader.result as string;
+      this.store.dispatch(SettingsActions.importCsv({ content, overwrite: this.overwrite }));
+    };
+    reader.onerror = () => {
+      this.importing = false;
+      this.importError = 'Failed to read file';
+    };
+    reader.readAsText(this.selectedFile);
   }
 }

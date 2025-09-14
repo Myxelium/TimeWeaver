@@ -9,6 +9,8 @@ import { format, subDays } from 'date-fns';
 import { combineLatest, of, Subject, Observable } from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import { map, take, startWith, takeUntil } from 'rxjs/operators';
+import { selectIgnoreWeekends } from '../../../../store/settings/settings.selectors';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-todays-work',
@@ -44,6 +46,8 @@ export class TodaysWorkComponent implements OnDestroy {
   private destroy$ = new Subject<void>();
   private confirm = inject(ConfirmService);
 
+  private ignoreWeekendsSignal = toSignal(inject(Store).select(selectIgnoreWeekends), { initialValue: true });
+
   constructor(private _store: Store) {
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
     this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
@@ -60,8 +64,14 @@ export class TodaysWorkComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
+  get weekendBlocked(): boolean {
+    if (!this.ignoreWeekendsSignal()) return false;
+    const dow = this.currentDate.getDay();
+    return dow === 0 || dow === 6;
+  }
+
   onSubmit(): void {
-    if (this.taskForm.invalid) return;
+    if (this.taskForm.invalid || this.weekendBlocked) return;
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');

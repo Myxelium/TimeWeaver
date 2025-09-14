@@ -7,3 +7,5 @@ export const selectDarkMode = createSelector(selectSettings, s => s?.darkMode ??
 export const selectIgnoreWeekends = createSelector(selectSettings, s => s?.ignoreWeekends ?? true);
 export const selectMonthlyIncome = createSelector(selectSettings, s => s?.monthlyIncome ?? 0);
 export const selectMonthlyCost = createSelector(selectSettings, s => s?.monthlyCost ?? 0);
+export const selectLastSaveSuccessAt = createSelector(selectSettingsState, s => s.lastSaveSuccessAt);
+export const selectLastImportResult = createSelector(selectSettingsState, s => s.lastImportResult);

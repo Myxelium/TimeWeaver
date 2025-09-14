@@ -17,8 +17,30 @@
             <input id="ignoreWeekends" type="checkbox" formControlName="ignoreWeekends" class="h-4 w-4" />
             <label for="ignoreWeekends" class="text-sm">Ignore Weekends (exclude from working day stats)</label>
         </div>
-        <div>
-            <button type="submit" class="btn-primary px-4 py-2">Save</button>
+        <div class="flex items-center space-x-3">
+            <button type="submit" class="btn-primary px-4 py-2 flex items-center space-x-2" [disabled]="saving">
+                <span *ngIf="!justSaved; else savedTpl">Save</span>
+            </button>
+            <ng-template #savedTpl>
+                <span class="text-green-600 font-semibold">Saved!</span>
+            </ng-template>
+        </div>
+        <div class="border-t pt-4 space-y-3">
+            <h2 class="text-lg font-semibold">Import Tasks CSV</h2>
+            <p class="text-xs text-muted-foreground">Import a CSV previously exported
+                (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can be overwritten.</p>
+            <input type="file" accept=".csv,text/csv" (change)="onFileSelected($event)" class="block" />
+            <div class="flex items-center space-x-2">
+                <input id="overwrite" type="checkbox" [(ngModel)]="overwrite" name="overwrite" class="h-4 w-4" />
+                <label for="overwrite" class="text-sm">Overwrite existing tasks (match by Date + Title)</label>
+            </div>
+            <button type="button" class="btn-secondary px-3 py-1" (click)="importCsv()"
+                [disabled]="!selectedFile || importing">Import</button>
+            <div *ngIf="importResult" class="text-sm text-muted-foreground">
+                Imported {{importResult.imported}} new, Updated {{importResult.updated}}, Skipped
+                {{importResult.skipped}} (Total lines: {{importResult.total}})
+            </div>
+            <div *ngIf="importError" class="text-sm text-red-600">{{importError}}</div>
         </div>
     </form>
 </div>

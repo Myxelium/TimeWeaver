@@ -95,6 +95,18 @@ export class DatabaseService {
     }
   }
 
+  importCsv(content: string, overwrite: boolean): Observable<{ imported: number; updated: number; skipped: number; total: number }> {
+    if (!this.isElectron()) {
+      console.log('Mock import CSV, overwrite=', overwrite);
+      return of({ imported: 0, updated: 0, skipped: 0, total: 0 });
+    }
+    const api = this.electronAPI;
+    if (!api) return of({ imported: 0, updated: 0, skipped: 0, total: 0 });
+    const contentBase64 = btoa(content);
+    return from(api.command({ type: 'import-csv', payload: { contentBase64, overwrite } }))
+      .pipe(map(r => r as { imported: number; updated: number; skipped: number; total: number }));
+  }
+
   getSettings(): Observable<Settings> {
     if (!this.isElectron()) {
       return of({ monthlyIncome: 0, monthlyCost: 0, darkMode: false, ignoreWeekends: true });

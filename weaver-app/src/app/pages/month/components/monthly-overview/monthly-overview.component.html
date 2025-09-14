@@ -47,7 +47,8 @@
         <div class="grid grid-cols-7 gap-1">
           @for (day of calendarDays(); track day.date) {
           <div class="calendar-day" [class.bg-muted]="!day.isCurrentMonth" [class.bg-primary]="day.isToday"
-            [class.border-primary]="day.isToday" [class.cursor-not-allowed]="!day.isCurrentMonth"
+            [class.border-primary]="day.isToday" [class.opacity-40]="ignoreWeekends && day.isWeekend"
+            [class.cursor-not-allowed]="!day.isCurrentMonth"
             [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth" (click)="onDayClick(day)">
             <div class="text-sm font-medium mb-1" [class.text-muted-foreground]="!day.isCurrentMonth && !day.isToday"
               [class.text-primary-foreground]="day.isToday">

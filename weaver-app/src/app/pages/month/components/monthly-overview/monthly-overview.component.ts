@@ -14,6 +14,7 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   summary?: DaySummary;
+  isWeekend: boolean;
 }
 
 interface MonthlyStats {
@@ -47,6 +48,7 @@ export class MonthlyOverviewComponent {
   private ignoreWeekendsSignal = toSignal(this.store.select(selectIgnoreWeekends), { initialValue: true });
   private monthlyDataSignal = toSignal(this.store.select(selectMonthlyData), { initialValue: [] as DaySummary[] });
   get monthlyData(): DaySummary[] { return this.monthlyDataSignal(); }
+  get ignoreWeekends(): boolean { return this.ignoreWeekendsSignal(); }
 
   constructor() {
     const now = new Date();
@@ -131,7 +133,8 @@ export class MonthlyOverviewComponent {
       date: day,
       isCurrentMonth: isSameMonth(day, current),
       isToday: isToday(day),
-      summary: this.getDaySummarySync(day)
+      summary: this.getDaySummarySync(day),
+      isWeekend: day.getDay() === 0 || day.getDay() === 6
     }));
   }
 

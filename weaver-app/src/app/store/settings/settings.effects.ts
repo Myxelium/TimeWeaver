@@ -22,6 +22,14 @@ export class SettingsEffects {
     ))
   ));
 
+  importCsv$ = createEffect(() => this.actions$.pipe(
+    ofType(SettingsActions.importCsv),
+    mergeMap(({ content, overwrite }) => this.db.importCsv(content, overwrite).pipe(
+      map(result => SettingsActions.importCsvSuccess({ result })),
+      catchError(err => of(SettingsActions.importCsvFailure({ error: err.message || 'Import CSV failed' })))
+    ))
+  ));
+
   theme$ = createEffect(() => this.actions$.pipe(
     ofType(SettingsActions.loadSuccess, SettingsActions.saveSuccess, SettingsActions.applyTheme),
     tap(action => {

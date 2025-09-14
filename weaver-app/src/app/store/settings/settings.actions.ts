@@ -9,7 +9,10 @@ export const SettingsActions = createActionGroup({
     'Save': props<{ settings: Settings }>(),
     'Save Success': props<{ settings: Settings }>(),
     'Save Failure': props<{ error: string }>(),
-    'Apply Theme': props<{ darkMode: boolean }>()
+    'Apply Theme': props<{ darkMode: boolean }>(),
+    'Import Csv': props<{ content: string; overwrite: boolean }>(),
+    'Import Csv Success': props<{ result: { imported: number; updated: number; skipped: number; total: number } }>(),
+    'Import Csv Failure': props<{ error: string }>()
   }
 });
 

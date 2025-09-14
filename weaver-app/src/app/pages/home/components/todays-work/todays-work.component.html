@@ -6,7 +6,7 @@
       <label for="taskTitle" class="form-label">Task Title</label>
       <div class="relative">
         <input type="text" id="taskTitle" formControlName="title" (focus)="onTitleFocus()" (blur)="onTitleBlur()"
-          class="input-base" placeholder="What are you working on?" autocomplete="off" />
+          class="input-base" placeholder="What are you working on?" autocomplete="off" [disabled]="weekendBlocked" />
         @if (showSuggestions && filteredSuggestions.length > 0) {
         <div class="suggestions-dropdown">
           @if (!showAllSuggestions && recentSuggestions.length > 0) {
@@ -40,15 +40,15 @@
     <div>
       <label for="taskDescription" class="form-label">Description (Optional)</label>
       <textarea formControlName="description" rows="3" id="taskDescription" class="textarea-base"
-        placeholder="Add details about the task..."></textarea>
+        placeholder="Add details about the task..." [disabled]="weekendBlocked"></textarea>
     </div>
     <div>
       <label for="taskHours" class="form-label">Hours</label>
       <div class="flex gap-2">
         <input type="number" formControlName="hours" min="0" max="24" step="0.1" id="taskHours"
-          class="flex-1 input-base" placeholder="0.0" />
+          class="flex-1 input-base" placeholder="0.0" [disabled]="weekendBlocked" />
         <ng-container *ngIf="(remainingHours$ | async) as remHours">
-          <button type="button" (click)="addEightHours()" [disabled]="remHours === 0"
+          <button type="button" (click)="addEightHours()" [disabled]="remHours === 0 || weekendBlocked"
             class="btn-secondary whitespace-nowrap px-3 py-2"
             [title]="remHours === 0 ? 'No remaining hours' : 'Add remaining hours'">
             {{ getAddHoursLabel(remHours) }}
@@ -56,8 +56,12 @@
         </ng-container>
       </div>
     </div>
+    <div *ngIf="weekendBlocked"
+      class="text-sm text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-800 rounded p-2">
+      Weekend tasks are disabled (Ignore Weekends setting). Change the setting to add tasks today.
+    </div>
     <div class="flex space-x-3">
-      <button type="submit" [disabled]="taskForm.invalid || (isLoading$ | async)"
+      <button type="submit" [disabled]="weekendBlocked || taskForm.invalid || (isLoading$ | async)"
         class="flex-1 btn-primary py-2 px-4">{{ editingTask ? 'Update Task' : 'Add Task' }}</button>
       @if (editingTask) { <button type="button" (click)="cancelEdit()" class="btn-outline px-4 py-2">Cancel</button> }
     </div>

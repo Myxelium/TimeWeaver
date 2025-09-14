@@ -65,14 +65,9 @@ export class EditDayModalComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['daySummary'] && this.editingTask) {
       const stillExists = this.daySummary?.tasks?.some(task => task.id === this.editingTask?.id);
-
-      if (!stillExists)
-        this.resetForm();
+      if (!stillExists) this.resetForm();
     }
-
-    if (changes['open'] && !this.isOpen) {
-      this.resetForm();
-    }
+    if (changes['open'] && !this.isOpen) this.resetForm();
   }
 
   getDayTotalHours(): number {
@@ -94,9 +89,8 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    if (!this.selectedDate || this.taskForm.invalid)
-      return;
-
+    if (!this.selectedDate) return;
+    if (this.taskForm.invalid) return;
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
     const dateStr = format(this.selectedDate, 'yyyy-MM-dd');

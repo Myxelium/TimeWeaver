@@ -4,7 +4,8 @@ import { Task } from '../entities/Task';
 export const CommandType = {
   SaveTask: 'save-task',
   DeleteTask: 'delete-task',
-  SaveSettings: 'save-settings'
+  SaveSettings: 'save-settings',
+  ImportCsv: 'import-csv'
 } as const;
 
 export const QueryType = {
@@ -46,6 +47,14 @@ export interface SaveSettingsCommand {
   };
 }
 
+export interface ImportCsvCommand {
+  type: typeof CommandType.ImportCsv;
+  payload: {
+    contentBase64: string; // CSV file content encoded in base64
+    overwrite: boolean; // if true, existing tasks on same date+title replaced/overwritten
+  };
+}
+
 export interface ExportMonthCsvQuery {
   type: typeof QueryType.ExportCsv;
   payload: { year: number; month: number };
@@ -73,7 +82,7 @@ export interface GetSettingsQuery {
   payload: Record<string, never>;
 }
 
-export type Command = SaveTaskCommand | DeleteTaskCommand | SaveSettingsCommand;
+export type Command = SaveTaskCommand | DeleteTaskCommand | SaveSettingsCommand | ImportCsvCommand;
 export type Query =
   | GetTasksByDateQuery
   | GetTasksByMonthQuery
