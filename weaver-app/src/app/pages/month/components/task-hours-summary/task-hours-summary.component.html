@@ -1,0 +1,35 @@
+<div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+  <div class="flex flex-col space-y-1.5 p-6">
+    <h3 class="text-xl font-semibold leading-none tracking-tight">Task Hours Summary</h3>
+    <p class="text-sm text-muted-foreground">Total hours spent on each task category for the current month</p>
+  </div>
+  <div class="p-6 pt-0">
+    <div class="h-64 flex items-end justify-start space-x-2 bg-muted/50 rounded-lg p-4 overflow-x-auto">
+      @if (chartData$ | async; as chartData) {
+        @for (taskData of chartData; track taskData.taskTitle) {
+          <div class="flex flex-col items-center flex-shrink-0 min-w-0" [style.min-width.px]="60">
+            <div
+              class="rounded-t w-full transition-all hover:opacity-80 cursor-pointer"
+              [style.height.px]="taskData.totalHours > 0 ? Math.max((taskData.totalHours / getMaxTaskHours(chartData)) * 185, 4) : 4"
+              [style.background-color]="taskData.color"
+              [title]="taskData.taskTitle + ': ' + (taskData.totalHours | number:'1.1-1') + 'h (' + taskData.taskCount + ' tasks)'"
+            ></div>
+            <div class="text-xs text-center mt-2 max-w-full break-words leading-tight">
+              <div class="font-medium">{{ taskData.taskTitle | slice:0:20 }}{{ taskData.taskTitle.length > 20 ? '...' : '' }}</div>
+              <div class="text-muted-foreground">{{ taskData.totalHours | number:'1.1-1' }}h</div>
+            </div>
+          </div>
+        }
+        @if (!chartData.length) {
+          <div class="flex items-center justify-center w-full h-full text-muted-foreground">
+            No tasks found for this month
+          </div>
+        }
+      }
+    </div>
+    <div class="flex justify-between text-xs text-muted-foreground mt-2">
+      <span>Task Categories</span>
+      <span>Hover bars for details</span>
+    </div>
+  </div>
+</div>
