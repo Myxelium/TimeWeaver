@@ -4,7 +4,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class InitialSchema1736920000001 implements MigrationInterface {
   name = 'InitialSchema1736920000001';
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
+  async up(queryRunner: QueryRunner): Promise<void> {
     // Create tasks table
     await queryRunner.query(`CREATE TABLE IF NOT EXISTS "tasks" (
       "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -34,7 +34,7 @@ export class InitialSchema1736920000001 implements MigrationInterface {
       END;`);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
+  async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP TRIGGER IF EXISTS tasks_updated_at_trigger');
     await queryRunner.query('DROP TABLE IF EXISTS "time_entries"');
     await queryRunner.query('DROP TABLE IF EXISTS "tasks"');

@@ -11,6 +11,6 @@ export async function handleSaveTask(command: SaveTaskCommand, dataSource: DataS
     return id;
   }
   const newTaskEntity = taskRepository.create({ title, description, date, hours });
-  const savedTask = await taskRepository.save(newTaskEntity);
-  return (savedTask as any).id;
+  const savedTask: Task = await taskRepository.save(newTaskEntity);
+  return savedTask.id;
 }

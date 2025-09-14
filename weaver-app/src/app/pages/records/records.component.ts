@@ -7,12 +7,12 @@ import { loadAllTasks } from '../../store/tasks/tasks.actions';
   selector: 'app-records',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './records.component.html',
+  templateUrl: './records.component.html'
 })
 export class RecordsComponent implements OnInit {
   private store = inject(Store);
-  
+
   ngOnInit(): void {
-  this.store.dispatch(loadAllTasks());
+    this.store.dispatch(loadAllTasks());
   }
 }

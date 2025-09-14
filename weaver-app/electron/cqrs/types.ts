@@ -18,18 +18,52 @@ export type CommandTypeKey = typeof CommandType[keyof typeof CommandType];
 export type QueryTypeKey = typeof QueryType[keyof typeof QueryType];
 
 // Command Interfaces
-export interface SaveTaskCommand { type: typeof CommandType.SaveTask; payload: { id?: number; title: string; description?: string; date: string; hours: number }; }
-export interface DeleteTaskCommand { type: typeof CommandType.DeleteTask; payload: { id: number }; }
-export interface ExportMonthCsvQuery { type: typeof QueryType.ExportCsv; payload: { year: number; month: number }; }
+export interface SaveTaskCommand {
+  type: typeof CommandType.SaveTask;
+  payload: {
+    id?: number;
+    title: string;
+    description?: string;
+    date: string;
+    hours: number;
+  };
+}
+
+export interface DeleteTaskCommand {
+  type: typeof CommandType.DeleteTask;
+  payload: { id: number };
+}
+
+export interface ExportMonthCsvQuery {
+  type: typeof QueryType.ExportCsv;
+  payload: { year: number; month: number };
+}
 
 // Query Interfaces
-export interface GetTasksByDateQuery { type: typeof QueryType.GetTasksByDate; payload: { date: string }; }
-export interface GetTasksByMonthQuery { type: typeof QueryType.GetTasksByMonth; payload: { year: number; month: number }; }
-export interface GetMonthlySummaryQuery { type: typeof QueryType.GetMonthlySummary; payload: { year: number; month: number }; }
-export interface GetAllTasksQuery { type: typeof QueryType.GetAllTasks; payload: {}; }
+export interface GetTasksByDateQuery {
+  type: typeof QueryType.GetTasksByDate;
+  payload: { date: string };
+}
+export interface GetTasksByMonthQuery {
+  type: typeof QueryType.GetTasksByMonth;
+  payload: { year: number; month: number };
+}
+export interface GetMonthlySummaryQuery {
+  type: typeof QueryType.GetMonthlySummary;
+  payload: { year: number; month: number };
+}
+export interface GetAllTasksQuery {
+  type: typeof QueryType.GetAllTasks;
+  payload: Record<string, never>;
+}
 
 export type Command = SaveTaskCommand | DeleteTaskCommand;
-export type Query = GetTasksByDateQuery | GetTasksByMonthQuery | GetMonthlySummaryQuery | GetAllTasksQuery | ExportMonthCsvQuery;
+export type Query =
+  | GetTasksByDateQuery
+  | GetTasksByMonthQuery
+  | GetMonthlySummaryQuery
+  | GetAllTasksQuery
+  | ExportMonthCsvQuery;
 
 export interface DaySummaryDTO {
   date: string;

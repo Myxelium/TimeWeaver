@@ -12,7 +12,8 @@ export interface TasksState {
 }
 
 export const initialTasksState: TasksState = {
-  currentDate: new Date().toISOString().split('T')[0],
+  currentDate: new Date().toISOString()
+    .split('T')[0],
   selectedMonth: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 },
   todayTasks: [],
   monthlyData: [],

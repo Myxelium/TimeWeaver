@@ -2,8 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { Command, Query } from './cqrs/types';
 
 export interface CqrsAPI {
-  command: <T = any>(command: Command) => Promise<T>;
-  query: <T = any>(query: Query) => Promise<T>;
+  command: <T = unknown>(command: Command) => Promise<T>;
+  query: <T = unknown>(query: Query) => Promise<T>;
 }
 
 const cqrsAPI: CqrsAPI = {

@@ -14,7 +14,16 @@ export const tasksReducer = createReducer(
   on(TasksActions.loadTodayTasksFailure, (state, { error }) => ({ ...state, isLoading: false, error })),
 
   on(TasksActions.loadMonthlyData, (state) => ({ ...state, isLoading: true })),
-  on(TasksActions.loadMonthlyDataSuccess, (state, { monthlyData, monthlySummary }) => ({ ...state, monthlyData, monthlySummary, isLoading: false, error: null })),
+  on(
+    TasksActions.loadMonthlyDataSuccess,
+    (state, { monthlyData, monthlySummary }) => ({
+      ...state,
+      monthlyData,
+      monthlySummary,
+      isLoading: false,
+      error: null
+    })
+  ),
   on(TasksActions.loadMonthlyDataFailure, (state, { error }) => ({ ...state, isLoading: false, error })),
 
   on(loadAllTasks, (state) => ({ ...state, isLoading: true })),

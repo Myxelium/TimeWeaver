@@ -17,7 +17,7 @@ import { TasksActions } from '../../store/tasks/tasks.actions';
       <div class="flex items-center">
         <h1 class="text-2xl font-semibold text-foreground">Weaver</h1>
       </div>
-      
+
       <!-- Monthly Summary and Export -->
       <div class="flex items-center space-x-4">
         <!-- Monthly Hours Progress -->
@@ -25,7 +25,7 @@ import { TasksActions } from '../../store/tasks/tasks.actions';
           <span class="text-sm text-muted-foreground">{{ currentMonth }}</span>
           <div class="flex items-center space-x-2">
             <div class="w-32 h-2 bg-secondary rounded-full overflow-hidden">
-              <div 
+              <div
                 class="h-full bg-primary transition-all duration-300"
                 [style.width.%]="progressPercentage$ | async"
               ></div>
@@ -33,7 +33,7 @@ import { TasksActions } from '../../store/tasks/tasks.actions';
             <span class="text-sm font-medium">{{ monthlySummary$ | async | number:'1.1-1' }}h</span>
           </div>
         </div>
-        
+
         <!-- Export Button -->
         <button
           (click)="exportCurrentMonth()"
@@ -52,23 +52,21 @@ import { TasksActions } from '../../store/tasks/tasks.actions';
   `]
 })
 export class HeaderComponent {
-  private store = inject(Store);
-  
-  monthlySummary$ = this.store.select(selectMonthlySummary);
-  selectedMonth$ = this.store.select(selectSelectedMonth);
-  isLoading$ = this.store.select(selectIsLoading);
-  
+  monthlySummary$ = inject(Store).select(selectMonthlySummary);
+  selectedMonth$ = inject(Store).select(selectSelectedMonth);
+  isLoading$ = inject(Store).select(selectIsLoading);
   progressPercentage$: Observable<number> = this.monthlySummary$.pipe(
-    map((hours: number) => Math.min((hours / 160) * 100, 100)) // Assuming 160 hours per month (20 days * 8 hours)
+    map((hours: number) => Math.min((hours / 160) * 100, 100))
   );
-  
+  private store = inject(Store);
+
   get currentMonth(): string {
     const now = new Date();
     return format(now, 'MMMM yyyy');
   }
-  
+
   exportCurrentMonth(): void {
     const now = new Date();
-  this.store.dispatch(TasksActions.exportCsv({ year: now.getFullYear(), month: now.getMonth() + 1 }));
+    this.store.dispatch(TasksActions.exportCsv({ year: now.getFullYear(), month: now.getMonth() + 1 }));
   }
 }
