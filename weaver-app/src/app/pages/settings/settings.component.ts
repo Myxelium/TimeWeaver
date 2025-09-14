@@ -1,18 +1,21 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Settings } from '../../shared/models';
+import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { SettingsActions, loadSettings } from '../../store/settings/settings.actions';
 import { selectLastImportResult, selectLastSaveSuccessAt, selectSettings } from '../../store/settings/settings.selectors';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './settings.component.html'
 })
 export class SettingsComponent implements OnInit {
+  eye = Eye;
+  eyeOff = EyeOff;
   settings$ = this.store.select(selectSettings);
   lastSaveAt$ = this.store.select(selectLastSaveSuccessAt);
   lastImportResult$ = this.store.select(selectLastImportResult);
@@ -20,17 +23,19 @@ export class SettingsComponent implements OnInit {
     monthlyIncome: [0, [Validators.min(0)]],
     monthlyCost: [0, [Validators.min(0)]],
     darkMode: [false],
-    ignoreWeekends: [true]
+    ignoreWeekends: [true],
+    overwrite: [false]
   });
 
   // UI state
   saving = false;
   justSaved = false;
   selectedFile: File | null = null;
-  overwrite = false;
   importing = false;
   importResult: { imported: number; updated: number; skipped: number; total: number } | null = null;
   importError: string | null = null;
+  showIncome = false;
+  showCost = false;
 
   constructor(private fb: FormBuilder, private store: Store) {}
 
@@ -77,7 +82,8 @@ export class SettingsComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => {
       const content = reader.result as string;
-      this.store.dispatch(SettingsActions.importCsv({ content, overwrite: this.overwrite }));
+      const overwrite = this.form.get('overwrite')?.value ?? false;
+      this.store.dispatch(SettingsActions.importCsv({ content, overwrite }));
     };
     reader.onerror = () => {
       this.importing = false;
@@ -85,4 +91,7 @@ export class SettingsComponent implements OnInit {
     };
     reader.readAsText(this.selectedFile);
   }
+
+  toggleIncomeVisibility(): void { this.showIncome = !this.showIncome; }
+  toggleCostVisibility(): void { this.showCost = !this.showCost; }
 }

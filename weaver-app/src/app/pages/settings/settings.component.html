@@ -3,11 +3,25 @@
     <form [formGroup]="form" (ngSubmit)="save()" class="space-y-6 max-w-md">
         <div>
             <label class="form-label" for="monthlyIncome">Monthly Income (What I earn)</label>
-            <input id="monthlyIncome" type="number" step="0.01" formControlName="monthlyIncome" class="input-base" />
+            <div class="relative">
+                <input id="monthlyIncome" [type]="showIncome ? 'number' : 'password'" step="0.01"
+                    formControlName="monthlyIncome" class="input-base pr-10" />
+                <button type="button" class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                    (click)="toggleIncomeVisibility()" [attr.aria-label]="showIncome ? 'Hide income' : 'Show income'">
+                    <lucide-icon [img]="showIncome ? eyeOff : eye" class="w-4 h-4"></lucide-icon>
+                </button>
+            </div>
         </div>
         <div>
             <label class="form-label" for="monthlyCost">Monthly Cost (Business pays)</label>
-            <input id="monthlyCost" type="number" step="0.01" formControlName="monthlyCost" class="input-base" />
+            <div class="relative">
+                <input id="monthlyCost" [type]="showCost ? 'number' : 'password'" step="0.01"
+                    formControlName="monthlyCost" class="input-base pr-10" />
+                <button type="button" class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                    (click)="toggleCostVisibility()" [attr.aria-label]="showCost ? 'Hide cost' : 'Show cost'">
+                    <lucide-icon [img]="showCost ? eyeOff : eye" class="w-4 h-4"></lucide-icon>
+                </button>
+            </div>
         </div>
         <div class="flex items-center space-x-2">
             <input id="darkMode" type="checkbox" formControlName="darkMode" class="h-4 w-4" />
@@ -31,7 +45,7 @@
                 (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can be overwritten.</p>
             <input type="file" accept=".csv,text/csv" (change)="onFileSelected($event)" class="block" />
             <div class="flex items-center space-x-2">
-                <input id="overwrite" type="checkbox" [(ngModel)]="overwrite" name="overwrite" class="h-4 w-4" />
+                <input id="overwrite" type="checkbox" formControlName="overwrite" class="h-4 w-4" />
                 <label for="overwrite" class="text-sm">Overwrite existing tasks (match by Date + Title)</label>
             </div>
             <button type="button" class="btn-secondary px-3 py-1" (click)="importCsv()"

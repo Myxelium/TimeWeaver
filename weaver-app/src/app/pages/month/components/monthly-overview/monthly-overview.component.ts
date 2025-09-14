@@ -69,6 +69,14 @@ export class MonthlyOverviewComponent {
     }
   }
 
+  canGoToPreviousMonth(): boolean {
+    const current = this.currentDate();
+    const previous = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+    const now = new Date();
+    const currentMonthStart = startOfMonth(now);
+    return !isBefore(previous, currentMonthStart);
+  }
+
   nextMonth(): void {
     const current = this.currentDate();
     const next = new Date(current.getFullYear(), current.getMonth() + 1, 1);

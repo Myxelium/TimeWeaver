@@ -6,7 +6,7 @@
       <label for="taskTitle" class="form-label">Task Title</label>
       <div class="relative">
         <input type="text" id="taskTitle" formControlName="title" (focus)="onTitleFocus()" (blur)="onTitleBlur()"
-          class="input-base" placeholder="What are you working on?" autocomplete="off" [disabled]="weekendBlocked" />
+          class="input-base" placeholder="What are you working on?" autocomplete="off" />
         @if (showSuggestions && filteredSuggestions.length > 0) {
         <div class="suggestions-dropdown">
           @if (!showAllSuggestions && recentSuggestions.length > 0) {
@@ -40,13 +40,13 @@
     <div>
       <label for="taskDescription" class="form-label">Description (Optional)</label>
       <textarea formControlName="description" rows="3" id="taskDescription" class="textarea-base"
-        placeholder="Add details about the task..." [disabled]="weekendBlocked"></textarea>
+        placeholder="Add details about the task..."></textarea>
     </div>
     <div>
       <label for="taskHours" class="form-label">Hours</label>
       <div class="flex gap-2">
         <input type="number" formControlName="hours" min="0" max="24" step="0.1" id="taskHours"
-          class="flex-1 input-base" placeholder="0.0" [disabled]="weekendBlocked" />
+          class="flex-1 input-base" placeholder="0.0" />
         <ng-container *ngIf="(remainingHours$ | async) as remHours">
           <button type="button" (click)="addEightHours()" [disabled]="remHours === 0 || weekendBlocked"
             class="btn-secondary whitespace-nowrap px-3 py-2"

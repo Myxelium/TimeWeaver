@@ -57,6 +57,12 @@ export class TodaysWorkComponent implements OnDestroy {
     this.loadTaskTitlesFromLast30Days();
     this.taskForm.get('title')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => this.filterSuggestions(val));
     this.todayTasks$.pipe(takeUntil(this.destroy$)).subscribe(tasks => (this.tasks = tasks));
+
+    this.applyWeekendBlockState();
+    this._store
+      .select(selectIgnoreWeekends)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.applyWeekendBlockState());
   }
 
   ngOnDestroy(): void {
@@ -253,5 +259,13 @@ export class TodaysWorkComponent implements OnDestroy {
       .slice(0, 10);
 
     this.showSuggestions = this.filteredSuggestions.length > 0;
+  }
+
+  private applyWeekendBlockState(): void {
+    if (this.weekendBlocked) {
+      if (!this.taskForm.disabled) this.taskForm.disable({ emitEvent: false });
+    } else {
+      if (this.taskForm.disabled) this.taskForm.enable({ emitEvent: false });
+    }
   }
 }

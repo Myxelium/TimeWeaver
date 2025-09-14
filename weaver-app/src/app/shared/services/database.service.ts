@@ -109,7 +109,7 @@ export class DatabaseService {
 
   getSettings(): Observable<Settings> {
     if (!this.isElectron()) {
-      return of({ monthlyIncome: 0, monthlyCost: 0, darkMode: false, ignoreWeekends: true });
+      return of({ monthlyIncome: 60000, monthlyCost: 130000, darkMode: false, ignoreWeekends: true });
     }
     const api = this.electronAPI;
     if (!api) return of({ monthlyIncome: 0, monthlyCost: 0, darkMode: false, ignoreWeekends: true });
@@ -126,12 +126,10 @@ export class DatabaseService {
     return from(api.command({ type: 'save-settings', payload: settings })).pipe(map(() => true));
   }
 
-  // ===== Private Helpers =====
   private isElectron(): boolean {
     return !!this.electronAPI;
   }
 
-  // Mock data for development
   private getMockTasksForDate(date: string): Task[] {
     return [
       {
