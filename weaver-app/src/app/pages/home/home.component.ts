@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PreviousDaysComponent } from './components/previous-days/previous-days.component';
 import { TodaysWorkComponent } from './components/todays-work/todays-work.component';
+import { Store } from '@ngrx/store';
+import { TasksActions } from '../../store';
 
 @Component({
   selector: 'app-home',
@@ -15,5 +17,12 @@ import { TodaysWorkComponent } from './components/todays-work/todays-work.compon
   `]
 })
 export class HomeComponent {
-  readonly currentDate = new Date();
+  currentDate = new Date();
+
+  constructor(private _store: Store) {
+    this._store.dispatch(TasksActions.loadMonthlyData({
+      year: this.currentDate.getFullYear(),
+      month: this.currentDate.getMonth() + 1
+    }));
+  }
 }

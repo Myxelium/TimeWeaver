@@ -134,9 +134,9 @@ export class TodaysWorkComponent implements OnDestroy {
   addEightHours(): void {
     this.getRemainingHours()
       .pipe(take(1))
-      .subscribe(rem => {
+      .subscribe(remaining => {
         const current = this.taskForm.get('hours')?.value || 0;
-        const toAdd = Math.min(8, rem);
+        const toAdd = Math.min(8, remaining);
         this.taskForm.patchValue({ hours: current + toAdd });
       });
   }
@@ -187,20 +187,20 @@ export class TodaysWorkComponent implements OnDestroy {
 
   trackTask(_index: number, task: Task) { return task.id ?? task.title; }
 
-  getAddHoursLabel(rem: number): string {
-    if (rem >= 8) return '+8h';
-    if (rem > 0) return `+${rem.toFixed(1)}h`;
+  getAddHoursLabel(remaining: number): string {
+    if (remaining >= 8) return '+8h';
+    if (remaining > 0) return `+${remaining.toFixed(1)}h`;
     return '0h';
   }
 
   remainingDayHours(total: number | null | undefined): number {
-    const t = typeof total === 'number' ? total : 0;
-    return Math.max(0, DAILY_WORK_HOURS - t);
+    const totalHours = typeof total === 'number' ? total : 0;
+    return Math.max(0, DAILY_WORK_HOURS - totalHours);
   }
 
   progressPercent(total: number | null | undefined): number {
-    const t = typeof total === 'number' ? total : 0;
-    return Math.min(100, (t / DAILY_WORK_HOURS) * 100);
+    const totalHours = typeof total === 'number' ? total : 0;
+    return Math.min(100, (totalHours / DAILY_WORK_HOURS) * 100);
   }
 
   private resetForm(): void {
@@ -217,11 +217,13 @@ export class TodaysWorkComponent implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(tasks => {
         const thirtyDaysAgo = subDays(this.currentDate, 30);
-        const recentTasks = tasks.filter(t => {
-          const taskDate = new Date(t.date);
+
+        const recentTasks = tasks.filter(task => {
+          const taskDate = new Date(task.date);
           return taskDate >= thirtyDaysAgo && taskDate <= this.currentDate;
         });
-        const uniqueTitles = [...new Set(recentTasks.map(t => t.title))];
+
+        const uniqueTitles = [...new Set(recentTasks.map(task => task.title))];
         this.allTaskTitles = uniqueTitles.reverse();
         this.recentSuggestions = this.allTaskTitles.slice(0, 5);
       });
@@ -233,10 +235,13 @@ export class TodaysWorkComponent implements OnDestroy {
       this.filteredSuggestions = [];
       return;
     }
+
     const searchValue = value.toLowerCase();
+
     this.filteredSuggestions = this.allTaskTitles
-      .filter(t => t.toLowerCase().includes(searchValue))
+      .filter(task => task.toLowerCase().includes(searchValue))
       .slice(0, 10);
+
     this.showSuggestions = this.filteredSuggestions.length > 0;
   }
 }
