@@ -3,7 +3,9 @@ import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { format } from 'date-fns';
-import { StateService } from '../../shared/services';
+import { Store } from '@ngrx/store';
+import { selectMonthlySummary, selectSelectedMonth, selectIsLoading } from '../../store/tasks/tasks.selectors';
+import { TasksActions } from '../../store/tasks/tasks.actions';
 
 @Component({
   selector: 'app-header',
@@ -50,11 +52,11 @@ import { StateService } from '../../shared/services';
   `]
 })
 export class HeaderComponent {
-  private stateService = inject(StateService);
+  private store = inject(Store);
   
-  monthlySummary$ = this.stateService.getMonthlySummary();
-  selectedMonth$ = this.stateService.getSelectedMonth();
-  isLoading$ = this.stateService.isLoading();
+  monthlySummary$ = this.store.select(selectMonthlySummary);
+  selectedMonth$ = this.store.select(selectSelectedMonth);
+  isLoading$ = this.store.select(selectIsLoading);
   
   progressPercentage$: Observable<number> = this.monthlySummary$.pipe(
     map((hours: number) => Math.min((hours / 160) * 100, 100)) // Assuming 160 hours per month (20 days * 8 hours)
@@ -67,6 +69,6 @@ export class HeaderComponent {
   
   exportCurrentMonth(): void {
     const now = new Date();
-    this.stateService.exportCsv(now.getFullYear(), now.getMonth() + 1);
+  this.store.dispatch(TasksActions.exportCsv({ year: now.getFullYear(), month: now.getMonth() + 1 }));
   }
 }

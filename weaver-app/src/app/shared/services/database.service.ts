@@ -27,19 +27,15 @@ export class DatabaseService {
     if (!this.isElectron()) {
       return of(this.getMockTasksForDate(date));
     }
-    return from(this.electronAPI.getTasksByDate(date)).pipe(
-      map(result => result as Task[])
-    );
+    return from(this.electronAPI.query({ type: 'get-tasks-by-date', payload: { date } })).pipe(map(r => r as Task[]));
   }
 
   saveTask(task: CreateTaskRequest | UpdateTaskRequest): Observable<number> {
     if (!this.isElectron()) {
-      console.log('Mock save task:', task);
-      return of(Math.random() * 1000);
+       console.log('Mock save task:', task);
+       return of(Math.random() * 1000);
     }
-    return from(this.electronAPI.saveTask(task)).pipe(
-      map(result => result as number)
-    );
+    return from(this.electronAPI.command({ type: 'save-task', payload: { ...task, hours: task.hours || 0 } })).pipe(map(r => r as number));
   }
 
   deleteTask(taskId: number): Observable<any> {
@@ -47,7 +43,7 @@ export class DatabaseService {
       console.log('Mock delete task:', taskId);
       return of({ success: true });
     }
-    return from(this.electronAPI.deleteTask(taskId));
+    return from(this.electronAPI.command({ type: 'delete-task', payload: { id: taskId } }));
   }
 
   // Monthly operations
@@ -55,18 +51,14 @@ export class DatabaseService {
     if (!this.isElectron()) {
       return of(this.getMockMonthlyData(year, month));
     }
-    return from(this.electronAPI.getTasksByMonth(year, month)).pipe(
-      map(result => result as DaySummary[])
-    );
+    return from(this.electronAPI.query({ type: 'get-tasks-by-month', payload: { year, month } })).pipe(map(r => r as DaySummary[]));
   }
 
   getMonthlySummary(year: number, month: number): Observable<number> {
     if (!this.isElectron()) {
-      return of(120); // Mock 120 hours
+      return of(120);
     }
-    return from(this.electronAPI.getMonthlySummary(year, month)).pipe(
-      map(result => result as number)
-    );
+    return from(this.electronAPI.query({ type: 'get-monthly-summary', payload: { year, month } })).pipe(map(r => r as number));
   }
 
   // All records
@@ -74,9 +66,7 @@ export class DatabaseService {
     if (!this.isElectron()) {
       return of(this.getMockAllTasks());
     }
-    return from(this.electronAPI.getAllTasks()).pipe(
-      map(result => result as Task[])
-    );
+    return from(this.electronAPI.query({ type: 'get-all-tasks', payload: {} })).pipe(map(r => r as Task[]));
   }
 
   // Export functionality
@@ -85,9 +75,7 @@ export class DatabaseService {
       console.log('Mock CSV export for:', year, month);
       return of(true);
     }
-    return from(this.electronAPI.exportCsv(year, month)).pipe(
-      map(result => result as boolean)
-    );
+    return from(this.electronAPI.query({ type: 'export-csv', payload: { year, month } })).pipe(map(r => r as boolean));
   }
 
   // Mock data for development

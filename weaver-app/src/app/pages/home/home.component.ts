@@ -4,7 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Observable, Subject, combineLatest, BehaviorSubject, of } from 'rxjs';
 import { map, takeUntil, debounceTime, distinctUntilChanged, switchMap, take, startWith } from 'rxjs/operators';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
-import { StateService } from '../../shared/services';
+import { Store } from '@ngrx/store';
+import { TasksActions, loadAllTasks } from '../../store/tasks/tasks.actions';
+import { selectTodayTasks, selectIsLoading, selectMonthlyData } from '../../store/tasks/tasks.selectors';
 import { Task, DAILY_WORK_HOURS, DaySummary } from '../../shared/models';
 
 @Component({
@@ -19,15 +21,15 @@ import { Task, DAILY_WORK_HOURS, DaySummary } from '../../shared/models';
   `]
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  private stateService = inject(StateService);
+  private store = inject(Store);
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
   
   DAILY_WORK_HOURS = DAILY_WORK_HOURS;
   currentDate = new Date();
   
-  todayTasks$ = this.stateService.getTodayTasks();
-  isLoading$ = this.stateService.isLoading();
+  todayTasks$ = this.store.select(selectTodayTasks);
+  isLoading$ = this.store.select(selectIsLoading);
   
   taskForm: FormGroup;
   editingTask: Task | null = null;
@@ -55,7 +57,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     );
 
     // Load previous days data from state service
-    this.previousDays$ = this.stateService.getMonthlyData().pipe(
+  this.previousDays$ = this.store.select(selectMonthlyData).pipe(
       map(monthlyData => {
         const days: { date: Date; tasks: Task[]; totalHours: number }[] = [];
         
@@ -79,13 +81,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   
   ngOnInit(): void {
     // Set current date for today's tasks
-    this.stateService.setCurrentDate(format(this.currentDate, 'yyyy-MM-dd'));
-    
-    // Set current month to load monthly data for previous days
-    this.stateService.setSelectedMonth(
-      this.currentDate.getFullYear(),
-      this.currentDate.getMonth() + 1
-    );
+  const dateStr = format(this.currentDate, 'yyyy-MM-dd');
+  this.store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
+  this.store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+  this.store.dispatch(TasksActions.setSelectedMonth({ year: this.currentDate.getFullYear(), month: this.currentDate.getMonth() + 1 }));
+  this.store.dispatch(TasksActions.loadMonthlyData({ year: this.currentDate.getFullYear(), month: this.currentDate.getMonth() + 1 }));
+  this.store.dispatch(loadAllTasks());
 
     // Load task titles for auto-suggestions
     this.loadTaskTitlesFromLast30Days();
@@ -112,21 +113,20 @@ export class HomeComponent implements OnInit, OnDestroy {
       
       if (this.editingTask) {
         // Update existing task
-        this.stateService.saveTask({
+  this.store.dispatch(TasksActions.saveTask({ task: {
           id: this.editingTask.id!,
           title: formValue.title,
           description: formValue.description,
           date: format(this.currentDate, 'yyyy-MM-dd'),
           hours: hours
-        });
+  }}));
       } else {
-        // Create new task
-        this.stateService.saveTask({
+  this.store.dispatch(TasksActions.saveTask({ task: {
           title: formValue.title,
           description: formValue.description,
           date: format(this.currentDate, 'yyyy-MM-dd'),
           hours: hours
-        });
+  }}));
       }
       
       this.resetForm();
@@ -150,13 +150,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   
   deleteTask(taskId: number): void {
     if (confirm('Are you sure you want to delete this task?')) {
-      this.stateService.deleteTask(taskId);
+  this.store.dispatch(TasksActions.deleteTask({ taskId }));
     }
   }
   
   autoDistributeHours(): void {
     // Get current snapshot of tasks and total hours (not reactive)
-    const currentTasks = this.stateService.getTodayTasks().pipe(take(1));
+  const currentTasks = this.todayTasks$.pipe(take(1));
     const currentTotalHours = this.todayTotalHours$.pipe(take(1));
     
     combineLatest([currentTasks, currentTotalHours])
@@ -175,7 +175,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             ...task,
             hours: task.hours + hoursPerTask
           };
-          this.stateService.saveTask(updatedTask);
+          this.store.dispatch(TasksActions.saveTask({ task: updatedTask }));
         });
       });
   }
@@ -190,7 +190,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private loadTaskTitlesFromLast30Days(): void {
     // Get tasks from the last 30 days
-    this.stateService.getAllTasks().pipe(
+  this.store.select(selectTodayTasks).pipe(
       takeUntil(this.destroy$)
     ).subscribe(tasks => {
       const thirtyDaysAgo = subDays(this.currentDate, 30);
@@ -230,7 +230,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.filterSuggestions(this.taskForm.get('title')?.value);
     } else {
       // Show recent suggestions when focused with no value
-      this.filteredSuggestions = this.recentSuggestions;
+  this.filteredSuggestions = this.recentSuggestions;
       this.showSuggestions = this.recentSuggestions.length > 0;
     }
   }

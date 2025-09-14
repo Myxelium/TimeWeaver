@@ -2,7 +2,9 @@ import { Component, inject, OnInit, OnDestroy, computed, signal, HostListener } 
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, ChevronLeft, ChevronRight } from 'lucide-angular';
-import { StateService } from '../../shared/services';
+import { Store } from '@ngrx/store';
+import { TasksActions, loadAllTasks } from '../../store/tasks/tasks.actions';
+import { selectMonthlyData, selectIsLoading, selectAllTasks } from '../../store/tasks/tasks.selectors';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subDays, isSameDay, isSameMonth, isToday, isBefore, startOfDay } from 'date-fns';
 import { Observable, map, combineLatest, Subject, take, takeUntil, debounceTime, distinctUntilChanged, startWith } from 'rxjs';
 import { Task, DaySummary, DAILY_WORK_HOURS } from '../../shared/models';
@@ -34,7 +36,7 @@ interface TaskChartDataPoint {
   templateUrl: './month.component.html'
 })
 export class MonthComponent implements OnInit, OnDestroy {
-  private stateService = inject(StateService);
+  private store = inject(Store);
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
   
@@ -52,8 +54,8 @@ export class MonthComponent implements OnInit, OnDestroy {
   
   dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
-  monthlyData$ = this.stateService.getMonthlyData();
-  isLoading$ = this.stateService.isLoading();
+  monthlyData$ = this.store.select(selectMonthlyData);
+  isLoading$ = this.store.select(selectIsLoading);
   
   taskForm: FormGroup;
   private monthlyDataCache: DaySummary[] = [];
@@ -145,7 +147,9 @@ export class MonthComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const now = new Date();
     this.currentDate.set(now);
-    this.stateService.setSelectedMonth(now.getFullYear(), now.getMonth() + 1);
+  this.store.dispatch(TasksActions.setSelectedMonth({ year: now.getFullYear(), month: now.getMonth() + 1 }));
+  this.store.dispatch(TasksActions.loadMonthlyData({ year: now.getFullYear(), month: now.getMonth() + 1 }));
+  this.store.dispatch(loadAllTasks());
     
     // Subscribe to monthly data to keep cache updated
     this.monthlyData$.pipe(
@@ -189,7 +193,8 @@ export class MonthComponent implements OnInit, OnDestroy {
     
     if (!isBefore(previous, currentMonthStart)) {
       this.currentDate.set(previous);
-      this.stateService.setSelectedMonth(previous.getFullYear(), previous.getMonth() + 1);
+  this.store.dispatch(TasksActions.setSelectedMonth({ year: previous.getFullYear(), month: previous.getMonth() + 1 }));
+  this.store.dispatch(TasksActions.loadMonthlyData({ year: previous.getFullYear(), month: previous.getMonth() + 1 }));
     }
   }
   
@@ -203,7 +208,8 @@ export class MonthComponent implements OnInit, OnDestroy {
     
     if (!isBefore(currentMonthStart, next)) {
       this.currentDate.set(next);
-      this.stateService.setSelectedMonth(next.getFullYear(), next.getMonth() + 1);
+  this.store.dispatch(TasksActions.setSelectedMonth({ year: next.getFullYear(), month: next.getMonth() + 1 }));
+  this.store.dispatch(TasksActions.loadMonthlyData({ year: next.getFullYear(), month: next.getMonth() + 1 }));
     }
   }
   
@@ -296,21 +302,20 @@ export class MonthComponent implements OnInit, OnDestroy {
       
       if (this.editingTask) {
         // Update existing task
-        this.stateService.saveTask({
+  this.store.dispatch(TasksActions.saveTask({ task: {
           id: this.editingTask.id!,
           title: formValue.title,
           description: formValue.description,
           date: selectedDate,
           hours: hours
-        });
+  }}));
       } else {
-        // Create new task
-        this.stateService.saveTask({
+  this.store.dispatch(TasksActions.saveTask({ task: {
           title: formValue.title,
           description: formValue.description,
           date: selectedDate,
           hours: hours
-        });
+  }}));
       }
       
       this.resetForm();
@@ -328,7 +333,7 @@ export class MonthComponent implements OnInit, OnDestroy {
   
   deleteTask(taskId: number): void {
     if (confirm('Are you sure you want to delete this task?')) {
-      this.stateService.deleteTask(taskId);
+  this.store.dispatch(TasksActions.deleteTask({ taskId }));
     }
   }
   
@@ -347,15 +352,11 @@ export class MonthComponent implements OnInit, OnDestroy {
   
   private getDaySummary(date: Date): DaySummary | undefined {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const monthlyData = this.stateService.getMonthlyData();
-    
-    // Subscribe to get the current value - this is for computed signals
-    let summary: DaySummary | undefined;
-    monthlyData.pipe(take(1)).subscribe(data => {
-      summary = data.find(d => d.date === dateStr);
+    let found: DaySummary | undefined;
+    this.monthlyData$.pipe(take(1)).subscribe((data: DaySummary[]) => {
+      found = data.find((d: DaySummary) => d.date === dateStr);
     });
-    
-    return summary;
+    return found;
   }
   
   private getDaySummarySync(date: Date): DaySummary | undefined {
@@ -462,7 +463,7 @@ export class MonthComponent implements OnInit, OnDestroy {
   
   private loadTaskTitlesFromLast30Days(): void {
     // Get tasks from the last 30 days
-    this.stateService.getAllTasks().pipe(
+  this.store.select(selectAllTasks).pipe(
       takeUntil(this.destroy$)
     ).subscribe(tasks => {
       const thirtyDaysAgo = subDays(new Date(), 30);
