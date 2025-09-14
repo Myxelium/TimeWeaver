@@ -17,38 +17,39 @@ import { map, take, startWith, takeUntil } from 'rxjs/operators';
   templateUrl: './todays-work.component.html'
 })
 export class TodaysWorkComponent implements OnDestroy {
-  // Public constants/fields
   DAILY_WORK_HOURS = DAILY_WORK_HOURS;
   currentDate = new Date();
-  tasks: Task[] = []; // local cache for template iteration
-  todayTasks$ = inject(Store).select(selectTodayTasks) as import('rxjs').Observable<Task[]>;
-  isLoading$ = inject(Store).select(selectIsLoading) as import('rxjs').Observable<boolean>;
-  taskForm: FormGroup = inject(FormBuilder).group({
-    title: ['', Validators.required],
-    description: [''],
-    hours: [0, [Validators.min(0)]]
-  });
+  tasks: Task[] = [];
+  todayTasks$: Observable<Task[]> = this._store.select(selectTodayTasks);
+  isLoading$: Observable<boolean> = this._store.select(selectIsLoading);
   editingTask: Task | null = null;
   showSuggestions = false;
   showAllSuggestions = false;
   allTaskTitles: string[] = [];
   filteredSuggestions: string[] = [];
   recentSuggestions: string[] = [];
+
+  taskForm: FormGroup = inject(FormBuilder).group({
+    title: ['', Validators.required],
+    description: [''],
+    hours: [0, [Validators.min(0)]]
+  });
+
   todayTotalHours$: Observable<number> = this.todayTasks$.pipe(
     map((tasks: Task[]) => tasks.reduce((total, task) => total + task.hours, 0))
   );
+
   remainingHours$: Observable<number> = this.getRemainingHours();
 
-  // Private injected/services after public fields
-  private store = inject(Store);
   private destroy$ = new Subject<void>();
   private confirm = inject(ConfirmService);
 
-  constructor() {
+  constructor(private _store: Store) {
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
-    this.store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
-    this.store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
-    this.store.dispatch(loadAllTasks());
+    this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
+    this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+    this._store.dispatch(loadAllTasks());
+
     this.loadTaskTitlesFromLast30Days();
     this.taskForm.get('title')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => this.filterSuggestions(val));
     this.todayTasks$.pipe(takeUntil(this.destroy$)).subscribe(tasks => (this.tasks = tasks));
@@ -65,7 +66,7 @@ export class TodaysWorkComponent implements OnDestroy {
     const hours = formValue.hours || 0;
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
     if (this.editingTask) {
-      this.store.dispatch(
+      this._store.dispatch(
         TasksActions.saveTask({
           task: {
             id: this.editingTask.id,
@@ -77,7 +78,7 @@ export class TodaysWorkComponent implements OnDestroy {
         })
       );
     } else {
-      this.store.dispatch(
+      this._store.dispatch(
         TasksActions.saveTask({
           task: { title: formValue.title, description: formValue.description, date: dateStr, hours }
         })
@@ -105,7 +106,7 @@ export class TodaysWorkComponent implements OnDestroy {
       destructive: true
     });
     if (!confirmed) return;
-    this.store.dispatch(TasksActions.deleteTask({ taskId }));
+    this._store.dispatch(TasksActions.deleteTask({ taskId }));
     if (this.editingTask && this.editingTask.id === taskId) {
       this.resetForm();
       queueMicrotask(() => document.getElementById('taskTitle')?.focus());
@@ -125,7 +126,7 @@ export class TodaysWorkComponent implements OnDestroy {
         if (remaining <= 0) return;
         const addPer = remaining / tasks.length;
         tasks.forEach(task => {
-          this.store.dispatch(TasksActions.saveTask({ task: { ...task, hours: task.hours + addPer } }));
+          this._store.dispatch(TasksActions.saveTask({ task: { ...task, hours: task.hours + addPer } }));
         });
       });
   }
@@ -211,7 +212,7 @@ export class TodaysWorkComponent implements OnDestroy {
   }
 
   private loadTaskTitlesFromLast30Days(): void {
-    this.store
+    this._store
       .select(selectTodayTasks)
       .pipe(takeUntil(this.destroy$))
       .subscribe(tasks => {

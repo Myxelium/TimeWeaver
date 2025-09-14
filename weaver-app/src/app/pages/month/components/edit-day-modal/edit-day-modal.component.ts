@@ -16,7 +16,7 @@ import { ConfirmService } from '../../../../shared/confirm/confirm.service';
   templateUrl: './edit-day-modal.component.html'
 })
 export class EditDayModalComponent implements OnChanges {
-  @Input() open = false;
+  @Input() isOpen = false;
   @Input() selectedDate: Date | null = null;
   @Input() daySummary: DaySummary | undefined;
   @Output() closed = new EventEmitter<void>();
@@ -41,8 +41,8 @@ export class EditDayModalComponent implements OnChanges {
   private confirm = inject(ConfirmService);
 
   constructor() {
-    // load all tasks for suggestions if not already
     this.store.dispatch(loadAllTasks());
+
     this.store
       .select(selectAllTasks)
       .pipe(takeUntil(this.destroy$))
@@ -56,27 +56,36 @@ export class EditDayModalComponent implements OnChanges {
         this.allTaskTitles = unique.reverse();
         this.recentSuggestions = this.allTaskTitles.slice(0, 5);
       });
+
     this.taskForm
-      .get('title')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .get('title')?.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(value => this.filterSuggestions(value));
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['daySummary'] && this.editingTask) {
-      // If summary changed while editing, ensure task still exists
-      const stillExists = this.daySummary?.tasks?.some(t => t.id === this.editingTask?.id);
-      if (!stillExists) this.resetForm();
+      const stillExists = this.daySummary?.tasks?.some(task => task.id === this.editingTask?.id);
+
+      if (!stillExists)
+        this.resetForm();
     }
 
-    if (changes['open'] && !this.open) {
+    if (changes['open'] && !this.isOpen) {
       this.resetForm();
     }
   }
 
-  getDayTotalHours(): number { return this.daySummary?.total_hours || 0; }
-  getDayTaskCount(): number { return this.daySummary?.task_count || 0; }
-  getDayTasks(): Task[] { return this.daySummary?.tasks || []; }
+  getDayTotalHours(): number {
+    return this.daySummary?.total_hours || 0;
+  }
+
+  getDayTaskCount(): number {
+    return this.daySummary?.task_count || 0;
+  }
+
+  getDayTasks(): Task[] {
+    return this.daySummary?.tasks || [];
+  }
 
   addRemainingHours(): void {
     const remaining = Math.max(0, DAILY_WORK_HOURS - this.getDayTotalHours());
@@ -85,10 +94,13 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    if (!this.selectedDate || this.taskForm.invalid) return;
+    if (!this.selectedDate || this.taskForm.invalid)
+      return;
+
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
     const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
+
     if (this.editingTask) {
       this.store.dispatch(
         TasksActions.saveTask({
@@ -101,7 +113,9 @@ export class EditDayModalComponent implements OnChanges {
           }
         })
       );
-    } else {
+    }
+    else
+    {
       this.store.dispatch(
         TasksActions.saveTask({
           task: {
@@ -129,11 +143,14 @@ export class EditDayModalComponent implements OnChanges {
       cancelText: 'Cancel',
       destructive: true
     });
-    if (confirmed) this.store.dispatch(TasksActions.deleteTask({ taskId }));
+
+    if (confirmed)
+      this.store.dispatch(TasksActions.deleteTask({ taskId }));
   }
 
   onTitleFocus(): void {
     const value = this.taskForm.get('title')?.value;
+
     if (value) {
       this.filterSuggestions(value);
     } else {
@@ -141,15 +158,29 @@ export class EditDayModalComponent implements OnChanges {
       this.showSuggestions = this.recentSuggestions.length > 0;
     }
   }
-  onTitleBlur(): void { setTimeout(() => { this.showSuggestions = false; this.showAllSuggestions = false; }, 200); }
-  selectSuggestion(t: string): void { this.taskForm.patchValue({ title: t }); this.showSuggestions = false; this.showAllSuggestions = false; }
+
+  onTitleBlur(): void {
+    setTimeout(() => {
+      this.showSuggestions = false;
+      this.showAllSuggestions = false;
+    }, 200);
+  }
+
+  selectSuggestion(taskTitle: string): void {
+    this.taskForm.patchValue({ title: taskTitle });
+    this.showSuggestions = false;
+    this.showAllSuggestions = false;
+  }
+
   toggleAllSuggestions(): void {
     this.showAllSuggestions = !this.showAllSuggestions;
     this.filteredSuggestions = this.showAllSuggestions ? this.allTaskTitles.slice(0, 15) : this.recentSuggestions;
     this.showSuggestions = true;
   }
 
-  close(): void { this.closed.emit(); }
+  close(): void {
+    this.closed.emit();
+  }
 
   resetForm(): void {
     this.taskForm.reset();
@@ -159,10 +190,14 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   private filterSuggestions(value: string): void {
-    if (!value || value.length < 1) { this.showSuggestions = false; this.filteredSuggestions = []; return; }
-    const s = value.toLowerCase();
-    this.filteredSuggestions = this.allTaskTitles.filter(t => t.toLowerCase().includes(s)).slice(0, 10);
+    if (!value || value.length < 1) {
+      this.showSuggestions = false;
+      this.filteredSuggestions = [];
+      return;
+    }
+
+    const search = value.toLowerCase();
+    this.filteredSuggestions = this.allTaskTitles.filter(task => task.toLowerCase().includes(search)).slice(0, 10);
     this.showSuggestions = this.filteredSuggestions.length > 0;
   }
 }
-// Make resetForm public for template access

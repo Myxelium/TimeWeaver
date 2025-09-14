@@ -1,10 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Store } from '@ngrx/store';
-import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
 import { Task, DAILY_WORK_HOURS } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
-import { map } from 'rxjs';
+import { DatabaseService } from '../../../../shared/services/database.service';
 
 @Component({
   selector: 'app-previous-days',
@@ -15,22 +13,36 @@ import { map } from 'rxjs';
 export class PreviousDaysComponent {
   DAILY_WORK_HOURS = DAILY_WORK_HOURS;
   currentDate = signal(new Date());
-  previousDays$ = inject(Store)
-    .select(selectMonthlyData)
-    .pipe(
-      map(monthlyData => {
-        const days: { date: Date; tasks: Task[]; totalHours: number }[] = [];
-        for (let dayIndex = 1; dayIndex <= 7; dayIndex++) {
-          const date = subDays(this.currentDate(), dayIndex);
-          const dateStr = format(date, 'yyyy-MM-dd');
-          const dayData = monthlyData.find(d => d.date === dateStr);
-          days.push({
-            date,
-            tasks: dayData?.tasks || [],
-            totalHours: dayData?.total_hours || 0
-          });
-        }
-        return days;
-      })
-    );
+  previousDays = signal<{
+    date: Date; tasks: Task[]; totalHours: number;
+  }[]>([]);
+  private databaseService = inject(DatabaseService);
+
+  constructor() {
+    this.loadLastSevenDays();
+  }
+
+  private loadLastSevenDays(): void {
+    const now = this.currentDate();
+    const tasksPromises: Promise<void>[] = [];
+    const collected: { date: Date; tasks: Task[]; totalHours: number }[] = [];
+
+    for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
+      const date = subDays(now, dayOffset);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const p = this.databaseService.getTasksByDate(dateStr)
+        .toPromise()
+        .then(tasks => {
+          const safeTasks: Task[] = Array.isArray(tasks) ? tasks : [];
+          const total = safeTasks.reduce((acc, t) => acc + (t.hours || 0), 0);
+          collected.push({ date, tasks: safeTasks, totalHours: total });
+        });
+
+      tasksPromises.push(p);
+    }
+    Promise.all(tasksPromises).then(() => {
+      collected.sort((a, b) => b.date.getTime() - a.date.getTime());
+      this.previousDays.set(collected);
+    });
+  }
 }

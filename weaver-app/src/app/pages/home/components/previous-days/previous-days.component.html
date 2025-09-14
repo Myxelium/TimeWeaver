@@ -1,5 +1,5 @@
 <h2 class="text-xl font-semibold text-foreground mb-4">Previous Days</h2>
-@for (day of previousDays$ | async; track day.date) {
+@for (day of previousDays(); track day.date) {
   <div class="bg-card border border-border rounded-lg p-6 mb-4 last:mb-0">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-lg font-medium">{{ day.date | date:'EEEE, MMM d' }}</h3>

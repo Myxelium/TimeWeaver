@@ -15,6 +15,5 @@ import { TodaysWorkComponent } from './components/todays-work/todays-work.compon
   `]
 })
 export class HomeComponent {
-  // Expose current date for template display
   readonly currentDate = new Date();
 }

@@ -3,9 +3,6 @@
   <app-monthly-overview (daySelected)="selectedDay.set($event); showDayModal.set(true)"></app-monthly-overview>
 </div>
 
-<app-edit-day-modal
-  [open]="showDayModal()"
-  [selectedDate]="selectedDay()"
-  [daySummary]="selectedDay() ? getDaySummarySync(selectedDay()!) : undefined"
-  (closed)="closeDayModal()"
-></app-edit-day-modal>
+<app-edit-day-modal [isOpen]="showDayModal()" [selectedDate]="selectedDay()"
+  [daySummary]="selectedDay() ? getDaySummarySync(selectedDay()!) : undefined" (closed)="closeDayModal()">
+</app-edit-day-modal>

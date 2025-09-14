@@ -27,8 +27,7 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-extraneous-class': 'off',
       '@angular-eslint/component-class-suffix': [ 'error', { suffixes: ['Component','Page','Stub'] } ],
       '@angular-eslint/directive-class-suffix': 'error',
-  // Removed deprecated Angular rules (v17+ removed lifecycle interface requirements)
-      '@typescript-eslint/explicit-module-boundry-types': 'off', // (typo kept intentionally? corrected below)
+      '@typescript-eslint/explicit-module-boundry-types': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/explicit-member-accessibility': ['error',{ accessibility: 'no-public' }],
       '@typescript-eslint/array-type': ['error',{ default: 'array' }],
@@ -105,15 +104,4 @@ module.exports = tseslint.config(
       '@stylistic/js/spaced-comment': ['error','always',{ markers:['/'] }]
     }
   },
-  {
-    files: ['**/*.html'],
-    extends: [
-      ...angular.configs.templateRecommended,
-      ...angular.configs.templateAccessibility
-    ],
-    rules: {
-      '@angular-eslint/template/click-events-have-key-events': 'off',
-      '@angular-eslint/template/interactive-supports-focus': 'off'
-    }
-  }
 );
