@@ -1,4 +1,4 @@
 export const settings = {
-  // Define your application settings here
-  databaseName: 'weaver.db'
+  databaseName: 'weaver.db',
+  debugMode: true
 };

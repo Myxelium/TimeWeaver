@@ -7,6 +7,7 @@ import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.action
 import { Task, DAILY_WORK_HOURS } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
 import { combineLatest, of, Subject, Observable } from 'rxjs';
+import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import { map, take, startWith, takeUntil } from 'rxjs/operators';
 
 @Component({
@@ -41,6 +42,7 @@ export class TodaysWorkComponent implements OnDestroy {
   // Private injected/services after public fields
   private store = inject(Store);
   private destroy$ = new Subject<void>();
+  private confirm = inject(ConfirmService);
 
   constructor() {
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
@@ -94,22 +96,22 @@ export class TodaysWorkComponent implements OnDestroy {
     this.resetForm();
   }
 
-  deleteTask(taskId: number): void {
-    if (confirm('Are you sure you want to delete this task?')) {
-      this.store.dispatch(TasksActions.deleteTask({ taskId }));
-      // If deleting the task currently being edited, clear the form to prevent stale state locking controls
-      if (this.editingTask && this.editingTask.id === taskId) {
-        this.resetForm();
-        // Refocus title after microtask to ensure element exists
-        queueMicrotask(() => {
-          const el = document.getElementById('taskTitle') as HTMLInputElement | null;
-          el?.focus();
-        });
-      }
-      // Close suggestions panel if open (prevents overlay blocking input clicks)
-      this.showSuggestions = false;
-      this.showAllSuggestions = false;
+  async deleteTask(taskId: number): Promise<void> {
+    const confirmed = await this.confirm.confirm({
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task?\nThis action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      destructive: true
+    });
+    if (!confirmed) return;
+    this.store.dispatch(TasksActions.deleteTask({ taskId }));
+    if (this.editingTask && this.editingTask.id === taskId) {
+      this.resetForm();
+      queueMicrotask(() => document.getElementById('taskTitle')?.focus());
     }
+    this.showSuggestions = false;
+    this.showAllSuggestions = false;
   }
 
   autoDistributeHours(): void {

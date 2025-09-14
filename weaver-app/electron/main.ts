@@ -74,9 +74,12 @@ function createWindow(): void {
     show: false
   });
 
+  if (process.env['NODE_ENV'] === 'development' || fs.existsSync('/debug') || settings.debugMode) {
+    debuggingMode(mainWindow);
+  }
+
   if (process.env['NODE_ENV'] === 'development') {
     mainWindow.loadURL('http://localhost:4200');
-    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(
       path.join(__dirname, '../dist/weaver-app/index.html')
@@ -162,3 +165,15 @@ app.on('before-quit', async (event) => {
     }
   }
 });
+
+function debuggingMode(BrowserWindow: BrowserWindow | null) {
+  if (BrowserWindow) {
+    BrowserWindow.webContents.openDevTools({ mode: 'detach' });
+  }
+  app.commandLine.appendSwitch('remote-debugging-port', '9222');
+  // Mitigate some GPU / vsync issues on headless / VM setups
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-features', 'VizDisplayCompositor');
+  // Better logging (shows in stdout)
+  app.commandLine.appendSwitch('enable-logging');
+}

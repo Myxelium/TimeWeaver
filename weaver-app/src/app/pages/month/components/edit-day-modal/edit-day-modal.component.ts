@@ -7,6 +7,7 @@ import { selectAllTasks, selectIsLoading } from '../../../../store/tasks/tasks.s
 import { Task, DaySummary, DAILY_WORK_HOURS } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
 import { Subject, takeUntil } from 'rxjs';
+import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 
 @Component({
   selector: 'app-edit-day-modal',
@@ -37,6 +38,7 @@ export class EditDayModalComponent implements OnChanges {
 
   private store = inject(Store);
   private destroy$ = new Subject<void>();
+  private confirm = inject(ConfirmService);
 
   constructor() {
     // load all tasks for suggestions if not already
@@ -119,8 +121,15 @@ export class EditDayModalComponent implements OnChanges {
     this.taskForm.patchValue({ title: task.title, description: task.description, hours: task.hours });
   }
 
-  deleteTask(taskId: number): void {
-    if (confirm('Are you sure you want to delete this task?')) this.store.dispatch(TasksActions.deleteTask({ taskId }));
+  async deleteTask(taskId: number): Promise<void> {
+    const confirmed = await this.confirm.confirm({
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task?\nThis action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      destructive: true
+    });
+    if (confirmed) this.store.dispatch(TasksActions.deleteTask({ taskId }));
   }
 
   onTitleFocus(): void {
