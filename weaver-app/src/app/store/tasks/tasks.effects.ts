@@ -9,12 +9,12 @@ import { selectCurrentDate, selectSelectedMonth } from './tasks.selectors';
 @Injectable({ providedIn: 'root' })
 export class TasksEffects {
   private actions$ = inject(Actions);
-  private db = inject(DatabaseService);
+  private databaseService = inject(DatabaseService);
   private store = inject(Store);
 
   loadToday$ = createEffect(() => this.actions$.pipe(
     ofType(TasksActions.loadTodayTasks),
-    mergeMap(({ date }) => this.db.getTasksByDate(date).pipe(
+  mergeMap(({ date }) => this.databaseService.getTasksByDate(date).pipe(
       map(tasks => TasksActions.loadTodayTasksSuccess({ tasks })),
       catchError(err => of(TasksActions.loadTodayTasksFailure({ error: err.message || 'Load today tasks failed' })))
     ))
@@ -22,8 +22,8 @@ export class TasksEffects {
 
   loadMonthly$ = createEffect(() => this.actions$.pipe(
     ofType(TasksActions.loadMonthlyData),
-    mergeMap(({ year, month }) => this.db.getTasksByMonth(year, month).pipe(
-      mergeMap(monthlyData => this.db.getMonthlySummary(year, month).pipe(
+    mergeMap(({ year, month }) => this.databaseService.getTasksByMonth(year, month).pipe(
+      mergeMap(monthlyData => this.databaseService.getMonthlySummary(year, month).pipe(
         map(monthlySummary => TasksActions.loadMonthlyDataSuccess({ monthlyData, monthlySummary }))
       )),
       catchError(err => of(TasksActions.loadMonthlyDataFailure({ error: err.message || 'Load monthly data failed' })))
@@ -32,7 +32,7 @@ export class TasksEffects {
 
   loadAll$ = createEffect(() => this.actions$.pipe(
     ofType(loadAllTasks),
-    mergeMap(() => this.db.getAllTasks().pipe(
+  mergeMap(() => this.databaseService.getAllTasks().pipe(
       map(tasks => TasksActions.loadAllTasksSuccess({ tasks })),
       catchError(err => of(TasksActions.loadAllTasksFailure({ error: err.message || 'Load all tasks failed' })))
     ))
@@ -40,7 +40,7 @@ export class TasksEffects {
 
   saveTask$ = createEffect(() => this.actions$.pipe(
     ofType(TasksActions.saveTask),
-    mergeMap(({ task }) => this.db.saveTask(task).pipe(
+  mergeMap(({ task }) => this.databaseService.saveTask(task).pipe(
       map(taskId => TasksActions.saveTaskSuccess({ taskId })),
       catchError(err => of(TasksActions.saveTaskFailure({ error: err.message || 'Save task failed' })))
     ))
@@ -62,7 +62,7 @@ export class TasksEffects {
 
   deleteTask$ = createEffect(() => this.actions$.pipe(
     ofType(TasksActions.deleteTask),
-    mergeMap(({ taskId }) => this.db.deleteTask(taskId).pipe(
+  mergeMap(({ taskId }) => this.databaseService.deleteTask(taskId).pipe(
       map(() => TasksActions.deleteTaskSuccess({ taskId })),
       catchError(err => of(TasksActions.deleteTaskFailure({ error: err.message || 'Delete task failed' })))
     ))
@@ -70,7 +70,7 @@ export class TasksEffects {
 
   exportCsv$ = createEffect(() => this.actions$.pipe(
     ofType(TasksActions.exportCsv),
-    mergeMap(({ year, month }) => this.db.exportCsv(year, month).pipe(
+  mergeMap(({ year, month }) => this.databaseService.exportCsv(year, month).pipe(
       map(success => success ? TasksActions.exportCsvSuccess({ success }) : TasksActions.exportCsvFailure({ error: 'Export failed' })),
       catchError(err => of(TasksActions.exportCsvFailure({ error: err.message || 'Export failed' })))
     ))

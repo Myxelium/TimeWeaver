@@ -1,0 +1,16 @@
+import { DataSource } from 'typeorm';
+import { Task } from '../../../entities/Task';
+import { GetMonthlySummaryQuery } from '../../types';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
+
+export async function handleGetMonthlySummary(query: GetMonthlySummaryQuery, dataSource: DataSource): Promise<number> {
+  const { year, month } = query.payload;
+  const startDate = format(startOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
+  const endDate = format(endOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
+  const taskRepository = dataSource.getRepository(Task);
+  const result: any = await taskRepository.createQueryBuilder('task')
+    .select('SUM(task.hours)', 'total_hours')
+    .where('task.date >= :startDate AND task.date <= :endDate', { startDate, endDate })
+    .getRawOne();
+  return parseFloat(result?.total_hours) || 0;
+}
