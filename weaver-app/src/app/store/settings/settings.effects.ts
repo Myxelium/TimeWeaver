@@ -33,10 +33,8 @@ export class SettingsEffects {
   theme$ = createEffect(() => this.actions$.pipe(
     ofType(SettingsActions.loadSuccess, SettingsActions.saveSuccess, SettingsActions.applyTheme),
     tap(action => {
-      // Extract darkMode field from union of actions
       let darkMode: boolean | undefined;
       if ('settings' in action) {
-        // loadSuccess or saveSuccess
         darkMode = (action as { settings: { darkMode: boolean } }).settings.darkMode;
       } else if ('darkMode' in action) {
         darkMode = (action as { darkMode: boolean }).darkMode;

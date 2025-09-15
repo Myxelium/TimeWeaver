@@ -6,6 +6,7 @@ import { Settings } from '../../shared/models';
 import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { SettingsActions, loadSettings } from '../../store/settings/settings.actions';
 import { selectLastImportResult, selectLastSaveSuccessAt, selectSettings } from '../../store/settings/settings.selectors';
+import { skip } from 'rxjs';
 
 @Component({
   selector: 'app-settings',
@@ -19,7 +20,8 @@ export class SettingsComponent implements OnInit {
   settings$ = this.store.select(selectSettings);
   lastSaveAt$ = this.store.select(selectLastSaveSuccessAt);
   lastImportResult$ = this.store.select(selectLastImportResult);
-  form = this.fb.group({
+
+  form = this.formBuilder.group({
     monthlyIncome: [0, [Validators.min(0)]],
     monthlyCost: [0, [Validators.min(0)]],
     darkMode: [false],
@@ -27,7 +29,6 @@ export class SettingsComponent implements OnInit {
     overwrite: [false]
   });
 
-  // UI state
   saving = false;
   justSaved = false;
   selectedFile: File | null = null;
@@ -37,24 +38,25 @@ export class SettingsComponent implements OnInit {
   showIncome = false;
   showCost = false;
 
-  constructor(private fb: FormBuilder, private store: Store) {}
+  constructor(private formBuilder: FormBuilder, private store: Store) {}
 
   ngOnInit(): void {
     this.store.dispatch(loadSettings());
-    this.settings$.subscribe(s => {
-      if (s) this.form.patchValue(s, { emitEvent: false });
+    this.settings$.subscribe(settings => {
+      if (settings)
+        this.form.patchValue(settings, { emitEvent: false });
     });
-    this.lastSaveAt$.subscribe(ts => {
-      if (ts) {
+    this.lastSaveAt$.pipe(skip(1)).subscribe(lastSaveAt => {
+      if (lastSaveAt) {
         this.saving = false;
         this.justSaved = true;
         setTimeout(() => this.justSaved = false, 2000);
       }
     });
-    this.lastImportResult$.subscribe(r => {
-      if (r) {
+    this.lastImportResult$.subscribe(lastImportResult => {
+      if (lastImportResult) {
         this.importing = false;
-        this.importResult = r;
+        this.importResult = lastImportResult;
       }
     });
   }
@@ -76,10 +78,14 @@ export class SettingsComponent implements OnInit {
   }
 
   importCsv(): void {
-    if (!this.selectedFile) return;
+    if (!this.selectedFile)
+      return;
+
     this.importing = true;
     this.importError = null;
+
     const reader = new FileReader();
+
     reader.onload = () => {
       const content = reader.result as string;
       const overwrite = this.form.get('overwrite')?.value ?? false;

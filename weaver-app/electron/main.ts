@@ -71,8 +71,12 @@ function createWindow(): void {
     },
     icon: path.join(__dirname, '../src/assets/icon.png'),
     titleBarStyle: 'default',
-    show: false
+    show: false,
+    autoHideMenuBar: true
   });
+
+  mainWindow.setMenu(null);
+  mainWindow.setMenuBarVisibility(false);
 
   if (process.env['NODE_ENV'] === 'development' || fs.existsSync('/debug') || settings.debugMode) {
     debuggingMode(mainWindow);
