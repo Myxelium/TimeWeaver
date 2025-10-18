@@ -5,6 +5,8 @@ import { Store } from '@ngrx/store';
 import { Settings } from '../../shared/models';
 import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { SettingsActions, loadSettings } from '../../store/settings/settings.actions';
+import { TasksActions } from '../../store/tasks/tasks.actions';
+import { selectIsLoading } from '../../store/tasks/tasks.selectors';
 import { selectLastImportResult, selectLastSaveSuccessAt, selectSettings } from '../../store/settings/settings.selectors';
 import { skip } from 'rxjs';
 
@@ -20,6 +22,7 @@ export class SettingsComponent implements OnInit {
   settings$ = this.store.select(selectSettings);
   lastSaveAt$ = this.store.select(selectLastSaveSuccessAt);
   lastImportResult$ = this.store.select(selectLastImportResult);
+  isLoading$ = this.store.select(selectIsLoading);
 
   form = this.formBuilder.group({
     monthlyIncome: [0, [Validators.min(0)]],
@@ -100,4 +103,8 @@ export class SettingsComponent implements OnInit {
 
   toggleIncomeVisibility(): void { this.showIncome = !this.showIncome; }
   toggleCostVisibility(): void { this.showCost = !this.showCost; }
+
+  exportAllCsv(): void {
+    this.store.dispatch(TasksActions.exportCsvAll());
+  }
 }

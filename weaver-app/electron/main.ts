@@ -119,7 +119,7 @@ function setupIpcHandlers() {
   ipcMain.handle('cqrs:query', async (_evt, query: Query) => {
     const handler = queryHandlerMap[query.type as QueryTypeKey];
     if (!handler) throw new Error(`No query handler for ${query.type}`);
-    if (query.type === 'export-csv') {
+    if (query.type === 'export-csv' || query.type === 'export-csv-all') {
       const saveCsv = async (defaultName: string, content: string) => {
         if (!mainWindow) return false;
         const result = await dialog.showSaveDialog(mainWindow, {

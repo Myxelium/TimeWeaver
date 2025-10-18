@@ -71,6 +71,14 @@ export class TasksEffects {
     ))
   ));
 
+  readonly exportCsvAll$ = createEffect(() => this.actions$.pipe(
+    ofType(TasksActions.exportCsvAll),
+    mergeMap(() => this.databaseService.exportAllCsv().pipe(
+      map(success => success ? TasksActions.exportCsvAllSuccess({ success }) : TasksActions.exportCsvAllFailure({ error: 'Export failed' })),
+      catchError(err => of(TasksActions.exportCsvAllFailure({ error: err.message || 'Export failed' })))
+    ))
+  ));
+
   constructor(
     private actions$: Actions,
     private databaseService: DatabaseService,

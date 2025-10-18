@@ -95,6 +95,17 @@ export class DatabaseService {
     }
   }
 
+  exportAllCsv(): Observable<boolean> {
+    if (!this.isElectron()) {
+      console.log('Mock CSV export for all tasks');
+      return of(true);
+    } else {
+      const api = this.electronAPI;
+      if (!api) return of(false);
+      return from(api.query({ type: 'export-csv-all', payload: {} })).pipe(map(r => r as boolean));
+    }
+  }
+
   importCsv(content: string, overwrite: boolean): Observable<{ imported: number; updated: number; skipped: number; total: number }> {
     if (!this.isElectron()) {
       console.log('Mock import CSV, overwrite=', overwrite);

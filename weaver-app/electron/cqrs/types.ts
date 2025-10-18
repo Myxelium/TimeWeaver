@@ -14,6 +14,7 @@ export const QueryType = {
   GetMonthlySummary: 'get-monthly-summary',
   GetAllTasks: 'get-all-tasks',
   ExportCsv: 'export-csv',
+  ExportCsvAll: 'export-csv-all',
   GetSettings: 'get-settings'
 } as const;
 
@@ -60,6 +61,11 @@ export interface ExportMonthCsvQuery {
   payload: { year: number; month: number };
 }
 
+export interface ExportAllCsvQuery {
+  type: typeof QueryType.ExportCsvAll;
+  payload: Record<string, never>;
+}
+
 // Query Interfaces
 export interface GetTasksByDateQuery {
   type: typeof QueryType.GetTasksByDate;
@@ -89,6 +95,7 @@ export type Query =
   | GetMonthlySummaryQuery
   | GetAllTasksQuery
   | ExportMonthCsvQuery
+  | ExportAllCsvQuery
   | GetSettingsQuery;
 
 export interface DaySummaryDTO {

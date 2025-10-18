@@ -6,6 +6,7 @@ import {
   GetMonthlySummaryQuery,
   GetAllTasksQuery,
   ExportMonthCsvQuery,
+  ExportAllCsvQuery,
   GetSettingsQuery
 } from '../types';
 import { handleGetTasksByDate } from './handlers/getTasksByDate';
@@ -13,6 +14,7 @@ import { handleGetTasksByMonth } from './handlers/getTasksByMonth';
 import { handleGetMonthlySummary } from './handlers/getMonthlySummary';
 import { handleGetAllTasks } from './handlers/getAllTasks';
 import { handleExportCsv } from './handlers/exportCsv';
+import { handleExportAllCsv } from './handlers/exportAllCsv';
 import { handleGetSettings } from './handlers/getSettings';
 
 export const buildQueryHandlers = (dataSource: DataSource) => ({
@@ -29,5 +31,9 @@ export const buildQueryHandlers = (dataSource: DataSource) => ({
   [QueryType.ExportCsv]: (
     query: ExportMonthCsvQuery,
     saveCsv: (defaultName: string, content: string) => Promise<boolean>
-  ) => handleExportCsv(query, dataSource, saveCsv)
+  ) => handleExportCsv(query, dataSource, saveCsv),
+  [QueryType.ExportCsvAll]: (
+    _query: ExportAllCsvQuery,
+    saveCsv: (defaultName: string, content: string) => Promise<boolean>
+  ) => handleExportAllCsv(dataSource, saveCsv)
 });
