@@ -1,0 +1,150 @@
+@if (isOpen) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/50" (click)="close()"></div>
+  <div
+    class="relative bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div class="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
+      <h2 class="section-heading mb-0">Edit Day - {{ selectedDate | date:'EEEE, MMMM d, y' }}</h2>
+      <button (click)="close()" class="text-muted-foreground hover:text-foreground transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-6">
+          <div>
+            <h3 class="panel-heading">Day Summary</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-muted rounded-lg p-4">
+                <div class="text-2xl font-bold text-primary">{{ getDayTotalHours() | number:'1.1-1' }}h</div>
+                <div class="text-sm text-muted-foreground">Total Hours</div>
+              </div>
+              <div class="bg-muted rounded-lg p-4">
+                <div class="text-2xl font-bold text-primary">{{ getDayTaskCount() }}</div>
+                <div class="text-sm text-muted-foreground">Tasks</div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div class="flex justify-between text-sm text-muted-foreground mb-1">
+                <span>Progress</span>
+                <span>{{ getDayTotalHours() | number:'1.1-1' }}h / {{ DAILY_WORK_HOURS }}h</span>
+              </div>
+              <div class="progress-outer">
+                <div class="h-2 rounded-full transition-all duration-300"
+                  [class.bg-green-500]="getDayTotalHours() >= DAILY_WORK_HOURS"
+                  [class.bg-yellow-500]="getDayTotalHours() >= (DAILY_WORK_HOURS * 0.75) && getDayTotalHours() < DAILY_WORK_HOURS"
+                  [class.bg-red-500]="getDayTotalHours() < (DAILY_WORK_HOURS * 0.75) && getDayTotalHours() > 0"
+                  [class.bg-muted]="getDayTotalHours() === 0"
+                  [style.width.%]="(getDayTotalHours() / DAILY_WORK_HOURS) * 100"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 class="panel-heading">Tasks</h3>
+            @if (getDayTasks().length > 0) {
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+              @for (task of getDayTasks(); track task.id) {
+              <div class="task-row">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium">{{ task.title }}</div>
+                  @if (task.description) {
+                  <div class="text-sm text-muted-foreground truncate">{{ task.description }}</div>
+                  }
+                </div>
+                <div class="task-actions flex-shrink-0">
+                  <span class="hours-badge">{{ task.hours | number:'1.1-1' }}h</span>
+                  <button (click)="editTask(task)" class="icon-btn" title="Edit task">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button (click)="deleteTask(task.id!)" class="icon-btn-danger" title="Delete task">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              }
+            </div>
+            } @else {
+            <div class="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg">No tasks
+              recorded for this day</div>
+            }
+          </div>
+        </div>
+        <div class="space-y-6">
+          <div class="card-panel">
+            <h3 class="panel-heading">{{ editingTask ? 'Edit Task' : 'Add New Task' }}</h3>
+            <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="space-y-4">
+              <div>
+                <label for="modalTaskTitle" class="form-label">Task Title</label>
+                <div class="relative">
+                  <input type="text" id="modalTaskTitle" formControlName="title" (focus)="onTitleFocus()"
+                    (blur)="onTitleBlur()" class="input-base" placeholder="What are you working on?"
+                    autocomplete="off" />
+                  @if (showSuggestions && filteredSuggestions.length > 0) {
+                  <div class="suggestions-dropdown">
+                    @if (!showAllSuggestions && recentSuggestions.length > 0) {
+                    <div class="suggestion-section">
+                      <div class="flex justify-between items-center">
+                        <span class="suggestion-meta">Recent Tasks</span>
+                        @if (allTaskTitles.length > 5) { <button type="button" (click)="toggleAllSuggestions()"
+                          class="btn-xs-link">Show more ({{ allTaskTitles.length - 5 }})</button> }
+                      </div>
+                    </div>
+                    }
+                    @if (showAllSuggestions) {
+                    <div class="suggestion-section">
+                      <div class="flex justify-between items-center">
+                        <span class="suggestion-meta">All Tasks (Last 30 days)</span>
+                        <button type="button" (click)="toggleAllSuggestions()" class="btn-xs-link">Show less</button>
+                      </div>
+                    </div>
+                    }
+                    @for (suggestion of filteredSuggestions; track suggestion) {
+                    <button type="button" (click)="selectSuggestion(suggestion)"
+                      class="suggestion-btn">{{ suggestion }}</button>
+                    }
+                  </div>
+                  }
+                </div>
+                @if (taskForm.get('title')?.invalid && taskForm.get('title')?.touched) { <p
+                  class="text-destructive text-sm mt-1">Task title is required</p> }
+              </div>
+              <div>
+                <label for="modalTaskDescription" class="form-label">Description (Optional)</label>
+                <textarea formControlName="description" rows="3" id="modalTaskDescription" class="textarea-base"
+                  placeholder="Add details about the task..."></textarea>
+              </div>
+              <div>
+                <label for="modalTaskHours" class="form-label">Hours</label>
+                <div class="flex gap-2">
+                  <input type="number" formControlName="hours" min="0" max="24" step="0.1" id="modalTaskHours"
+                    class="flex-1 input-base" placeholder="0.0" />
+                  <button type="button" (click)="addRemainingHours()" class="btn-secondary whitespace-nowrap px-3 py-2"
+                    title="Add remaining hours to reach daily goal">Fill
+                    {{ (DAILY_WORK_HOURS - getDayTotalHours()) | number:'1.1-1' }}h</button>
+                </div>
+              </div>
+              <div class="flex space-x-3">
+                <button type="submit" [disabled]="taskForm.invalid || (isLoading$ | async)"
+                  class="flex-1 btn-primary py-2 px-4">{{ editingTask ? 'Update Task' : 'Add Task' }}</button>
+                @if (editingTask) { <button type="button" (click)="resetForm()"
+                  class="btn-outline px-4 py-2">Cancel</button> }
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-end space-x-3 p-6 border-t border-border flex-shrink-0">
+      <button (click)="close()" class="btn-outline px-4 py-2">Close</button>
+    </div>
+  </div>
+</div>
+}

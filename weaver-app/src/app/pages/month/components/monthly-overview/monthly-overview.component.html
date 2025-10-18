@@ -1,0 +1,88 @@
+<div class="card-shell">
+  <div class="card-header">
+    <div class="flex items-center justify-between">
+      <h3 class="card-title-lg">Monthly Overview</h3>
+      <div class="flex items-center space-x-2">
+        <button (click)="previousMonth()" [disabled]="!canGoToPreviousMonth()" class="btn-icon">
+          <lucide-icon [img]="ChevronLeft" class="w-4 h-4"></lucide-icon>
+        </button>
+        <span class="text-lg font-medium min-w-0">{{ currentDate() | date:'MMMM yyyy' }}</span>
+        <button (click)="nextMonth()" [disabled]="!canGoToNextMonth()" class="btn-icon">
+          <lucide-icon [img]="ChevronRight" class="w-4 h-4"></lucide-icon>
+        </button>
+      </div>
+    </div>
+    <p class="text-sm text-muted-foreground">Track your daily progress throughout the month</p>
+  </div>
+  <div class="card-body">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="text-center p-4 bg-muted rounded-lg">
+        <div class="text-2xl font-bold text-primary">{{ monthlyStats().totalHours | number:'1.1-1' }}</div>
+        <div class="text-sm text-muted-foreground">Total Hours</div>
+      </div>
+      <div class="text-center p-4 bg-muted rounded-lg">
+        <div class="text-2xl font-bold text-primary">{{ monthlyStats().workingDays }}</div>
+        <div class="text-sm text-muted-foreground">Working Days</div>
+      </div>
+      <div class="text-center p-4 bg-muted rounded-lg">
+        <div class="text-2xl font-bold text-primary">{{ monthlyStats().averageHours | number:'1.1-1' }}</div>
+        <div class="text-sm text-muted-foreground">Avg Hours/Day</div>
+      </div>
+      <div class="text-center p-4 bg-muted rounded-lg">
+        <div class="text-2xl font-bold" [class.text-green-600]="monthlyStats().completionRate >= 80"
+          [class.text-yellow-600]="monthlyStats().completionRate >= 60 && monthlyStats().completionRate < 80"
+          [class.text-red-600]="monthlyStats().completionRate < 60">
+          {{ monthlyStats().completionRate | number:'1.0-0' }}%</div>
+        <div class="text-sm text-muted-foreground">Completion Rate</div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <div class="min-w-full">
+        <div class="grid grid-cols-7 gap-1 mb-2">
+          @for (day of dayHeaders; track day) {
+          <div class="text-center p-2 text-sm font-medium text-muted-foreground min-w-0">{{ day }}</div>
+          }
+        </div>
+        <div class="grid grid-cols-7 gap-1">
+          @for (day of calendarDays(); track day.date) {
+          <div class="calendar-day" [class.bg-muted]="!day.isCurrentMonth" [class.bg-primary]="day.isToday"
+            [class.border-primary]="day.isToday" [class.opacity-40]="ignoreWeekends && day.isWeekend"
+            [class.cursor-not-allowed]="!day.isCurrentMonth"
+            [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth" (click)="onDayClick(day)">
+            <div class="text-sm font-medium mb-1" [class.text-muted-foreground]="!day.isCurrentMonth && !day.isToday"
+              [class.text-primary-foreground]="day.isToday">
+              {{ day.date | date:'d' }}
+            </div>
+            @if (day.summary && day.isCurrentMonth) {
+            <div class="space-y-1">
+              <div class="text-xs" [class.text-muted-foreground]="!day.isToday"
+                [class.text-primary-foreground]="day.isToday">{{ day.summary.total_hours | number:'1.1-1' }}h</div>
+              <div class="progress-outer-xs">
+                <div class="progress-inner-xs" [class.bg-green-500]="day.summary.total_hours >= DAILY_WORK_HOURS"
+                  [class.bg-yellow-500]="day.summary.total_hours >= (DAILY_WORK_HOURS * 0.75) && day.summary.total_hours < DAILY_WORK_HOURS"
+                  [class.bg-red-500]="day.summary.total_hours < (DAILY_WORK_HOURS * 0.75) && day.summary.total_hours > 0"
+                  [style.width.%]="(day.summary.total_hours / DAILY_WORK_HOURS) * 100"></div>
+              </div>
+              <div class="text-xs space-y-0.5">
+                @for (task of (day.summary.tasks || []).slice(0, 2); track task.id) {
+                <div class="truncate" [class.text-muted-foreground]="!day.isToday"
+                  [class.text-primary-foreground]="day.isToday">{{ task.title }}</div>
+                }
+                @if ((day.summary.tasks || []).length > 2) {
+                <div [class.text-muted-foreground]="!day.isToday" [class.text-primary-foreground]="day.isToday"
+                  class="text-xs">+{{ (day.summary.tasks || []).length - 2 }} more</div>
+                }
+              </div>
+            </div>
+            } @else if (!day.isCurrentMonth) {
+            } @else {
+            <div class="text-xs text-muted-foreground italic">No tasks</div>
+            }
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

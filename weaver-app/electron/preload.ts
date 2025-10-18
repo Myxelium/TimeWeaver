@@ -1,38 +1,20 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { Command, Query } from './cqrs/types';
 
-// Define the API interface
-export interface ElectronAPI {
-  // Task operations
-  getTasksByDate: (date: string) => Promise<any[]>;
-  saveTask: (task: any) => Promise<number>;
-  deleteTask: (taskId: number) => Promise<any>;
-  
-  // Monthly operations
-  getTasksByMonth: (year: number, month: number) => Promise<any[]>;
-  getMonthlySummary: (year: number, month: number) => Promise<number>;
-  
-  // Data operations
-  getAllTasks: () => Promise<any[]>;
-  exportCsv: (year: number, month: number) => Promise<boolean>;
+export interface CqrsAPI {
+  command: <T = unknown>(command: Command) => Promise<T>;
+  query: <T = unknown>(query: Query) => Promise<T>;
 }
 
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
-const electronAPI: ElectronAPI = {
-  getTasksByDate: (date: string) => ipcRenderer.invoke('get-tasks-by-date', date),
-  saveTask: (task: any) => ipcRenderer.invoke('save-task', task),
-  deleteTask: (taskId: number) => ipcRenderer.invoke('delete-task', taskId),
-  getTasksByMonth: (year: number, month: number) => ipcRenderer.invoke('get-tasks-by-month', year, month),
-  getMonthlySummary: (year: number, month: number) => ipcRenderer.invoke('get-monthly-summary', year, month),
-  getAllTasks: () => ipcRenderer.invoke('get-all-tasks'),
-  exportCsv: (year: number, month: number) => ipcRenderer.invoke('export-csv', year, month),
+const cqrsAPI: CqrsAPI = {
+  command: (command) => ipcRenderer.invoke('cqrs:command', command),
+  query: (query) => ipcRenderer.invoke('cqrs:query', query)
 };
 
-contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+contextBridge.exposeInMainWorld('electronAPI', cqrsAPI);
 
-// Type declaration for global window object
 declare global {
   interface Window {
-    electronAPI: ElectronAPI;
+    electronAPI: CqrsAPI;
   }
 }

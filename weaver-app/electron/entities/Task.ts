@@ -12,7 +12,7 @@ export class Task {
   description!: string;
 
   @Column()
-  date!: string; // YYYY-MM-DD format
+  date!: string;
 
   @Column('real', { default: 0 })
   hours!: number;

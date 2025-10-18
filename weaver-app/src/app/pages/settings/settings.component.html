@@ -1,0 +1,60 @@
+<div class="p-6 space-y-6">
+    <h1 class="text-2xl font-semibold">Settings</h1>
+    <form [formGroup]="form" (ngSubmit)="save()" class="space-y-6 max-w-md">
+        <div>
+            <label class="form-label" for="monthlyIncome">Monthly Income (What I earn)</label>
+            <div class="relative">
+                <input id="monthlyIncome" [type]="showIncome ? 'number' : 'password'" step="0.01"
+                    formControlName="monthlyIncome" class="input-base pr-10" />
+                <button type="button" class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                    (click)="toggleIncomeVisibility()" [attr.aria-label]="showIncome ? 'Hide income' : 'Show income'">
+                    <lucide-icon [img]="showIncome ? eyeOff : eye" class="w-4 h-4"></lucide-icon>
+                </button>
+            </div>
+        </div>
+        <div>
+            <label class="form-label" for="monthlyCost">Monthly Cost (Business pays)</label>
+            <div class="relative">
+                <input id="monthlyCost" [type]="showCost ? 'number' : 'password'" step="0.01"
+                    formControlName="monthlyCost" class="input-base pr-10" />
+                <button type="button" class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                    (click)="toggleCostVisibility()" [attr.aria-label]="showCost ? 'Hide cost' : 'Show cost'">
+                    <lucide-icon [img]="showCost ? eyeOff : eye" class="w-4 h-4"></lucide-icon>
+                </button>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <input id="darkMode" type="checkbox" formControlName="darkMode" class="h-4 w-4" />
+            <label for="darkMode" class="text-sm">Dark Mode</label>
+        </div>
+        <div class="flex items-center space-x-2">
+            <input id="ignoreWeekends" type="checkbox" formControlName="ignoreWeekends" class="h-4 w-4" />
+            <label for="ignoreWeekends" class="text-sm">Ignore Weekends (exclude from working day stats)</label>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button type="submit" class="btn-primary px-4 py-2 flex items-center space-x-2" [disabled]="saving">
+                <span *ngIf="!justSaved; else savedTpl">Save</span>
+            </button>
+            <ng-template #savedTpl>
+                <span class="text-green-600 font-semibold">Saved!</span>
+            </ng-template>
+        </div>
+        <div class="border-t pt-4 space-y-3">
+            <h2 class="text-lg font-semibold">Import Tasks CSV</h2>
+            <p class="text-xs text-muted-foreground">Import a CSV previously exported
+                (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can be overwritten.</p>
+            <input type="file" accept=".csv,text/csv" (change)="onFileSelected($event)" class="block" />
+            <div class="flex items-center space-x-2">
+                <input id="overwrite" type="checkbox" formControlName="overwrite" class="h-4 w-4" />
+                <label for="overwrite" class="text-sm">Overwrite existing tasks (match by Date + Title)</label>
+            </div>
+            <button type="button" class="btn-secondary px-3 py-1" (click)="importCsv()"
+                [disabled]="!selectedFile || importing">Import</button>
+            <div *ngIf="importResult" class="text-sm text-muted-foreground">
+                Imported {{importResult.imported}} new, Updated {{importResult.updated}}, Skipped
+                {{importResult.skipped}} (Total lines: {{importResult.total}})
+            </div>
+            <div *ngIf="importError" class="text-sm text-red-600">{{importError}}</div>
+        </div>
+    </form>
+</div>

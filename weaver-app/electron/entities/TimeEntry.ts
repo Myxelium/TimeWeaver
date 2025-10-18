@@ -10,7 +10,7 @@ export class TimeEntry {
   task_id!: number;
 
   @Column()
-  date!: string; // YYYY-MM-DD format
+  date!: string;
 
   @Column('real')
   hours!: number;

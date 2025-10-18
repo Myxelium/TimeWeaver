@@ -60,6 +60,13 @@ export interface UpdateTaskRequest extends CreateTaskRequest {
   id: number;
 }
 
+export interface Settings {
+  monthlyIncome: number;
+  monthlyCost: number;
+  darkMode: boolean;
+  ignoreWeekends: boolean;
+}
+
 export const DAILY_WORK_HOURS = 8;
 
 export const NAV_ITEMS: NavItem[] = [
