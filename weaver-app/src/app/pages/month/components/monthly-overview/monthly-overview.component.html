@@ -3,11 +3,11 @@
     <div class="flex items-center justify-between">
       <h3 class="card-title-lg">Monthly Overview</h3>
       <div class="flex items-center space-x-2">
-        <button (click)="previousMonth()" [disabled]="!canGoToPreviousMonth()" class="btn-icon">
+        <button (click)="previousMonth()" class="btn-icon">
           <lucide-icon [img]="ChevronLeft" class="w-4 h-4"></lucide-icon>
         </button>
         <span class="text-lg font-medium min-w-0">{{ currentDate() | date:'MMMM yyyy' }}</span>
-        <button (click)="nextMonth()" [disabled]="!canGoToNextMonth()" class="btn-icon">
+        <button (click)="nextMonth()" class="btn-icon">
           <lucide-icon [img]="ChevronRight" class="w-4 h-4"></lucide-icon>
         </button>
       </div>

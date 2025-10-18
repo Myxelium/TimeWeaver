@@ -4,7 +4,7 @@
   </div>
   <div class="flex items-center space-x-6">
     <div class="flex items-center space-x-3">
-      <span class="text-sm text-muted-foreground">{{ currentMonth }}</span>
+      <span class="text-sm text-muted-foreground">{{ selectedMonthLabel$ | async }}</span>
       <div class="flex items-center space-x-2">
         <div class="w-32 h-2 bg-secondary rounded-full overflow-hidden">
           <div class="h-full bg-primary transition-all duration-300" [style.width.%]="progressPercentage$ | async">

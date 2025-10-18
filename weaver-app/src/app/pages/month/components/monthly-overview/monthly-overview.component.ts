@@ -60,21 +60,10 @@ export class MonthlyOverviewComponent {
   previousMonth(): void {
     const current = this.currentDate();
     const previous = new Date(current.getFullYear(), current.getMonth() - 1, 1);
-    const now = new Date();
-    const currentMonthStart = startOfMonth(now);
-    if (!isBefore(previous, currentMonthStart)) {
-      this.currentDate.set(previous);
-      this.store.dispatch(TasksActions.setSelectedMonth({ year: previous.getFullYear(), month: previous.getMonth() + 1 }));
-      this.store.dispatch(TasksActions.loadMonthlyData({ year: previous.getFullYear(), month: previous.getMonth() + 1 }));
-    }
-  }
 
-  canGoToPreviousMonth(): boolean {
-    const current = this.currentDate();
-    const previous = new Date(current.getFullYear(), current.getMonth() - 1, 1);
-    const now = new Date();
-    const currentMonthStart = startOfMonth(now);
-    return !isBefore(previous, currentMonthStart);
+    this.currentDate.set(previous);
+    this.store.dispatch(TasksActions.setSelectedMonth({ year: previous.getFullYear(), month: previous.getMonth() + 1 }));
+    this.store.dispatch(TasksActions.loadMonthlyData({ year: previous.getFullYear(), month: previous.getMonth() + 1 }));
   }
 
   nextMonth(): void {
@@ -82,6 +71,7 @@ export class MonthlyOverviewComponent {
     const next = new Date(current.getFullYear(), current.getMonth() + 1, 1);
     const now = new Date();
     const currentMonthStart = startOfMonth(now);
+
     if (!isBefore(currentMonthStart, next)) {
       this.currentDate.set(next);
       this.store.dispatch(TasksActions.setSelectedMonth({ year: next.getFullYear(), month: next.getMonth() + 1 }));

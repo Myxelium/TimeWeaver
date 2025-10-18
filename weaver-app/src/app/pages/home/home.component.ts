@@ -20,6 +20,12 @@ export class HomeComponent {
   currentDate = new Date();
 
   constructor(private _store: Store) {
+    // Ensure the selected month resets to the current month when navigating to Home
+    this._store.dispatch(TasksActions.setSelectedMonth({
+      year: this.currentDate.getFullYear(),
+      month: this.currentDate.getMonth() + 1
+    }));
+
     this._store.dispatch(TasksActions.loadMonthlyData({
       year: this.currentDate.getFullYear(),
       month: this.currentDate.getMonth() + 1

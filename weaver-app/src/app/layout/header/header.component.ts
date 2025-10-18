@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { AsyncPipe, DecimalPipe, NgIf, NgClass } from '@angular/common';
 import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { format } from 'date-fns';
 import { Store } from '@ngrx/store';
 import { selectMonthlySummary, selectSelectedMonth, selectIsLoading, selectMonthlyData } from '../../store/tasks/tasks.selectors';
@@ -40,12 +40,17 @@ export class HeaderComponent {
   );
   earned$ = this.calculateFinancialProgress('income');
   costed$ = this.calculateFinancialProgress('cost');
-  private store = inject(Store);
 
-  get currentMonth(): string {
-    const now = new Date();
-    return format(now, 'MMMM yyyy');
-  }
+  selectedMonthLabel$: Observable<string> = this.selectedMonth$.pipe(
+    map((date) => {
+      if (!date) {
+        const now = new Date();
+        return format(now, 'MMMM yyyy');
+      }
+      return format(new Date(date.year, date.month - 1, 1), 'MMMM yyyy');
+    })
+  );
+  private store = inject(Store);
 
   toggleCostFinanceVisibility(): void {
     this.showCostFinance = !this.showCostFinance;
@@ -56,12 +61,17 @@ export class HeaderComponent {
   }
 
   exportCurrentMonth(): void {
-    const now = new Date();
-    this.store.dispatch(TasksActions.exportCsv({ year: now.getFullYear(), month: now.getMonth() + 1 }));
+    this.selectedMonth$.pipe(take(1)).subscribe((date) => {
+      const now = new Date();
+      const year = date?.year ?? now.getFullYear();
+      const month = date?.month ?? now.getMonth() + 1;
+      this.store.dispatch(TasksActions.exportCsv({ year, month }));
+    });
   }
 
   private calculateFinancialProgress(kind: 'income' | 'cost'): Observable<number> {
     const value$ = kind === 'income' ? this.monthlyIncome$ : this.monthlyCost$;
+
     return combineLatest([this.monthlySummary$, value$]).pipe(
       map(([loggedHours, monthlyValue]) => {
         if (!monthlyValue || monthlyValue === 0) return 0;
