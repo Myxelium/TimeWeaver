@@ -1,8 +1,12 @@
 <div class="max-w-7xl mx-auto p-4 space-y-6">
-  <app-task-hours-summary />
-  <app-monthly-overview (daySelected)="selectedDay.set($event); showDayModal.set(true)"></app-monthly-overview>
+    <app-task-hours-summary />
+
+    <app-monthly-overview (daySelected)="selectedDay.set($event); showDayModal.set(true)" />
 </div>
 
-<app-edit-day-modal [isOpen]="showDayModal()" [selectedDate]="selectedDay()"
-  [daySummary]="selectedDay() ? getDaySummarySync(selectedDay()!) : undefined" (closed)="closeDayModal()">
-</app-edit-day-modal>
+<app-edit-day-modal
+    (closed)="closeDayModal()"
+    [isOpen]="showDayModal()"
+    [selectedDate]="selectedDay()"
+    [daySummary]="selectedDay() ? getDaySummarySync(selectedDay()!) : undefined"
+/>

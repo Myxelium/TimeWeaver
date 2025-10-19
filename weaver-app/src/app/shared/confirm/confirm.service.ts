@@ -16,9 +16,11 @@ export class ConfirmService {
       this.hostRef = createComponent(ConfirmDialogHostComponent, {
         environmentInjector: this.injector
       });
+
       this.appRef.attachView(this.hostRef.hostView);
       document.body.appendChild(this.hostRef.location.nativeElement);
     }
+
     return this.hostRef.instance;
   }
 }

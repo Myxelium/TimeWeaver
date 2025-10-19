@@ -7,7 +7,7 @@ const stylisticJs = require('@stylistic/eslint-plugin-js');
 
 module.exports = tseslint.config(
   {
-    ignores: ['**/generated/*','dist/**', '**/migrations/**']
+    ignores: ['**/generated/*','dist/**', '**/migrations/**', 'release/**']
   },
   {
     files: ['**/*.ts'],
@@ -102,6 +102,64 @@ module.exports = tseslint.config(
       '@stylistic/js/space-in-parens': 'error',
       '@stylistic/js/space-unary-ops': 'error',
       '@stylistic/js/spaced-comment': ['error','always',{ markers:['/'] }]
+      ,
+  // Require spaces inside single-line blocks: { stmt; }
+  '@stylistic/js/block-spacing': ['error','always'],
+      
+      // Disallow single-line if statements but allow body on the next line (with or without braces)
+      // Examples allowed:
+      // if (condition)\n  return true;
+      // if (condition)\n  {\n    return true;\n  }
+      'nonblock-statement-body-position': ['error', 'below'],
+      // Ensure only one statement per line to prevent patterns like: if (cond) { doThing(); }
+      'max-statements-per-line': ['error', { max: 1 }],
+      // Prevent single-character identifiers for variables/params; do not check object property names
+      'id-length': ['error', { min: 2, properties: 'never', exceptions: ['_'] }],
+      // Require blank lines around block-like statements (if, function, class, switch, try, etc.)
+      'padding-line-between-statements': [
+        'error',
+        // Ensure blank lines around standalone if statements within the same scope
+        { blankLine: 'always', prev: '*', next: 'if' },
+        { blankLine: 'always', prev: 'if', next: '*' },
+        // Keep clear separation around any block-like statement (if, function, class, switch, try, etc.)
+        { blankLine: 'always', prev: '*', next: 'block-like' },
+        { blankLine: 'always', prev: 'block-like', next: '*' },
+        // Always require a blank line after functions (and multiline expressions)
+        { blankLine: 'always', prev: ['function', 'multiline-expression'], next: '*' },
+        // Always require a blank line after class declarations (and multiline expressions)
+        { blankLine: 'always', prev: ['class', 'multiline-expression'], next: '*' },
+        // Always require a blank line after groups of variable declarations
+        { blankLine: 'always', prev: 'const', next: '*' },
+        { blankLine: 'always', prev: 'let', next: '*' },
+        { blankLine: 'always', prev: 'var', next: '*' },
+        // But never require a blank line between a series of variable declarations of the same kind
+        { blankLine: 'never', prev: 'const', next: 'const' },
+        { blankLine: 'never', prev: 'let', next: 'let' },
+        { blankLine: 'never', prev: 'var', next: 'var' }
+      ]
     }
   },
+  // HTML template formatting rules (external Angular templates only)
+  {
+    files: ['src/app/**/*.html'],
+    extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
+    rules: {
+      // Angular template best practices
+      '@angular-eslint/template/button-has-type': 'warn',
+      '@angular-eslint/template/cyclomatic-complexity': ['warn', { maxComplexity: 10 }],
+      '@angular-eslint/template/eqeqeq': 'error',
+      '@angular-eslint/template/prefer-control-flow': 'error',
+      '@angular-eslint/template/prefer-ngsrc': 'warn',
+      '@angular-eslint/template/prefer-self-closing-tags': 'warn',
+      '@angular-eslint/template/use-track-by-function': 'warn',
+      '@angular-eslint/template/no-negated-async': 'warn',
+      '@angular-eslint/template/no-call-expression': 'off', // Allow method calls in templates
+      // Note: attributes-order is disabled in favor of Prettier handling formatting
+      // Prettier uses singleAttributePerLine to enforce property grouping
+    },
+  },
 );
+
+// IMPORTANT: Formatting is handled by Prettier, not ESLint
+// ESLint validates logic/accessibility, Prettier handles formatting
+// Enable format on save in VS Code settings to use Prettier automatically

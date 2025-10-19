@@ -7,7 +7,6 @@ export async function handleExportAllCsv(
 ): Promise<boolean> {
   const taskRepository = dataSource.getRepository(Task);
   const tasks = await taskRepository.find({ order: { date: 'ASC', created_at: 'ASC' } });
-
   const header = 'Date,Title,Description,Hours,Created At\n';
   const body = tasks
     .map(taskEntity =>

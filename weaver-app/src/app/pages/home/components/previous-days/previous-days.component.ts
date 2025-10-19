@@ -30,18 +30,20 @@ export class PreviousDaysComponent {
     for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
       const date = subDays(now, dayOffset);
       const dateStr = format(date, 'yyyy-MM-dd');
-      const p = this.databaseService.getTasksByDate(dateStr)
+      const taskPromise = this.databaseService.getTasksByDate(dateStr)
         .toPromise()
         .then(tasks => {
           const safeTasks: Task[] = Array.isArray(tasks) ? tasks : [];
-          const total = safeTasks.reduce((acc, t) => acc + (t.hours || 0), 0);
+          const total = safeTasks.reduce((acc, task) => acc + (task.hours || 0), 0);
+
           collected.push({ date, tasks: safeTasks, totalHours: total });
         });
 
-      tasksPromises.push(p);
+      tasksPromises.push(taskPromise);
     }
+
     Promise.all(tasksPromises).then(() => {
-      collected.sort((a, b) => b.date.getTime() - a.date.getTime());
+      collected.sort((left, right) => right.date.getTime() - left.date.getTime());
       this.previousDays.set(collected);
     });
   }

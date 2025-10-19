@@ -62,6 +62,7 @@ export class MonthComponent implements OnInit, OnDestroy {
 
   getDaySummarySync(date: Date): DaySummary | undefined {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return this.monthlyDataCache.find(d => d.date === dateStr);
+
+    return this.monthlyDataCache.find(daySummary => daySummary.date === dateStr);
   }
 }

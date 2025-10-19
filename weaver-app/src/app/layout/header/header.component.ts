@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { AsyncPipe, DecimalPipe, NgIf, NgClass } from '@angular/common';
+import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
@@ -15,7 +15,7 @@ import { TasksActions } from '../../store/tasks/tasks.actions';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [AsyncPipe, DecimalPipe, NgIf, NgClass, LucideAngularModule],
+  imports: [AsyncPipe, DecimalPipe, LucideAngularModule],
   templateUrl: './header.component.html',
   styles: [`
     :host {
@@ -45,8 +45,10 @@ export class HeaderComponent {
     map((date) => {
       if (!date) {
         const now = new Date();
+
         return format(now, 'MMMM yyyy');
       }
+
       return format(new Date(date.year, date.month - 1, 1), 'MMMM yyyy');
     })
   );
@@ -65,6 +67,7 @@ export class HeaderComponent {
       const now = new Date();
       const year = date?.year ?? now.getFullYear();
       const month = date?.month ?? now.getMonth() + 1;
+
       this.store.dispatch(TasksActions.exportCsv({ year, month }));
     });
   }
@@ -74,16 +77,22 @@ export class HeaderComponent {
 
     return combineLatest([this.monthlySummary$, value$]).pipe(
       map(([loggedHours, monthlyValue]) => {
-        if (!monthlyValue || monthlyValue === 0) return 0;
+        if (!monthlyValue || monthlyValue === 0)
+          return 0;
+
         const now = new Date();
         const start = startOfMonth(now);
         const end = endOfMonth(now);
         const days = eachDayOfInterval({ start, end });
-        const weekdays = days.filter(d => d.getDay() !== 0 && d.getDay() !== 6).length;
+        const weekdays = days.filter(dayItem => dayItem.getDay() !== 0 && dayItem.getDay() !== 6).length;
         const expectedHours = weekdays * DAILY_WORK_HOURS;
-        if (expectedHours === 0) return 0;
+
+        if (expectedHours === 0)
+          return 0;
+
         const ratio = loggedHours / expectedHours;
         const value = monthlyValue * ratio;
+
         return Math.max(0, Math.min(value, monthlyValue));
       })
     );

@@ -30,7 +30,7 @@ export const TasksActions = createActionGroup({
     'Export Csv Success': props<{ success: boolean }>(),
     'Export Csv Failure': props<{ error: string }>(),
 
-  'Export Csv All': emptyProps(),
+    'Export Csv All': emptyProps(),
     'Export Csv All Success': props<{ success: boolean }>(),
     'Export Csv All Failure': props<{ error: string }>()
   }

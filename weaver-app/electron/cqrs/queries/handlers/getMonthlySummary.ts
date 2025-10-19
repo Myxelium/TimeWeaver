@@ -16,5 +16,6 @@ export async function handleGetMonthlySummary(query: GetMonthlySummaryQuery, dat
     .select('SUM(task.hours)', 'total_hours')
     .where('task.date >= :startDate AND task.date <= :endDate', { startDate, endDate })
     .getRawOne<MonthlySummaryRawRow>();
+
   return parseFloat(result?.total_hours || '0') || 0;
 }

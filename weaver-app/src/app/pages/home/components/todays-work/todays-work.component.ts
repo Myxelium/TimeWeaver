@@ -2,7 +2,7 @@ import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { selectTodayTasks, selectIsLoading } from '../../../../store/tasks/tasks.selectors';
+import { selectTodayTasks, selectIsLoading, selectAllTasks } from '../../../../store/tasks/tasks.selectors';
 import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
 import { Task, DAILY_WORK_HOURS } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
@@ -50,6 +50,7 @@ export class TodaysWorkComponent implements OnDestroy {
 
   constructor(private _store: Store) {
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
+
     this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
     this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
     this._store.dispatch(loadAllTasks());
@@ -71,16 +72,22 @@ export class TodaysWorkComponent implements OnDestroy {
   }
 
   get weekendBlocked(): boolean {
-    if (!this.ignoreWeekendsSignal()) return false;
+    if (!this.ignoreWeekendsSignal())
+      return false;
+
     const dow = this.currentDate.getDay();
+
     return dow === 0 || dow === 6;
   }
 
   onSubmit(): void {
-    if (this.taskForm.invalid || this.weekendBlocked) return;
+    if (this.taskForm.invalid || this.weekendBlocked)
+      return;
+
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
+
     if (this.editingTask) {
       this._store.dispatch(
         TasksActions.saveTask({
@@ -100,6 +107,7 @@ export class TodaysWorkComponent implements OnDestroy {
         })
       );
     }
+
     this.resetForm();
   }
 
@@ -121,12 +129,17 @@ export class TodaysWorkComponent implements OnDestroy {
       cancelText: 'Cancel',
       destructive: true
     });
-    if (!confirmed) return;
+
+    if (!confirmed)
+      return;
+
     this._store.dispatch(TasksActions.deleteTask({ taskId }));
+
     if (this.editingTask && this.editingTask.id === taskId) {
       this.resetForm();
       queueMicrotask(() => document.getElementById('taskTitle')?.focus());
     }
+
     this.showSuggestions = false;
     this.showAllSuggestions = false;
   }
@@ -134,13 +147,20 @@ export class TodaysWorkComponent implements OnDestroy {
   autoDistributeHours(): void {
     const currentTasks$ = this.todayTasks$.pipe(take(1));
     const totalHours$ = this.todayTotalHours$.pipe(take(1));
+
     combineLatest([currentTasks$, totalHours$])
       .pipe(take(1))
       .subscribe(([tasks, total]) => {
-        if (!tasks.length) return;
+        if (!tasks.length)
+          return;
+
         const remaining = DAILY_WORK_HOURS - total;
-        if (remaining <= 0) return;
+
+        if (remaining <= 0)
+          return;
+
         const addPer = remaining / tasks.length;
+
         tasks.forEach(task => {
           this._store.dispatch(TasksActions.saveTask({ task: { ...task, hours: task.hours + addPer } }));
         });
@@ -153,6 +173,7 @@ export class TodaysWorkComponent implements OnDestroy {
       .subscribe(remaining => {
         const current = this.taskForm.get('hours')?.value || 0;
         const toAdd = Math.min(8, remaining);
+
         this.taskForm.patchValue({ hours: current + toAdd });
       });
   }
@@ -163,10 +184,12 @@ export class TodaysWorkComponent implements OnDestroy {
         map(value => value || 0),
         startWith(this.taskForm.get('hours')?.value || 0)
       ) || of(0);
+
     return combineLatest([this.todayTotalHours$, hoursValueChanges]).pipe(
       map(([totalHours, currentTaskHours]) => {
         const remainingForDay = DAILY_WORK_HOURS - totalHours;
         const editingTaskHours = this.editingTask ? this.editingTask.hours : 0;
+
         return Math.max(0, remainingForDay + editingTaskHours - (currentTaskHours || 0));
       })
     );
@@ -174,6 +197,7 @@ export class TodaysWorkComponent implements OnDestroy {
 
   onTitleFocus(): void {
     const value = this.taskForm.get('title')?.value;
+
     if (value) {
       this.filterSuggestions(value);
     } else {
@@ -204,18 +228,24 @@ export class TodaysWorkComponent implements OnDestroy {
   trackTask(_index: number, task: Task) { return task.id ?? task.title; }
 
   getAddHoursLabel(remaining: number): string {
-    if (remaining >= 8) return '+8h';
-    if (remaining > 0) return `+${remaining.toFixed(1)}h`;
+    if (remaining >= 8)
+      return '+8h';
+
+    if (remaining > 0)
+      return `+${remaining.toFixed(1)}h`;
+
     return '0h';
   }
 
   remainingDayHours(total: number | null | undefined): number {
     const totalHours = typeof total === 'number' ? total : 0;
+
     return Math.max(0, DAILY_WORK_HOURS - totalHours);
   }
 
   progressPercent(total: number | null | undefined): number {
     const totalHours = typeof total === 'number' ? total : 0;
+
     return Math.min(100, (totalHours / DAILY_WORK_HOURS) * 100);
   }
 
@@ -229,17 +259,17 @@ export class TodaysWorkComponent implements OnDestroy {
 
   private loadTaskTitlesFromLast30Days(): void {
     this._store
-      .select(selectTodayTasks)
+      .select(selectAllTasks)
       .pipe(takeUntil(this.destroy$))
       .subscribe(tasks => {
         const thirtyDaysAgo = subDays(this.currentDate, 30);
-
         const recentTasks = tasks.filter(task => {
           const taskDate = new Date(task.date);
+
           return taskDate >= thirtyDaysAgo && taskDate <= this.currentDate;
         });
-
         const uniqueTitles = [...new Set(recentTasks.map(task => task.title))];
+
         this.allTaskTitles = uniqueTitles.reverse();
         this.recentSuggestions = this.allTaskTitles.slice(0, 5);
       });
@@ -263,9 +293,11 @@ export class TodaysWorkComponent implements OnDestroy {
 
   private applyWeekendBlockState(): void {
     if (this.weekendBlocked) {
-      if (!this.taskForm.disabled) this.taskForm.disable({ emitEvent: false });
+      if (!this.taskForm.disabled)
+        this.taskForm.disable({ emitEvent: false });
     } else {
-      if (this.taskForm.disabled) this.taskForm.enable({ emitEvent: false });
+      if (this.taskForm.disabled)
+        this.taskForm.enable({ emitEvent: false });
     }
   }
 }

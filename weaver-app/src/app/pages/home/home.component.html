@@ -1,15 +1,17 @@
 <div class="max-w-6xl mx-auto space-y-6">
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-foreground">Today's Tasks</h1>
-    <p class="text-muted-foreground mt-2">{{ currentDate | date:'fullDate' }}</p>
-  </div>
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-foreground">Today's Tasks</h1>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <div class="order-2 lg:order-1">
-      <app-previous-days />
+        <p class="text-muted-foreground mt-2">{{ currentDate | date: 'fullDate' }}</p>
     </div>
-    <div class="order-1 lg:order-2">
-      <app-todays-work />
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="order-2 lg:order-1">
+            <app-previous-days />
+        </div>
+
+        <div class="order-1 lg:order-2">
+            <app-todays-work />
+        </div>
     </div>
-  </div>
 </div>

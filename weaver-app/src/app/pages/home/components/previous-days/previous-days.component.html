@@ -1,32 +1,39 @@
 <h2 class="section-heading">Previous Days</h2>
 @for (day of previousDays(); track day.date) {
-<div class="card-panel mb-4 last:mb-0">
-  <div class="flex justify-between items-center mb-4">
-    <h3 class="text-lg font-medium">{{ day.date | date:'EEEE, MMM d' }}</h3>
-    <span class="text-sm text-muted-foreground">{{ day.totalHours | number:'1.1' }}h /
-      {{ DAILY_WORK_HOURS | number:'1.1-1' }}h</span>
-  </div>
-  @if (day.tasks.length > 0) {
-  <div class="space-y-2">
-    @for (task of day.tasks; track task.id) {
-    <div class="task-row-compact">
-      <div class="flex-1">
-        <p class="font-medium text-sm">{{ task.title }}</p>
-        @if (task.description) {
-        <p class="text-xs text-muted-foreground">{{ task.description }}</p>
+    <div class="card-panel mb-4 last:mb-0">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium">{{ day.date | date: 'EEEE, MMM d' }}</h3>
+
+            <span class="text-sm text-muted-foreground"> {{ day.totalHours | number: '1.1' }}h / {{ DAILY_WORK_HOURS | number: '1.1-1' }}h</span>
+        </div>
+
+        @if (day.tasks.length > 0) {
+            <div class="space-y-2">
+                @for (task of day.tasks; track task.id) {
+                    <div class="task-row-compact">
+                        <div class="flex-1">
+                            <p class="font-medium text-sm">{{ task.title }}</p>
+
+                            @if (task.description) {
+                                <p class="text-xs text-muted-foreground">{{ task.description }}</p>
+                            }
+                        </div>
+
+                        <span class="text-sm font-medium">{{ task.hours | number: '1.1-1' }}h</span>
+                    </div>
+                }
+            </div>
+        } @else {
+            <p class="text-muted-foreground text-sm">No tasks recorded</p>
         }
-      </div>
-      <span class="text-sm font-medium">{{ task.hours | number:'1.1-1' }}h</span>
+
+        <div class="mt-4">
+            <div class="progress-outer">
+                <div
+                    [style.width.%]="(day.totalHours / DAILY_WORK_HOURS) * 100"
+                    class="progress-inner"
+                ></div>
+            </div>
+        </div>
     </div>
-    }
-  </div>
-  } @else {
-  <p class="text-muted-foreground text-sm">No tasks recorded</p>
-  }
-  <div class="mt-4">
-    <div class="progress-outer">
-      <div class="progress-inner" [style.width.%]="(day.totalHours / DAILY_WORK_HOURS) * 100"></div>
-    </div>
-  </div>
-</div>
 }

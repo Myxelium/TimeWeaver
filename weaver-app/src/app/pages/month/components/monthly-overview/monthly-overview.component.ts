@@ -52,6 +52,7 @@ export class MonthlyOverviewComponent {
 
   constructor() {
     const now = new Date();
+
     this.currentDate.set(now);
     this.store.dispatch(TasksActions.setSelectedMonth({ year: now.getFullYear(), month: now.getMonth() + 1 }));
     this.store.dispatch(TasksActions.loadMonthlyData({ year: now.getFullYear(), month: now.getMonth() + 1 }));
@@ -80,12 +81,14 @@ export class MonthlyOverviewComponent {
   }
 
   onDayClick(day: CalendarDay): void {
-    if (day.isCurrentMonth) this.daySelected.emit(day.date);
+    if (day.isCurrentMonth)
+      this.daySelected.emit(day.date);
   }
 
   private getDaySummarySync(date: Date): DaySummary | undefined {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return this.monthlyData.find((d: DaySummary) => d.date === dateStr);
+
+    return this.monthlyData.find((daySummary: DaySummary) => daySummary.date === dateStr);
   }
 
   private calculateMonthlyStats(): MonthlyStats {
@@ -97,23 +100,36 @@ export class MonthlyOverviewComponent {
     const workingDays = daysInMonth.filter(day => {
       if (ignoreWeekends) {
         const dow = day.getDay();
-        if (dow === 0 || dow === 6) return false;
+
+        if (dow === 0 || dow === 6)
+          return false;
       }
+
       return true;
     }).length;
 
-    let totalHours = 0; let daysWithTasks = 0;
+    let totalHours = 0;
+    let daysWithTasks = 0;
 
     daysInMonth.forEach(day => {
       const summary = this.getDaySummarySync(day);
-      if (summary && summary.total_hours > 0) { totalHours += summary.total_hours; daysWithTasks++; }
+
+      if (summary && summary.total_hours > 0) {
+        totalHours += summary.total_hours;
+        daysWithTasks++;
+      }
     });
 
     const averageHours = daysWithTasks > 0 ? totalHours / daysWithTasks : 0;
     const expectedHours = workingDays * DAILY_WORK_HOURS;
     const completionRate = expectedHours > 0 ? (totalHours / expectedHours) * 100 : 0;
 
-    return { totalHours, workingDays, averageHours, completionRate };
+    return {
+      totalHours,
+      workingDays,
+      averageHours,
+      completionRate
+    };
   }
 
   private calculateCalendarDays(): CalendarDay[] {
@@ -121,9 +137,11 @@ export class MonthlyOverviewComponent {
     const monthStart = startOfMonth(current);
     const monthEnd = endOfMonth(current);
     const calendarStart = new Date(monthStart);
+
     calendarStart.setDate(calendarStart.getDate() - monthStart.getDay());
     const calendarEnd = new Date(monthEnd);
     const daysToAdd = 6 - monthEnd.getDay();
+
     calendarEnd.setDate(calendarEnd.getDate() + daysToAdd);
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
@@ -141,6 +159,7 @@ export class MonthlyOverviewComponent {
     const next = new Date(current.getFullYear(), current.getMonth() + 1, 1);
     const now = new Date();
     const currentMonthStart = startOfMonth(now);
+
     return !isBefore(currentMonthStart, next);
   }
 }

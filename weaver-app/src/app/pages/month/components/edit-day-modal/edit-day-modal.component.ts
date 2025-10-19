@@ -48,11 +48,13 @@ export class EditDayModalComponent implements OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe(tasks => {
         const thirtyDaysAgo = subDays(new Date(), 30);
-        const recent = tasks.filter(t => {
-          const d = new Date(t.date);
-          return d >= thirtyDaysAgo && d <= new Date();
+        const recent = tasks.filter(taskItem => {
+          const dateObj = new Date(taskItem.date);
+
+          return dateObj >= thirtyDaysAgo && dateObj <= new Date();
         });
-        const unique = [...new Set(recent.map(t => t.title))];
+        const unique = [...new Set(recent.map(taskItem => taskItem.title))];
+
         this.allTaskTitles = unique.reverse();
         this.recentSuggestions = this.allTaskTitles.slice(0, 5);
       });
@@ -65,9 +67,13 @@ export class EditDayModalComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['daySummary'] && this.editingTask) {
       const stillExists = this.daySummary?.tasks?.some(task => task.id === this.editingTask?.id);
-      if (!stillExists) this.resetForm();
+
+      if (!stillExists)
+        this.resetForm();
     }
-    if (changes['open'] && !this.isOpen) this.resetForm();
+
+    if (changes['open'] && !this.isOpen)
+      this.resetForm();
   }
 
   getDayTotalHours(): number {
@@ -85,12 +91,17 @@ export class EditDayModalComponent implements OnChanges {
   addRemainingHours(): void {
     const remaining = Math.max(0, DAILY_WORK_HOURS - this.getDayTotalHours());
     const current = this.taskForm.get('hours')?.value || 0;
+
     this.taskForm.patchValue({ hours: current + remaining });
   }
 
   onSubmit(): void {
-    if (!this.selectedDate) return;
-    if (this.taskForm.invalid) return;
+    if (!this.selectedDate)
+      return;
+
+    if (this.taskForm.invalid)
+      return;
+
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
     const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
@@ -121,6 +132,7 @@ export class EditDayModalComponent implements OnChanges {
         })
       );
     }
+
     this.resetForm();
   }
 
@@ -180,7 +192,8 @@ export class EditDayModalComponent implements OnChanges {
     this.taskForm.reset();
     this.taskForm.patchValue({ hours: 0 });
     this.editingTask = null;
-    this.showSuggestions = false; this.showAllSuggestions = false;
+    this.showSuggestions = false;
+    this.showAllSuggestions = false;
   }
 
   private filterSuggestions(value: string): void {
@@ -191,6 +204,7 @@ export class EditDayModalComponent implements OnChanges {
     }
 
     const search = value.toLowerCase();
+
     this.filteredSuggestions = this.allTaskTitles.filter(task => task.toLowerCase().includes(search)).slice(0, 10);
     this.showSuggestions = this.filteredSuggestions.length > 0;
   }

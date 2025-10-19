@@ -3,19 +3,19 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent)
+    loadComponent: () => import('./pages/home/home.component').then(module => module.HomeComponent)
   },
   {
     path: 'month',
-    loadComponent: () => import('./pages/month/month.component').then(m => m.MonthComponent)
+    loadComponent: () => import('./pages/month/month.component').then(module => module.MonthComponent)
   },
   {
     path: 'records',
-    loadComponent: () => import('./pages/records/records.component').then(m => m.RecordsComponent)
+    loadComponent: () => import('./pages/records/records.component').then(module => module.RecordsComponent)
   },
   {
     path: 'settings',
-    loadComponent: () => import('./pages/settings/settings.component').then(m => m.SettingsComponent)
+    loadComponent: () => import('./pages/settings/settings.component').then(module => module.SettingsComponent)
   },
   {
     path: '**',

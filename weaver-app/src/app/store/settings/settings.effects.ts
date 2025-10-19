@@ -17,7 +17,7 @@ export class SettingsEffects {
   save$ = createEffect(() => this.actions$.pipe(
     ofType(SettingsActions.save),
     mergeMap(({ settings }) => this.db.saveSettings(settings).pipe(
-      mergeMap(() => this.db.getSettings().pipe(map(s => SettingsActions.saveSuccess({ settings: s })))),
+      mergeMap(() => this.db.getSettings().pipe(map(freshSettings => SettingsActions.saveSuccess({ settings: freshSettings })))),
       catchError(err => of(SettingsActions.saveFailure({ error: err.message || 'Save settings failed' })))
     ))
   ));
@@ -34,12 +34,15 @@ export class SettingsEffects {
     ofType(SettingsActions.loadSuccess, SettingsActions.saveSuccess, SettingsActions.applyTheme),
     tap(action => {
       let darkMode: boolean | undefined;
+
       if ('settings' in action) {
         darkMode = (action as { settings: { darkMode: boolean } }).settings.darkMode;
       } else if ('darkMode' in action) {
         darkMode = (action as { darkMode: boolean }).darkMode;
       }
+
       const root = document.documentElement;
+
       root.classList.toggle('dark', !!darkMode);
     })
   ), { dispatch: false });

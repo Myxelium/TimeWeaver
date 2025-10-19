@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
 import { DaySummary, Task } from '../../../../shared/models';
-import { map } from 'rxjs';
+import { map, take } from 'rxjs';
+import { TasksActions } from '../../../../store/tasks/tasks.actions';
+import { TaskDetailsModalComponent } from '../task-details-modal/task-details-modal.component';
 
 interface TaskChartDataPoint {
   taskTitle: string;
@@ -15,12 +17,11 @@ interface TaskChartDataPoint {
 @Component({
   selector: 'app-task-hours-summary',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TaskDetailsModalComponent],
   templateUrl: './task-hours-summary.component.html'
 })
 export class TaskHoursSummaryComponent {
-  readonly Math = Math;
-
+  Math = Math;
   monthlyData$ = inject(Store).select(selectMonthlyData);
   chartData$ = this.monthlyData$.pipe(
     map(days => {
@@ -31,13 +32,21 @@ export class TaskHoursSummaryComponent {
           taskCount: stats.taskCount,
           color: this.titleToColor(taskTitle)
         }))
-        .sort((a, b) => b.totalHours - a.totalHours);
+        .sort((itemA, itemB) => itemB.totalHours - itemA.totalHours);
     })
   );
 
+  showDetails = false;
+  selectedTaskTitle: string | null = null;
+  detailedTasks: Task[] = [];
+
+  store = inject(Store);
+
   getMaxTaskHours(data: TaskChartDataPoint[]): number {
-    if (!data?.length) return 1;
-    return Math.max(1, Math.max(...data.map(d => d.totalHours)));
+    if (!data?.length)
+      return 1;
+
+    return Math.max(1, Math.max(...data.map(dataPoint => dataPoint.totalHours)));
   }
 
   titleToColor(title: string): string {
@@ -64,11 +73,51 @@ export class TaskHoursSummaryComponent {
         if (!aggregate[key]) {
           aggregate[key] = { totalHours: 0, taskCount: 0 };
         }
+
         aggregate[key].totalHours += task.hours || 0;
         aggregate[key].taskCount += 1;
       });
     });
 
     return aggregate;
+  }
+
+  onBarClick(taskTitle: string): void {
+    this.selectedTaskTitle = taskTitle;
+    this.store
+      .select(selectMonthlyData)
+      .pipe(take(1))
+      .subscribe(days => {
+        const key = taskTitle.trim().toLowerCase();
+        const matched: Task[] = [];
+
+        days.forEach(day => (day.tasks || []).forEach(task => {
+          const taskKey = (task.title || '').trim().toLowerCase();
+
+          if (taskKey === key)
+            matched.push(task);
+        }));
+
+        this.detailedTasks = matched.sort((taskA, taskB) => taskA.date.localeCompare(taskB.date));
+        this.showDetails = true;
+      });
+  }
+
+  onModalClosed(): void {
+    this.showDetails = false;
+    this.selectedTaskTitle = null;
+    this.detailedTasks = [];
+  }
+
+  onModalSaveTask(updated: { id: number; title: string; description?: string; date: string; hours: number }): void {
+    this.store.dispatch(TasksActions.saveTask({
+      task: {
+        id: updated.id,
+        title: (updated.title || '').trim(),
+        description: updated.description || '',
+        date: updated.date,
+        hours: updated.hours || 0
+      }
+    }));
   }
 }

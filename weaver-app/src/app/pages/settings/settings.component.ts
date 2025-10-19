@@ -49,6 +49,7 @@ export class SettingsComponent implements OnInit {
       if (settings)
         this.form.patchValue(settings, { emitEvent: false });
     });
+
     this.lastSaveAt$.pipe(skip(1)).subscribe(lastSaveAt => {
       if (lastSaveAt) {
         this.saving = false;
@@ -56,6 +57,7 @@ export class SettingsComponent implements OnInit {
         setTimeout(() => this.justSaved = false, 2000);
       }
     });
+
     this.lastImportResult$.subscribe(lastImportResult => {
       if (lastImportResult) {
         this.importing = false;
@@ -65,14 +67,18 @@ export class SettingsComponent implements OnInit {
   }
 
   save(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid)
+      return;
+
     const value = this.form.value as Settings;
+
     this.saving = true;
     this.store.dispatch(SettingsActions.save({ settings: value }));
   }
 
   onFileSelected(evt: Event): void {
     const input = evt.target as HTMLInputElement;
+
     if (input.files && input.files.length > 0) {
       this.selectedFile = input.files[0];
       this.importResult = null;
@@ -92,12 +98,15 @@ export class SettingsComponent implements OnInit {
     reader.onload = () => {
       const content = reader.result as string;
       const overwrite = this.form.get('overwrite')?.value ?? false;
+
       this.store.dispatch(SettingsActions.importCsv({ content, overwrite }));
     };
+
     reader.onerror = () => {
       this.importing = false;
       this.importError = 'Failed to read file';
     };
+
     reader.readAsText(this.selectedFile);
   }
 
