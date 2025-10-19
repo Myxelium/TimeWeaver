@@ -19,6 +19,9 @@ export class EditDayModalComponent implements OnChanges {
   @Input() isOpen = false;
   @Input() selectedDate: Date | null = null;
   @Input() daySummary: DaySummary | undefined;
+  @Input() allowDateChange = false; // New flag to enable date editing
+  @Input() singleTaskMode = false; // New flag for editing single task from records
+  @Input() taskToEdit: Task | null = null; // Direct task to edit (for records page)
   @Output() closed = new EventEmitter<void>();
 
   DAILY_WORK_HOURS = DAILY_WORK_HOURS;
@@ -26,7 +29,8 @@ export class EditDayModalComponent implements OnChanges {
   taskForm: FormGroup = inject(FormBuilder).group({
     title: ['', Validators.required],
     description: [''],
-    hours: [0, [Validators.min(0)]]
+    hours: [0, [Validators.min(0)]],
+    date: ['', Validators.required] // Add date field to form
   });
 
   editingTask: Task | null = null;
@@ -72,8 +76,23 @@ export class EditDayModalComponent implements OnChanges {
         this.resetForm();
     }
 
-    if (changes['open'] && !this.isOpen)
-      this.resetForm();
+    if (changes['selectedDate'] && this.selectedDate) {
+      const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
+
+      this.taskForm.patchValue({ date: dateStr });
+    }
+
+    if (changes['taskToEdit'] && this.taskToEdit) {
+      this.editTask(this.taskToEdit);
+    }
+
+    if (changes['isOpen']) {
+      if (!this.isOpen) {
+        this.resetForm();
+      } else if (this.taskToEdit) {
+        this.editTask(this.taskToEdit);
+      }
+    }
   }
 
   getDayTotalHours(): number {
@@ -96,15 +115,15 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    if (!this.selectedDate)
-      return;
-
     if (this.taskForm.invalid)
       return;
 
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
-    const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
+    const dateStr = this.allowDateChange ? formValue.date : (this.selectedDate ? format(this.selectedDate, 'yyyy-MM-dd') : '');
+
+    if (!dateStr)
+      return;
 
     if (this.editingTask) {
       this.store.dispatch(
@@ -134,11 +153,20 @@ export class EditDayModalComponent implements OnChanges {
     }
 
     this.resetForm();
+
+    if (this.singleTaskMode) {
+      this.close();
+    }
   }
 
   editTask(task: Task): void {
     this.editingTask = task;
-    this.taskForm.patchValue({ title: task.title, description: task.description, hours: task.hours });
+    this.taskForm.patchValue({
+      title: task.title,
+      description: task.description,
+      hours: task.hours,
+      date: task.date
+    });
   }
 
   async deleteTask(taskId: number): Promise<void> {
@@ -189,8 +217,10 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   resetForm(): void {
+    const currentDate = this.selectedDate ? format(this.selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+
     this.taskForm.reset();
-    this.taskForm.patchValue({ hours: 0 });
+    this.taskForm.patchValue({ hours: 0, date: currentDate });
     this.editingTask = null;
     this.showSuggestions = false;
     this.showAllSuggestions = false;
