@@ -29,6 +29,8 @@ export class SettingsComponent implements OnInit {
     monthlyCost: [0, [Validators.min(0)]],
     darkMode: [false],
     ignoreWeekends: [true],
+    maxHoursPerDay: [8, [Validators.min(0.1), Validators.max(24)]],
+    maxHoursEnabled: [true],
     overwrite: [false]
   });
 

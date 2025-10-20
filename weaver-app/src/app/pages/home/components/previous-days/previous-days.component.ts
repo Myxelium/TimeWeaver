@@ -1,8 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Task, DAILY_WORK_HOURS } from '../../../../shared/models';
+import { Task } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
 import { DatabaseService } from '../../../../shared/services/database.service';
+import { Store } from '@ngrx/store';
+import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-previous-days',
@@ -11,7 +14,7 @@ import { DatabaseService } from '../../../../shared/services/database.service';
   templateUrl: './previous-days.component.html'
 })
 export class PreviousDaysComponent {
-  DAILY_WORK_HOURS = DAILY_WORK_HOURS;
+  maxHoursPerDay = toSignal(inject(Store).select(selectMaxHoursPerDay), { initialValue: 8 });
   currentDate = signal(new Date());
   previousDays = signal<{
     date: Date; tasks: Task[]; totalHours: number;

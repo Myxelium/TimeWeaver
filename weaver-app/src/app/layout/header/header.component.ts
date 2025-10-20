@@ -6,8 +6,7 @@ import { map, take } from 'rxjs/operators';
 import { format } from 'date-fns';
 import { Store } from '@ngrx/store';
 import { selectMonthlySummary, selectSelectedMonth, selectIsLoading, selectMonthlyData } from '../../store/tasks/tasks.selectors';
-import { selectIgnoreWeekends, selectMonthlyIncome, selectMonthlyCost } from '../../store/settings/settings.selectors';
-import { DAILY_WORK_HOURS } from '../../shared/models';
+import { selectIgnoreWeekends, selectMonthlyIncome, selectMonthlyCost, selectMaxHoursPerDay } from '../../store/settings/settings.selectors';
 import { eachDayOfInterval, endOfMonth, startOfMonth } from 'date-fns';
 import { combineLatest } from 'rxjs';
 import { TasksActions } from '../../store/tasks/tasks.actions';
@@ -75,8 +74,8 @@ export class HeaderComponent {
   private calculateFinancialProgress(kind: 'income' | 'cost'): Observable<number> {
     const value$ = kind === 'income' ? this.monthlyIncome$ : this.monthlyCost$;
 
-    return combineLatest([this.monthlySummary$, value$]).pipe(
-      map(([loggedHours, monthlyValue]) => {
+    return combineLatest([this.monthlySummary$, value$, inject(Store).select(selectMaxHoursPerDay)]).pipe(
+      map(([loggedHours, monthlyValue, maxHoursPerDay]) => {
         if (!monthlyValue || monthlyValue === 0)
           return 0;
 
@@ -85,7 +84,7 @@ export class HeaderComponent {
         const end = endOfMonth(now);
         const days = eachDayOfInterval({ start, end });
         const weekdays = days.filter(dayItem => dayItem.getDay() !== 0 && dayItem.getDay() !== 6).length;
-        const expectedHours = weekdays * DAILY_WORK_HOURS;
+        const expectedHours = weekdays * maxHoursPerDay;
 
         if (expectedHours === 0)
           return 0;

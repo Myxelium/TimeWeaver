@@ -4,10 +4,11 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Store } from '@ngrx/store';
 import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
 import { selectAllTasks, selectIsLoading } from '../../../../store/tasks/tasks.selectors';
-import { Task, DaySummary, DAILY_WORK_HOURS } from '../../../../shared/models';
+import { Task, DaySummary } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
-import { Subject, takeUntil } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
+import { selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
 
 @Component({
   selector: 'app-edit-day-modal',
@@ -24,7 +25,8 @@ export class EditDayModalComponent implements OnChanges {
   @Input() taskToEdit: Task | null = null; // Direct task to edit (for records page)
   @Output() closed = new EventEmitter<void>();
 
-  DAILY_WORK_HOURS = DAILY_WORK_HOURS;
+  maxHoursPerDay$: Observable<number> = inject(Store).select(selectMaxHoursPerDay);
+  maxHoursEnabled$: Observable<boolean> = inject(Store).select(selectMaxHoursEnabled);
   isLoading$ = inject(Store).select(selectIsLoading);
   taskForm: FormGroup = inject(FormBuilder).group({
     title: ['', Validators.required],
@@ -108,10 +110,12 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   addRemainingHours(): void {
-    const remaining = Math.max(0, DAILY_WORK_HOURS - this.getDayTotalHours());
-    const current = this.taskForm.get('hours')?.value || 0;
+    this.maxHoursPerDay$.subscribe(maxHours => {
+      const remaining = Math.max(0, maxHours - this.getDayTotalHours());
+      const current = this.taskForm.get('hours')?.value || 0;
 
-    this.taskForm.patchValue({ hours: current + remaining });
+      this.taskForm.patchValue({ hours: current + remaining });
+    }).unsubscribe();
   }
 
   onSubmit(): void {

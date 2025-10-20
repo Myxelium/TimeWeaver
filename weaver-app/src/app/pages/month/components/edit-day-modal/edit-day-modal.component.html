@@ -55,19 +55,23 @@
                                 <div class="mt-4">
                                     <div class="flex justify-between text-sm text-muted-foreground mb-1">
                                         <span>Progress</span>
-                                        <span>{{ getDayTotalHours() | number: '1.1-1' }}h / {{ DAILY_WORK_HOURS }}h</span>
+                                        @if (maxHoursPerDay$ | async; as maxHours) {
+                                            <span>{{ getDayTotalHours() | number: '1.1-1' }}h / {{ maxHours }}h</span>
+                                        }
                                     </div>
 
-                                    <div class="progress-outer">
-                                        <div
-                                            [class.bg-green-500]="getDayTotalHours() >= DAILY_WORK_HOURS"
-                                            [class.bg-yellow-500]="getDayTotalHours() >= DAILY_WORK_HOURS * 0.75 && getDayTotalHours() < DAILY_WORK_HOURS"
-                                            [class.bg-red-500]="getDayTotalHours() < DAILY_WORK_HOURS * 0.75 && getDayTotalHours() > 0"
-                                            [class.bg-muted]="getDayTotalHours() === 0"
-                                            [style.width.%]="(getDayTotalHours() / DAILY_WORK_HOURS) * 100"
-                                            class="h-2 rounded-full transition-all duration-300"
-                                        ></div>
-                                    </div>
+                                    @if (maxHoursPerDay$ | async; as maxHours) {
+                                        <div class="progress-outer">
+                                            <div
+                                                [class.bg-green-500]="getDayTotalHours() >= maxHours"
+                                                [class.bg-yellow-500]="getDayTotalHours() >= maxHours * 0.75 && getDayTotalHours() < maxHours"
+                                                [class.bg-red-500]="getDayTotalHours() < maxHours * 0.75 && getDayTotalHours() > 0"
+                                                [class.bg-muted]="getDayTotalHours() === 0"
+                                                [style.width.%]="(getDayTotalHours() / maxHours) * 100"
+                                                class="h-2 rounded-full transition-all duration-300"
+                                            ></div>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         }
@@ -268,15 +272,17 @@
                                             placeholder="0.0"
                                         />
 
-                                        @if (!singleTaskMode) {
-                                            <button
-                                                (click)="addRemainingHours()"
-                                                type="button"
-                                                class="btn-secondary whitespace-nowrap px-3 py-2"
-                                                title="Add remaining hours to reach daily goal"
-                                            >
-                                                Fill {{ DAILY_WORK_HOURS - getDayTotalHours() | number: '1.1-1' }}h
-                                            </button>
+                                        @if (!singleTaskMode && (maxHoursEnabled$ | async)) {
+                                            @if (maxHoursPerDay$ | async; as maxHours) {
+                                                <button
+                                                    (click)="addRemainingHours()"
+                                                    type="button"
+                                                    class="btn-secondary whitespace-nowrap px-3 py-2"
+                                                    title="Add remaining hours to reach daily goal"
+                                                >
+                                                    Fill {{ maxHours - getDayTotalHours() | number: '1.1-1' }}h
+                                                </button>
+                                            }
                                         }
                                     </div>
                                 </div>

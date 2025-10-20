@@ -65,10 +65,10 @@
               <div class="text-xs" [class.text-muted-foreground]="!day.isToday"
                 [class.text-primary-foreground]="day.isToday">{{ day.summary.total_hours | number:'1.1-1' }}h</div>
               <div class="progress-outer-xs">
-                <div class="progress-inner-xs" [class.bg-green-500]="day.summary.total_hours >= DAILY_WORK_HOURS"
-                  [class.bg-yellow-500]="day.summary.total_hours >= (DAILY_WORK_HOURS * 0.75) && day.summary.total_hours < DAILY_WORK_HOURS"
-                  [class.bg-red-500]="day.summary.total_hours < (DAILY_WORK_HOURS * 0.75) && day.summary.total_hours > 0"
-                  [style.width.%]="(day.summary.total_hours / DAILY_WORK_HOURS) * 100"></div>
+                <div class="progress-inner-xs" [class.bg-green-500]="day.summary.total_hours >= maxHoursPerDay"
+                  [class.bg-yellow-500]="day.summary.total_hours >= (maxHoursPerDay * 0.75) && day.summary.total_hours < maxHoursPerDay"
+                  [class.bg-red-500]="day.summary.total_hours < (maxHoursPerDay * 0.75) && day.summary.total_hours > 0"
+                  [style.width.%]="(day.summary.total_hours / maxHoursPerDay) * 100"></div>
               </div>
               <div class="text-xs space-y-0.5">
                 @for (task of (day.summary.tasks || []).slice(0, 2); track task.id) {

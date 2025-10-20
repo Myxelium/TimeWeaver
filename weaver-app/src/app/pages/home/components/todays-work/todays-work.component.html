@@ -112,16 +112,18 @@
                     placeholder="0.0"
                 />
 
-                @if (remainingHours$ | async; as remHours) {
-                    <button
-                        (click)="addEightHours()"
-                        [disabled]="remHours === 0 || weekendBlocked"
-                        [title]="remHours === 0 ? 'No remaining hours' : 'Add remaining hours'"
-                        type="button"
-                        class="btn-secondary whitespace-nowrap px-3 py-2"
-                    >
-                        {{ getAddHoursLabel(remHours) }}
-                    </button>
+                @if (maxHoursEnabled$ | async) {
+                    @if (remainingHours$ | async; as remHours) {
+                        <button
+                            (click)="addEightHours()"
+                            [disabled]="remHours === 0 || weekendBlocked"
+                            [title]="remHours === 0 ? 'No remaining hours' : 'Add remaining hours'"
+                            type="button"
+                            class="btn-secondary whitespace-nowrap px-3 py-2"
+                        >
+                            {{ getAddHoursLabel(remHours) | async }}
+                        </button>
+                    }
                 }
             </div>
         </div>
@@ -158,9 +160,13 @@
 <div class="card-panel">
     <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-medium">Tasks</h3>
-        <span class="text-sm text-muted-foreground"
-            >{{ todayTotalHours$ | async | number: '1.1-1' }}h / {{ DAILY_WORK_HOURS | number: '1.1-1' }}h</span
-        >
+        @if (todayTotalHours$ | async; as totalHours) {
+            @if (maxHoursPerDay$ | async; as maxHours) {
+                <span class="text-sm text-muted-foreground"
+                    >{{ totalHours | number: '1.1-1' }}h / {{ maxHours | number: '1.1-1' }}h</span
+                >
+            }
+        }
     </div>
 
     @if (tasks.length) {
@@ -225,16 +231,22 @@
             }
         </div>
 
-        @if (remainingDayHours(todayTotalHours$ | async) > 0) {
-            <div class="section-divider">
-                <button
-                    type="button"
-                    (click)="autoDistributeHours()"
-                    class="w-full btn-secondary py-2 px-4"
-                >
-                    Auto-distribute remaining {{ remainingDayHours(todayTotalHours$ | async) | number: '1.1-1' }}h across tasks
-                </button>
-            </div>
+        @if (maxHoursEnabled$ | async) {
+            @if (todayTotalHours$ | async; as totalHours) {
+                @if (remainingDayHours(totalHours) | async; as remaining) {
+                    @if (remaining > 0) {
+                        <div class="section-divider">
+                            <button
+                                type="button"
+                                (click)="autoDistributeHours()"
+                                class="w-full btn-secondary py-2 px-4"
+                            >
+                                Auto-distribute remaining {{ remaining | number: '1.1-1' }}h across tasks
+                            </button>
+                        </div>
+                    }
+                }
+            }
         }
     } @else {
         <p class="empty-state">No tasks added yet. Start by adding your first task above!</p>

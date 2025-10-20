@@ -149,13 +149,28 @@ export class DatabaseService {
 
   getSettings(): Observable<Settings> {
     if (!this.isElectron()) {
-      return of({ monthlyIncome: 60000, monthlyCost: 130000, darkMode: false, ignoreWeekends: true, autoCarryOverTasks: false });
+      return of({
+        monthlyIncome: 60000,
+        monthlyCost: 130000,
+        darkMode: false,
+        ignoreWeekends: true,
+        maxHoursPerDay: 8,
+        maxHoursEnabled: true
+      });
     }
 
     const api = this.electronAPI;
 
-    if (!api)
-      return of({ monthlyIncome: 0, monthlyCost: 0, darkMode: false, ignoreWeekends: true, autoCarryOverTasks: true });
+    if (!api) {
+      return of({
+        monthlyIncome: 0,
+        monthlyCost: 0,
+        darkMode: false,
+        ignoreWeekends: true,
+        maxHoursPerDay: 8,
+        maxHoursEnabled: true
+      });
+    }
 
     return from(api.query({ type: 'get-settings', payload: {} })).pipe(map(result => result as Settings));
   }

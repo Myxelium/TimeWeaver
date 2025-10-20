@@ -65,6 +65,8 @@ export interface Settings {
   monthlyCost: number;
   darkMode: boolean;
   ignoreWeekends: boolean;
+  maxHoursPerDay: number;
+  maxHoursEnabled: boolean;
 }
 
 export const DAILY_WORK_HOURS = 8;

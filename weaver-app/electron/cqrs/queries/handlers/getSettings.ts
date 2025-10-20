@@ -16,6 +16,8 @@ export async function handleGetSettings(dataSource: DataSource): Promise<Setting
     monthlyIncome: settings.monthlyIncome ?? 0,
     monthlyCost: settings.monthlyCost ?? 0,
     darkMode: !!settings.darkMode,
-    ignoreWeekends: settings.ignoreWeekends !== false
+    ignoreWeekends: settings.ignoreWeekends !== false,
+    maxHoursPerDay: settings.maxHoursPerDay ?? 8,
+    maxHoursEnabled: settings.maxHoursEnabled !== false
   };
 }

@@ -4,12 +4,12 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angula
 import { Store } from '@ngrx/store';
 import { selectTodayTasks, selectIsLoading, selectAllTasks } from '../../../../store/tasks/tasks.selectors';
 import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
-import { Task, DAILY_WORK_HOURS } from '../../../../shared/models';
+import { Task } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
 import { combineLatest, of, Subject, Observable } from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import { map, take, startWith, takeUntil } from 'rxjs/operators';
-import { selectIgnoreWeekends } from '../../../../store/settings/settings.selectors';
+import { selectIgnoreWeekends, selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -19,7 +19,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
   templateUrl: './todays-work.component.html'
 })
 export class TodaysWorkComponent implements OnDestroy {
-  DAILY_WORK_HOURS = DAILY_WORK_HOURS;
+  maxHoursPerDay$ = this._store.select(selectMaxHoursPerDay);
+  maxHoursEnabled$ = this._store.select(selectMaxHoursEnabled);
   currentDate = new Date();
   tasks: Task[] = [];
   todayTasks$: Observable<Task[]> = this._store.select(selectTodayTasks);
@@ -148,13 +149,13 @@ export class TodaysWorkComponent implements OnDestroy {
     const currentTasks$ = this.todayTasks$.pipe(take(1));
     const totalHours$ = this.todayTotalHours$.pipe(take(1));
 
-    combineLatest([currentTasks$, totalHours$])
+    combineLatest([currentTasks$, totalHours$, this.maxHoursPerDay$.pipe(take(1))])
       .pipe(take(1))
-      .subscribe(([tasks, total]) => {
+      .subscribe(([tasks, total, maxHours]) => {
         if (!tasks.length)
           return;
 
-        const remaining = DAILY_WORK_HOURS - total;
+        const remaining = maxHours - total;
 
         if (remaining <= 0)
           return;
@@ -168,11 +169,11 @@ export class TodaysWorkComponent implements OnDestroy {
   }
 
   addEightHours(): void {
-    this.getRemainingHours()
+    combineLatest([this.getRemainingHours(), this.maxHoursPerDay$])
       .pipe(take(1))
-      .subscribe(remaining => {
+      .subscribe(([remaining, maxHours]) => {
         const current = this.taskForm.get('hours')?.value || 0;
-        const toAdd = Math.min(8, remaining);
+        const toAdd = Math.min(maxHours, remaining);
 
         this.taskForm.patchValue({ hours: current + toAdd });
       });
@@ -185,9 +186,9 @@ export class TodaysWorkComponent implements OnDestroy {
         startWith(this.taskForm.get('hours')?.value || 0)
       ) || of(0);
 
-    return combineLatest([this.todayTotalHours$, hoursValueChanges]).pipe(
-      map(([totalHours, currentTaskHours]) => {
-        const remainingForDay = DAILY_WORK_HOURS - totalHours;
+    return combineLatest([this.todayTotalHours$, hoursValueChanges, this.maxHoursPerDay$]).pipe(
+      map(([totalHours, currentTaskHours, maxHours]) => {
+        const remainingForDay = maxHours - totalHours;
         const editingTaskHours = this.editingTask ? this.editingTask.hours : 0;
 
         return Math.max(0, remainingForDay + editingTaskHours - (currentTaskHours || 0));
@@ -227,26 +228,30 @@ export class TodaysWorkComponent implements OnDestroy {
 
   trackTask(_index: number, task: Task) { return task.id ?? task.title; }
 
-  getAddHoursLabel(remaining: number): string {
-    if (remaining >= 8)
-      return '+8h';
+  getAddHoursLabel(remaining: number): Observable<string> {
+    return this.maxHoursPerDay$.pipe(
+      map(maxHours => {
+        if (remaining >= maxHours)
+          return `+${maxHours.toFixed(1)}h`;
 
-    if (remaining > 0)
-      return `+${remaining.toFixed(1)}h`;
+        if (remaining > 0)
+          return `+${remaining.toFixed(1)}h`;
 
-    return '0h';
+        return '0h';
+      })
+    );
   }
 
-  remainingDayHours(total: number | null | undefined): number {
+  remainingDayHours(total: number | null | undefined): Observable<number> {
     const totalHours = typeof total === 'number' ? total : 0;
 
-    return Math.max(0, DAILY_WORK_HOURS - totalHours);
+    return this.maxHoursPerDay$.pipe(map(maxHours => Math.max(0, maxHours - totalHours)));
   }
 
-  progressPercent(total: number | null | undefined): number {
+  progressPercent(total: number | null | undefined): Observable<number> {
     const totalHours = typeof total === 'number' ? total : 0;
 
-    return Math.min(100, (totalHours / DAILY_WORK_HOURS) * 100);
+    return this.maxHoursPerDay$.pipe(map(maxHours => Math.min(100, (totalHours / maxHours) * 100)));
   }
 
   private resetForm(): void {

@@ -45,6 +45,8 @@ export interface SaveSettingsCommand {
     monthlyCost: number;
     darkMode: boolean;
     ignoreWeekends: boolean;
+    maxHoursPerDay: number;
+    maxHoursEnabled: boolean;
   };
 }
 
@@ -110,4 +112,6 @@ export interface SettingsDTO {
   monthlyCost: number;
   darkMode: boolean;
   ignoreWeekends: boolean;
+  maxHoursPerDay: number;
+  maxHoursEnabled: boolean;
 }

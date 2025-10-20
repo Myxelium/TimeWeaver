@@ -4,8 +4,8 @@ import { LucideAngularModule, ChevronLeft, ChevronRight } from 'lucide-angular';
 import { Store } from '@ngrx/store';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
-import { selectIgnoreWeekends } from '../../../../store/settings/settings.selectors';
-import { DaySummary, DAILY_WORK_HOURS } from '../../../../shared/models';
+import { selectIgnoreWeekends, selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+import { DaySummary } from '../../../../shared/models';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore } from 'date-fns';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -35,7 +35,6 @@ export class MonthlyOverviewComponent {
 
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
-  DAILY_WORK_HOURS = DAILY_WORK_HOURS;
   dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   currentDate = signal(new Date());
@@ -46,9 +45,11 @@ export class MonthlyOverviewComponent {
 
   private store = inject(Store);
   private ignoreWeekendsSignal = toSignal(this.store.select(selectIgnoreWeekends), { initialValue: true });
+  private maxHoursPerDaySignal = toSignal(this.store.select(selectMaxHoursPerDay), { initialValue: 8 });
   private monthlyDataSignal = toSignal(this.store.select(selectMonthlyData), { initialValue: [] as DaySummary[] });
   get monthlyData(): DaySummary[] { return this.monthlyDataSignal(); }
   get ignoreWeekends(): boolean { return this.ignoreWeekendsSignal(); }
+  get maxHoursPerDay(): number { return this.maxHoursPerDaySignal(); }
 
   constructor() {
     const now = new Date();
@@ -121,7 +122,7 @@ export class MonthlyOverviewComponent {
     });
 
     const averageHours = daysWithTasks > 0 ? totalHours / daysWithTasks : 0;
-    const expectedHours = workingDays * DAILY_WORK_HOURS;
+    const expectedHours = workingDays * this.maxHoursPerDay;
     const completionRate = expectedHours > 0 ? (totalHours / expectedHours) * 100 : 0;
 
     return {

@@ -15,6 +15,8 @@ export async function handleSaveSettings(command: SaveSettingsCommand, dataSourc
   settings.monthlyCost = command.payload.monthlyCost;
   settings.darkMode = command.payload.darkMode;
   settings.ignoreWeekends = command.payload.ignoreWeekends;
+  settings.maxHoursPerDay = command.payload.maxHoursPerDay;
+  settings.maxHoursEnabled = command.payload.maxHoursEnabled;
   await repo.save(settings);
   return true;
 }
