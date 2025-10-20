@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PreviousDaysComponent } from './components/previous-days/previous-days.component';
 import { TodaysWorkComponent } from './components/todays-work/todays-work.component';
 import { Store } from '@ngrx/store';
 import { TasksActions } from '../../store';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { DateChangeDetectionService } from '../../shared/services';
 
 @Component({
   selector: 'app-home',
@@ -16,19 +19,51 @@ import { TasksActions } from '../../store';
     }
   `]
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit, OnDestroy {
   currentDate = new Date();
+  private destroy$ = new Subject<void>();
 
-  constructor(private _store: Store) {
-    // Ensure the selected month resets to the current month when navigating to Home
+  constructor(
+    private _store: Store,
+    private dateChangeService: DateChangeDetectionService
+  ) {}
+
+  ngOnInit(): void {
+    this.currentDate = this.dateChangeService.currentDate;
+    this.loadCurrentDateData();
+    this.subscribeToDayChanges();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadCurrentDateData(): void {
+    const currentDate = this.dateChangeService.currentDate;
+
     this._store.dispatch(TasksActions.setSelectedMonth({
-      year: this.currentDate.getFullYear(),
-      month: this.currentDate.getMonth() + 1
+      year: currentDate.getFullYear(),
+      month: currentDate.getMonth() + 1
     }));
 
     this._store.dispatch(TasksActions.loadMonthlyData({
-      year: this.currentDate.getFullYear(),
-      month: this.currentDate.getMonth() + 1
+      year: currentDate.getFullYear(),
+      month: currentDate.getMonth() + 1
     }));
+
+    const dateStr = this.dateChangeService.currentDateString;
+
+    this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
+    this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+  }
+
+  private subscribeToDayChanges(): void {
+    this.dateChangeService.currentDate$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.currentDate = this.dateChangeService.currentDate;
+        this.loadCurrentDateData();
+      });
   }
 }

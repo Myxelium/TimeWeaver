@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -11,6 +11,7 @@ import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import { map, take, startWith, takeUntil } from 'rxjs/operators';
 import { selectIgnoreWeekends, selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { DateChangeDetectionService } from '../../../../shared/services';
 
 @Component({
   selector: 'app-todays-work',
@@ -18,7 +19,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './todays-work.component.html'
 })
-export class TodaysWorkComponent implements OnDestroy {
+export class TodaysWorkComponent implements OnInit, OnDestroy {
   maxHoursPerDay$ = this._store.select(selectMaxHoursPerDay);
   maxHoursEnabled$ = this._store.select(selectMaxHoursEnabled);
   currentDate = new Date();
@@ -46,25 +47,15 @@ export class TodaysWorkComponent implements OnDestroy {
 
   private destroy$ = new Subject<void>();
   private confirm = inject(ConfirmService);
-
+  private dateChangeService = inject(DateChangeDetectionService);
   private ignoreWeekendsSignal = toSignal(inject(Store).select(selectIgnoreWeekends), { initialValue: true });
 
-  constructor(private _store: Store) {
-    const dateStr = format(this.currentDate, 'yyyy-MM-dd');
+  constructor(private _store: Store) {}
 
-    this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
-    this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
-    this._store.dispatch(loadAllTasks());
-
-    this.loadTaskTitlesFromLast30Days();
-    this.taskForm.get('title')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => this.filterSuggestions(val));
-    this.todayTasks$.pipe(takeUntil(this.destroy$)).subscribe(tasks => (this.tasks = tasks));
-
-    this.applyWeekendBlockState();
-    this._store
-      .select(selectIgnoreWeekends)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.applyWeekendBlockState());
+  ngOnInit(): void {
+    this.initializeDate();
+    this.setupSubscriptions();
+    this.subscribeToDayChanges();
   }
 
   ngOnDestroy(): void {
@@ -252,6 +243,46 @@ export class TodaysWorkComponent implements OnDestroy {
     const totalHours = typeof total === 'number' ? total : 0;
 
     return this.maxHoursPerDay$.pipe(map(maxHours => Math.min(100, (totalHours / maxHours) * 100)));
+  }
+
+  private initializeDate(): void {
+    this.currentDate = this.dateChangeService.currentDate;
+
+    const dateStr = this.dateChangeService.currentDateString;
+
+    this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
+    this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+    this._store.dispatch(loadAllTasks());
+  }
+
+  private setupSubscriptions(): void {
+    this.loadTaskTitlesFromLast30Days();
+    this.taskForm.get('title')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => this.filterSuggestions(val));
+    this.todayTasks$.pipe(takeUntil(this.destroy$)).subscribe(tasks => (this.tasks = tasks));
+
+    this.applyWeekendBlockState();
+    this._store
+      .select(selectIgnoreWeekends)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.applyWeekendBlockState());
+  }
+
+  private subscribeToDayChanges(): void {
+    this.dateChangeService.currentDate$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.currentDate = this.dateChangeService.currentDate;
+
+        const dateStr = this.dateChangeService.currentDateString;
+
+        this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
+        this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+        this._store.dispatch(loadAllTasks());
+
+        this.resetForm();
+        this.loadTaskTitlesFromLast30Days();
+        this.applyWeekendBlockState();
+      });
   }
 
   private resetForm(): void {
