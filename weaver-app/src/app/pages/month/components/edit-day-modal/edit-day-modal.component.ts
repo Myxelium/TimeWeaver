@@ -4,10 +4,11 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Store } from '@ngrx/store';
 import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
 import { selectAllTasks, selectIsLoading } from '../../../../store/tasks/tasks.selectors';
-import { Task, DaySummary, DAILY_WORK_HOURS } from '../../../../shared/models';
+import { Task, DaySummary } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
-import { Subject, takeUntil } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
+import { selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
 
 @Component({
   selector: 'app-edit-day-modal',
@@ -19,14 +20,19 @@ export class EditDayModalComponent implements OnChanges {
   @Input() isOpen = false;
   @Input() selectedDate: Date | null = null;
   @Input() daySummary: DaySummary | undefined;
+  @Input() allowDateChange = false; // New flag to enable date editing
+  @Input() singleTaskMode = false; // New flag for editing single task from records
+  @Input() taskToEdit: Task | null = null; // Direct task to edit (for records page)
   @Output() closed = new EventEmitter<void>();
 
-  DAILY_WORK_HOURS = DAILY_WORK_HOURS;
+  maxHoursPerDay$: Observable<number> = inject(Store).select(selectMaxHoursPerDay);
+  maxHoursEnabled$: Observable<boolean> = inject(Store).select(selectMaxHoursEnabled);
   isLoading$ = inject(Store).select(selectIsLoading);
   taskForm: FormGroup = inject(FormBuilder).group({
     title: ['', Validators.required],
     description: [''],
-    hours: [0, [Validators.min(0)]]
+    hours: [0, [Validators.min(0)]],
+    date: ['', Validators.required] // Add date field to form
   });
 
   editingTask: Task | null = null;
@@ -48,11 +54,13 @@ export class EditDayModalComponent implements OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe(tasks => {
         const thirtyDaysAgo = subDays(new Date(), 30);
-        const recent = tasks.filter(t => {
-          const d = new Date(t.date);
-          return d >= thirtyDaysAgo && d <= new Date();
+        const recent = tasks.filter(taskItem => {
+          const dateObj = new Date(taskItem.date);
+
+          return dateObj >= thirtyDaysAgo && dateObj <= new Date();
         });
-        const unique = [...new Set(recent.map(t => t.title))];
+        const unique = [...new Set(recent.map(taskItem => taskItem.title))];
+
         this.allTaskTitles = unique.reverse();
         this.recentSuggestions = this.allTaskTitles.slice(0, 5);
       });
@@ -65,9 +73,28 @@ export class EditDayModalComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['daySummary'] && this.editingTask) {
       const stillExists = this.daySummary?.tasks?.some(task => task.id === this.editingTask?.id);
-      if (!stillExists) this.resetForm();
+
+      if (!stillExists)
+        this.resetForm();
     }
-    if (changes['open'] && !this.isOpen) this.resetForm();
+
+    if (changes['selectedDate'] && this.selectedDate) {
+      const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
+
+      this.taskForm.patchValue({ date: dateStr });
+    }
+
+    if (changes['taskToEdit'] && this.taskToEdit) {
+      this.editTask(this.taskToEdit);
+    }
+
+    if (changes['isOpen']) {
+      if (!this.isOpen) {
+        this.resetForm();
+      } else if (this.taskToEdit) {
+        this.editTask(this.taskToEdit);
+      }
+    }
   }
 
   getDayTotalHours(): number {
@@ -83,17 +110,24 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   addRemainingHours(): void {
-    const remaining = Math.max(0, DAILY_WORK_HOURS - this.getDayTotalHours());
-    const current = this.taskForm.get('hours')?.value || 0;
-    this.taskForm.patchValue({ hours: current + remaining });
+    this.maxHoursPerDay$.subscribe(maxHours => {
+      const remaining = Math.max(0, maxHours - this.getDayTotalHours());
+      const current = this.taskForm.get('hours')?.value || 0;
+
+      this.taskForm.patchValue({ hours: current + remaining });
+    }).unsubscribe();
   }
 
   onSubmit(): void {
-    if (!this.selectedDate) return;
-    if (this.taskForm.invalid) return;
+    if (this.taskForm.invalid)
+      return;
+
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
-    const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
+    const dateStr = this.allowDateChange ? formValue.date : (this.selectedDate ? format(this.selectedDate, 'yyyy-MM-dd') : '');
+
+    if (!dateStr)
+      return;
 
     if (this.editingTask) {
       this.store.dispatch(
@@ -121,12 +155,22 @@ export class EditDayModalComponent implements OnChanges {
         })
       );
     }
+
     this.resetForm();
+
+    if (this.singleTaskMode) {
+      this.close();
+    }
   }
 
   editTask(task: Task): void {
     this.editingTask = task;
-    this.taskForm.patchValue({ title: task.title, description: task.description, hours: task.hours });
+    this.taskForm.patchValue({
+      title: task.title,
+      description: task.description,
+      hours: task.hours,
+      date: task.date
+    });
   }
 
   async deleteTask(taskId: number): Promise<void> {
@@ -177,10 +221,13 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   resetForm(): void {
+    const currentDate = this.selectedDate ? format(this.selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+
     this.taskForm.reset();
-    this.taskForm.patchValue({ hours: 0 });
+    this.taskForm.patchValue({ hours: 0, date: currentDate });
     this.editingTask = null;
-    this.showSuggestions = false; this.showAllSuggestions = false;
+    this.showSuggestions = false;
+    this.showAllSuggestions = false;
   }
 
   private filterSuggestions(value: string): void {
@@ -191,6 +238,7 @@ export class EditDayModalComponent implements OnChanges {
     }
 
     const search = value.toLowerCase();
+
     this.filteredSuggestions = this.allTaskTitles.filter(task => task.toLowerCase().includes(search)).slice(0, 10);
     this.showSuggestions = this.filteredSuggestions.length > 0;
   }

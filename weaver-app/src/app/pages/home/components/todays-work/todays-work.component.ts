@@ -1,16 +1,17 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { selectTodayTasks, selectIsLoading } from '../../../../store/tasks/tasks.selectors';
+import { selectTodayTasks, selectIsLoading, selectAllTasks } from '../../../../store/tasks/tasks.selectors';
 import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
-import { Task, DAILY_WORK_HOURS } from '../../../../shared/models';
+import { Task } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
 import { combineLatest, of, Subject, Observable } from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import { map, take, startWith, takeUntil } from 'rxjs/operators';
-import { selectIgnoreWeekends } from '../../../../store/settings/settings.selectors';
+import { selectIgnoreWeekends, selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { DateChangeDetectionService } from '../../../../shared/services';
 
 @Component({
   selector: 'app-todays-work',
@@ -18,8 +19,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './todays-work.component.html'
 })
-export class TodaysWorkComponent implements OnDestroy {
-  DAILY_WORK_HOURS = DAILY_WORK_HOURS;
+export class TodaysWorkComponent implements OnInit, OnDestroy {
+  maxHoursPerDay$ = this._store.select(selectMaxHoursPerDay);
+  maxHoursEnabled$ = this._store.select(selectMaxHoursEnabled);
   currentDate = new Date();
   tasks: Task[] = [];
   todayTasks$: Observable<Task[]> = this._store.select(selectTodayTasks);
@@ -45,24 +47,15 @@ export class TodaysWorkComponent implements OnDestroy {
 
   private destroy$ = new Subject<void>();
   private confirm = inject(ConfirmService);
-
+  private dateChangeService = inject(DateChangeDetectionService);
   private ignoreWeekendsSignal = toSignal(inject(Store).select(selectIgnoreWeekends), { initialValue: true });
 
-  constructor(private _store: Store) {
-    const dateStr = format(this.currentDate, 'yyyy-MM-dd');
-    this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
-    this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
-    this._store.dispatch(loadAllTasks());
+  constructor(private _store: Store) {}
 
-    this.loadTaskTitlesFromLast30Days();
-    this.taskForm.get('title')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => this.filterSuggestions(val));
-    this.todayTasks$.pipe(takeUntil(this.destroy$)).subscribe(tasks => (this.tasks = tasks));
-
-    this.applyWeekendBlockState();
-    this._store
-      .select(selectIgnoreWeekends)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.applyWeekendBlockState());
+  ngOnInit(): void {
+    this.initializeDate();
+    this.setupSubscriptions();
+    this.subscribeToDayChanges();
   }
 
   ngOnDestroy(): void {
@@ -71,16 +64,22 @@ export class TodaysWorkComponent implements OnDestroy {
   }
 
   get weekendBlocked(): boolean {
-    if (!this.ignoreWeekendsSignal()) return false;
+    if (!this.ignoreWeekendsSignal())
+      return false;
+
     const dow = this.currentDate.getDay();
+
     return dow === 0 || dow === 6;
   }
 
   onSubmit(): void {
-    if (this.taskForm.invalid || this.weekendBlocked) return;
+    if (this.taskForm.invalid || this.weekendBlocked)
+      return;
+
     const formValue = this.taskForm.value;
     const hours = formValue.hours || 0;
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
+
     if (this.editingTask) {
       this._store.dispatch(
         TasksActions.saveTask({
@@ -100,6 +99,7 @@ export class TodaysWorkComponent implements OnDestroy {
         })
       );
     }
+
     this.resetForm();
   }
 
@@ -121,12 +121,17 @@ export class TodaysWorkComponent implements OnDestroy {
       cancelText: 'Cancel',
       destructive: true
     });
-    if (!confirmed) return;
+
+    if (!confirmed)
+      return;
+
     this._store.dispatch(TasksActions.deleteTask({ taskId }));
+
     if (this.editingTask && this.editingTask.id === taskId) {
       this.resetForm();
       queueMicrotask(() => document.getElementById('taskTitle')?.focus());
     }
+
     this.showSuggestions = false;
     this.showAllSuggestions = false;
   }
@@ -134,13 +139,20 @@ export class TodaysWorkComponent implements OnDestroy {
   autoDistributeHours(): void {
     const currentTasks$ = this.todayTasks$.pipe(take(1));
     const totalHours$ = this.todayTotalHours$.pipe(take(1));
-    combineLatest([currentTasks$, totalHours$])
+
+    combineLatest([currentTasks$, totalHours$, this.maxHoursPerDay$.pipe(take(1))])
       .pipe(take(1))
-      .subscribe(([tasks, total]) => {
-        if (!tasks.length) return;
-        const remaining = DAILY_WORK_HOURS - total;
-        if (remaining <= 0) return;
+      .subscribe(([tasks, total, maxHours]) => {
+        if (!tasks.length)
+          return;
+
+        const remaining = maxHours - total;
+
+        if (remaining <= 0)
+          return;
+
         const addPer = remaining / tasks.length;
+
         tasks.forEach(task => {
           this._store.dispatch(TasksActions.saveTask({ task: { ...task, hours: task.hours + addPer } }));
         });
@@ -148,11 +160,12 @@ export class TodaysWorkComponent implements OnDestroy {
   }
 
   addEightHours(): void {
-    this.getRemainingHours()
+    combineLatest([this.getRemainingHours(), this.maxHoursPerDay$])
       .pipe(take(1))
-      .subscribe(remaining => {
+      .subscribe(([remaining, maxHours]) => {
         const current = this.taskForm.get('hours')?.value || 0;
-        const toAdd = Math.min(8, remaining);
+        const toAdd = Math.min(maxHours, remaining);
+
         this.taskForm.patchValue({ hours: current + toAdd });
       });
   }
@@ -163,10 +176,12 @@ export class TodaysWorkComponent implements OnDestroy {
         map(value => value || 0),
         startWith(this.taskForm.get('hours')?.value || 0)
       ) || of(0);
-    return combineLatest([this.todayTotalHours$, hoursValueChanges]).pipe(
-      map(([totalHours, currentTaskHours]) => {
-        const remainingForDay = DAILY_WORK_HOURS - totalHours;
+
+    return combineLatest([this.todayTotalHours$, hoursValueChanges, this.maxHoursPerDay$]).pipe(
+      map(([totalHours, currentTaskHours, maxHours]) => {
+        const remainingForDay = maxHours - totalHours;
         const editingTaskHours = this.editingTask ? this.editingTask.hours : 0;
+
         return Math.max(0, remainingForDay + editingTaskHours - (currentTaskHours || 0));
       })
     );
@@ -174,6 +189,7 @@ export class TodaysWorkComponent implements OnDestroy {
 
   onTitleFocus(): void {
     const value = this.taskForm.get('title')?.value;
+
     if (value) {
       this.filterSuggestions(value);
     } else {
@@ -203,20 +219,70 @@ export class TodaysWorkComponent implements OnDestroy {
 
   trackTask(_index: number, task: Task) { return task.id ?? task.title; }
 
-  getAddHoursLabel(remaining: number): string {
-    if (remaining >= 8) return '+8h';
-    if (remaining > 0) return `+${remaining.toFixed(1)}h`;
-    return '0h';
+  getAddHoursLabel(remaining: number): Observable<string> {
+    return this.maxHoursPerDay$.pipe(
+      map(maxHours => {
+        if (remaining >= maxHours)
+          return `+${maxHours.toFixed(1)}h`;
+
+        if (remaining > 0)
+          return `+${remaining.toFixed(1)}h`;
+
+        return '0h';
+      })
+    );
   }
 
-  remainingDayHours(total: number | null | undefined): number {
+  remainingDayHours(total: number | null | undefined): Observable<number> {
     const totalHours = typeof total === 'number' ? total : 0;
-    return Math.max(0, DAILY_WORK_HOURS - totalHours);
+
+    return this.maxHoursPerDay$.pipe(map(maxHours => Math.max(0, maxHours - totalHours)));
   }
 
-  progressPercent(total: number | null | undefined): number {
+  progressPercent(total: number | null | undefined): Observable<number> {
     const totalHours = typeof total === 'number' ? total : 0;
-    return Math.min(100, (totalHours / DAILY_WORK_HOURS) * 100);
+
+    return this.maxHoursPerDay$.pipe(map(maxHours => Math.min(100, (totalHours / maxHours) * 100)));
+  }
+
+  private initializeDate(): void {
+    this.currentDate = this.dateChangeService.currentDate;
+
+    const dateStr = this.dateChangeService.currentDateString;
+
+    this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
+    this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+    this._store.dispatch(loadAllTasks());
+  }
+
+  private setupSubscriptions(): void {
+    this.loadTaskTitlesFromLast30Days();
+    this.taskForm.get('title')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => this.filterSuggestions(val));
+    this.todayTasks$.pipe(takeUntil(this.destroy$)).subscribe(tasks => (this.tasks = tasks));
+
+    this.applyWeekendBlockState();
+    this._store
+      .select(selectIgnoreWeekends)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.applyWeekendBlockState());
+  }
+
+  private subscribeToDayChanges(): void {
+    this.dateChangeService.currentDate$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.currentDate = this.dateChangeService.currentDate;
+
+        const dateStr = this.dateChangeService.currentDateString;
+
+        this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
+        this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+        this._store.dispatch(loadAllTasks());
+
+        this.resetForm();
+        this.loadTaskTitlesFromLast30Days();
+        this.applyWeekendBlockState();
+      });
   }
 
   private resetForm(): void {
@@ -229,17 +295,17 @@ export class TodaysWorkComponent implements OnDestroy {
 
   private loadTaskTitlesFromLast30Days(): void {
     this._store
-      .select(selectTodayTasks)
+      .select(selectAllTasks)
       .pipe(takeUntil(this.destroy$))
       .subscribe(tasks => {
         const thirtyDaysAgo = subDays(this.currentDate, 30);
-
         const recentTasks = tasks.filter(task => {
           const taskDate = new Date(task.date);
+
           return taskDate >= thirtyDaysAgo && taskDate <= this.currentDate;
         });
-
         const uniqueTitles = [...new Set(recentTasks.map(task => task.title))];
+
         this.allTaskTitles = uniqueTitles.reverse();
         this.recentSuggestions = this.allTaskTitles.slice(0, 5);
       });
@@ -263,9 +329,11 @@ export class TodaysWorkComponent implements OnDestroy {
 
   private applyWeekendBlockState(): void {
     if (this.weekendBlocked) {
-      if (!this.taskForm.disabled) this.taskForm.disable({ emitEvent: false });
+      if (!this.taskForm.disabled)
+        this.taskForm.disable({ emitEvent: false });
     } else {
-      if (this.taskForm.disabled) this.taskForm.enable({ emitEvent: false });
+      if (this.taskForm.disabled)
+        this.taskForm.enable({ emitEvent: false });
     }
   }
 }

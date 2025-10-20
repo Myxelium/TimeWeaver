@@ -1,60 +1,95 @@
 <header class="h-16 bg-card border-b border-border flex items-center justify-between px-6">
-  <div class="flex items-center">
-    <h1 class="text-2xl font-semibold text-foreground">Weaver</h1>
-  </div>
-  <div class="flex items-center space-x-6">
-    <div class="flex items-center space-x-3">
-      <span class="text-sm text-muted-foreground">{{ currentMonth }}</span>
-      <div class="flex items-center space-x-2">
-        <div class="w-32 h-2 bg-secondary rounded-full overflow-hidden">
-          <div class="h-full bg-primary transition-all duration-300" [style.width.%]="progressPercentage$ | async">
-          </div>
-        </div>
-        <span class="text-sm font-medium">{{ monthlySummary$ | async | number:'1.1-1' }}h</span>
-      </div>
+    <div class="flex items-center">
+        <h1 class="text-2xl font-semibold text-foreground">Weaver</h1>
     </div>
 
-    <ng-container *ngIf="(monthlyIncome$ | async) as inc">
-      <div class="text-xs" [ngClass]="{'hidden': !inc || inc === 0}">
-        <div class="flex flex-col text-right">
-          <span class="text-muted-foreground flex items-center space-x-1">
-            <span>Earned</span>
-            <button type="button" (click)="toggleEarnedFinanceVisibility()"
-              class="p-0.5 rounded hover:bg-muted transition" aria-label="Toggle visibility">
-              <lucide-icon [img]="showEarnedFinance ? eyeOff : eye" class="w-3.5 h-3.5"></lucide-icon>
-            </button>
-          </span>
-          <span class="font-semibold transition-all select-none"
-            [style.filter]="showEarnedFinance ? 'none' : 'blur(4px)'"
-            title="Pro-rated: loggedHours/expectedHours * monthlyIncome">
-            {{ (earned$ | async) | number:'1.0-0' }} / {{ inc | number:'1.0-0' }}
-          </span>
+    <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-3">
+            <span class="text-sm text-muted-foreground">{{ selectedMonthLabel$ | async }}</span>
+            <div class="flex items-center space-x-2">
+                <div class="w-32 h-2 bg-secondary rounded-full overflow-hidden">
+                    <div
+                        [style.width.%]="progressPercentage$ | async"
+                        class="h-full bg-primary transition-all duration-300"
+                    ></div>
+                </div>
+                <span class="text-sm font-medium">{{ monthlySummary$ | async | number: '1.1-1' }}h</span>
+            </div>
         </div>
-      </div>
-    </ng-container>
 
-    <ng-container *ngIf="(monthlyCost$ | async) as cost">
-      <div class="text-xs" [ngClass]="{'hidden': !cost || cost === 0}">
-        <div class="flex flex-col text-right">
-          <span class="text-muted-foreground flex items-center space-x-1">
-            <span>Cost</span>
-            <button type="button" (click)="toggleCostFinanceVisibility()"
-              class="p-0.5 rounded hover:bg-muted transition" aria-label="Toggle visibility">
-              <lucide-icon [img]="showCostFinance ? eyeOff : eye" class="w-3.5 h-3.5"></lucide-icon>
-            </button>
-          </span>
-          <span class="font-semibold transition-all select-none" [style.filter]="showCostFinance ? 'none' : 'blur(4px)'"
-            title="Pro-rated: loggedHours/expectedHours * monthlyCost">
-            {{ (costed$ | async) | number:'1.0-0' }} / {{ cost | number:'1.0-0' }}
-          </span>
-        </div>
-      </div>
-    </ng-container>
+        @if (monthlyIncome$ | async; as inc) {
+            @if (inc && inc !== 0) {
+            <div
+                class="text-xs"
+            >
+                <div class="flex flex-col text-right">
+                    <span class="text-muted-foreground flex items-center space-x-1">
+                        <span>Earned</span>
+                        <button
+                            (click)="toggleEarnedFinanceVisibility()"
+                            type="button"
+                            class="p-0.5 rounded hover:bg-muted transition"
+                            aria-label="Toggle visibility"
+                        >
+                            <lucide-icon
+                                [img]="showEarnedFinance ? eyeOff : eye"
+                                class="w-3.5 h-3.5"
+                            />
+                        </button>
+                    </span>
+                    <span
+                        [style.filter]="showEarnedFinance ? 'none' : 'blur(4px)'"
+                        class="font-semibold transition-all select-none"
+                        title="Pro-rated: loggedHours/expectedHours * monthlyIncome"
+                    >
+                        {{ earned$ | async | number: '1.0-0' }} / {{ inc | number: '1.0-0' }}
+                    </span>
+                </div>
+            </div>
+            }
+        }
 
-    <button (click)="exportCurrentMonth()"
-      class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-      [disabled]="isLoading$ | async">
-      Export CSV
-    </button>
-  </div>
+        @if (monthlyCost$ | async; as cost) {
+            @if (cost && cost !== 0) {
+            <div
+                class="text-xs"
+            >
+                <div class="flex flex-col text-right">
+                    <span class="text-muted-foreground flex items-center space-x-1">
+                        <span>Cost</span>
+
+                        <button
+                            (click)="toggleCostFinanceVisibility()"
+                            type="button"
+                            class="p-0.5 rounded hover:bg-muted transition"
+                            aria-label="Toggle visibility"
+                        >
+                            <lucide-icon
+                                [img]="showCostFinance ? eyeOff : eye"
+                                class="w-3.5 h-3.5"
+                            />
+                        </button>
+                    </span>
+
+                    <span
+                        [style.filter]="showCostFinance ? 'none' : 'blur(4px)'"
+                        class="font-semibold transition-all select-none"
+                        title="Pro-rated: loggedHours/expectedHours * monthlyCost"
+                    >
+                        {{ costed$ | async | number: '1.0-0' }} / {{ cost | number: '1.0-0' }}
+                    </span>
+                </div>
+            </div>
+            }
+        }
+
+        <button
+            (click)="exportCurrentMonth()"
+            type="button"
+            [disabled]="isLoading$ | async"
+            class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
+        >
+            Export CSV
+        </button>
+    </div>
 </header>

@@ -1,4 +1,4 @@
-import { createActionGroup, props, createAction } from '@ngrx/store';
+import { createActionGroup, props, emptyProps, createAction } from '@ngrx/store';
 import { Task, DaySummary, CreateTaskRequest, UpdateTaskRequest } from '../../shared/models';
 
 export const TasksActions = createActionGroup({
@@ -28,7 +28,11 @@ export const TasksActions = createActionGroup({
 
     'Export Csv': props<{ year: number; month: number }>(),
     'Export Csv Success': props<{ success: boolean }>(),
-    'Export Csv Failure': props<{ error: string }>()
+    'Export Csv Failure': props<{ error: string }>(),
+
+    'Export Csv All': emptyProps(),
+    'Export Csv All Success': props<{ success: boolean }>(),
+    'Export Csv All Failure': props<{ error: string }>()
   }
 });
 

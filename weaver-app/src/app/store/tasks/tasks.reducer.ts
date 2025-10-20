@@ -40,5 +40,9 @@ export const tasksReducer = createReducer(
 
   on(TasksActions.exportCsv, (state) => ({ ...state, isLoading: true })),
   on(TasksActions.exportCsvSuccess, (state) => ({ ...state, isLoading: false })),
-  on(TasksActions.exportCsvFailure, (state, { error }) => ({ ...state, isLoading: false, error }))
+  on(TasksActions.exportCsvFailure, (state, { error }) => ({ ...state, isLoading: false, error })),
+
+  on(TasksActions.exportCsvAll, (state) => ({ ...state, isLoading: true })),
+  on(TasksActions.exportCsvAllSuccess, (state) => ({ ...state, isLoading: false })),
+  on(TasksActions.exportCsvAllFailure, (state, { error }) => ({ ...state, isLoading: false, error }))
 );

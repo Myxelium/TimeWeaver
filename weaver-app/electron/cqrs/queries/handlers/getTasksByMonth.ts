@@ -8,7 +8,6 @@ export async function handleGetTasksByMonth(query: GetTasksByMonthQuery, dataSou
   const startDate = format(startOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
   const endDate = format(endOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
   const taskRepository = dataSource.getRepository(Task);
-
   const summaryRows = await taskRepository.createQueryBuilder('task')
     .select('task.date', 'date')
     .addSelect('SUM(task.hours)', 'total_hours')
@@ -17,10 +16,12 @@ export async function handleGetTasksByMonth(query: GetTasksByMonthQuery, dataSou
     .groupBy('task.date')
     .orderBy('task.date')
     .getRawMany();
-
   const allTasks = await taskRepository.find({ where: { date: Between(startDate, endDate) }, order: { date: 'ASC', created_at: 'DESC' } });
   const tasksIndexedByDate: Record<string, Task[]> = {};
-  allTasks.forEach(taskEntity => { (tasksIndexedByDate[taskEntity.date] ||= []).push(taskEntity); });
+
+  allTasks.forEach(taskEntity => {
+    (tasksIndexedByDate[taskEntity.date] ||= []).push(taskEntity);
+  });
 
   return summaryRows.map(row => ({
     date: row.date,

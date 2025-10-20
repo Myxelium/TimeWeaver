@@ -9,7 +9,6 @@ export async function handleExportCsv(
   saveCsv: (defaultName: string, content: string) => Promise<boolean>
 ): Promise<boolean> {
   const { year, month } = query.payload;
-
   const startDate = format(
     startOfMonth(new Date(year, month - 1)),
     'yyyy-MM-dd'
@@ -18,13 +17,11 @@ export async function handleExportCsv(
     endOfMonth(new Date(year, month - 1)),
     'yyyy-MM-dd'
   );
-
   const taskRepository = dataSource.getRepository(Task);
   const tasks = await taskRepository.find({
     where: { date: Between(startDate, endDate) },
     order: { date: 'ASC', created_at: 'ASC' }
   });
-
   const header = 'Date,Title,Description,Hours,Created At\n';
   const body = tasks
     .map(taskEntity =>

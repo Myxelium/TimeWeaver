@@ -1,0 +1,14 @@
+{
+  "singleAttributePerLine": true,
+  "htmlWhitespaceSensitivity": "css",
+  "printWidth": 150,
+  "proseWrap": "preserve",
+  "tabWidth": 4,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "none",
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf"
+}

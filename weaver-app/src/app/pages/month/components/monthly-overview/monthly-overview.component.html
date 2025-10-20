@@ -3,12 +3,12 @@
     <div class="flex items-center justify-between">
       <h3 class="card-title-lg">Monthly Overview</h3>
       <div class="flex items-center space-x-2">
-        <button (click)="previousMonth()" [disabled]="!canGoToPreviousMonth()" class="btn-icon">
-          <lucide-icon [img]="ChevronLeft" class="w-4 h-4"></lucide-icon>
+        <button type="button" (click)="previousMonth()" class="btn-icon">
+          <lucide-icon [img]="ChevronLeft" class="w-4 h-4" />
         </button>
         <span class="text-lg font-medium min-w-0">{{ currentDate() | date:'MMMM yyyy' }}</span>
-        <button (click)="nextMonth()" [disabled]="!canGoToNextMonth()" class="btn-icon">
-          <lucide-icon [img]="ChevronRight" class="w-4 h-4"></lucide-icon>
+        <button type="button" (click)="nextMonth()" class="btn-icon">
+          <lucide-icon [img]="ChevronRight" class="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -46,10 +46,16 @@
         </div>
         <div class="grid grid-cols-7 gap-1">
           @for (day of calendarDays(); track day.date) {
-          <div class="calendar-day" [class.bg-muted]="!day.isCurrentMonth" [class.bg-primary]="day.isToday"
+          <div class="calendar-day" 
+            (click)="onDayClick(day)"
+            (keydown.enter)="onDayClick(day)"
+            (keydown.space)="onDayClick(day)"
+            role="button"
+            tabindex="0"
+            [class.bg-muted]="!day.isCurrentMonth" [class.bg-primary]="day.isToday"
             [class.border-primary]="day.isToday" [class.opacity-40]="ignoreWeekends && day.isWeekend"
             [class.cursor-not-allowed]="!day.isCurrentMonth"
-            [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth" (click)="onDayClick(day)">
+            [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth">
             <div class="text-sm font-medium mb-1" [class.text-muted-foreground]="!day.isCurrentMonth && !day.isToday"
               [class.text-primary-foreground]="day.isToday">
               {{ day.date | date:'d' }}
@@ -59,10 +65,10 @@
               <div class="text-xs" [class.text-muted-foreground]="!day.isToday"
                 [class.text-primary-foreground]="day.isToday">{{ day.summary.total_hours | number:'1.1-1' }}h</div>
               <div class="progress-outer-xs">
-                <div class="progress-inner-xs" [class.bg-green-500]="day.summary.total_hours >= DAILY_WORK_HOURS"
-                  [class.bg-yellow-500]="day.summary.total_hours >= (DAILY_WORK_HOURS * 0.75) && day.summary.total_hours < DAILY_WORK_HOURS"
-                  [class.bg-red-500]="day.summary.total_hours < (DAILY_WORK_HOURS * 0.75) && day.summary.total_hours > 0"
-                  [style.width.%]="(day.summary.total_hours / DAILY_WORK_HOURS) * 100"></div>
+                <div class="progress-inner-xs" [class.bg-green-500]="day.summary.total_hours >= maxHoursPerDay"
+                  [class.bg-yellow-500]="day.summary.total_hours >= (maxHoursPerDay * 0.75) && day.summary.total_hours < maxHoursPerDay"
+                  [class.bg-red-500]="day.summary.total_hours < (maxHoursPerDay * 0.75) && day.summary.total_hours > 0"
+                  [style.width.%]="(day.summary.total_hours / maxHoursPerDay) * 100"></div>
               </div>
               <div class="text-xs space-y-0.5">
                 @for (task of (day.summary.tasks || []).slice(0, 2); track task.id) {

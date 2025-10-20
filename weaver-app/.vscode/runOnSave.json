@@ -1,0 +1,11 @@
+{
+  "shell": "bash",
+  "runOnSave": [
+    {
+      "match": "src/app/.*\\.html$",
+      "cmd": "node ${workspaceFolder}/tools/sort-template-properties.js ${file}",
+      "runIn": "backend",
+      "silent": true
+    }
+  ]
+}

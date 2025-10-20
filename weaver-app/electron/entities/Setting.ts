@@ -17,6 +17,12 @@ export class Setting {
   @Column({ type: 'boolean', default: true })
   ignoreWeekends!: boolean;
 
+  @Column({ type: 'real', default: 8 })
+  maxHoursPerDay!: number;
+
+  @Column({ type: 'boolean', default: true })
+  maxHoursEnabled!: boolean;
+
   @UpdateDateColumn({ type: 'datetime', nullable: true })
   updated_at?: string;
 }

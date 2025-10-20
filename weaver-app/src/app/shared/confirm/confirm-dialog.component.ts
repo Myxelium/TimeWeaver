@@ -28,8 +28,10 @@ export class ConfirmDialogHostComponent {
     this.open.set(true);
     queueMicrotask(() => {
       const btns = document.querySelectorAll('[data-confirm-primary]');
+
       (btns.item(0) as HTMLElement | null)?.focus();
     });
+
     return new Promise<boolean>(resolve => {
       this._resolver = resolve;
     });

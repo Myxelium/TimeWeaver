@@ -14,6 +14,7 @@ export const QueryType = {
   GetMonthlySummary: 'get-monthly-summary',
   GetAllTasks: 'get-all-tasks',
   ExportCsv: 'export-csv',
+  ExportCsvAll: 'export-csv-all',
   GetSettings: 'get-settings'
 } as const;
 
@@ -44,6 +45,8 @@ export interface SaveSettingsCommand {
     monthlyCost: number;
     darkMode: boolean;
     ignoreWeekends: boolean;
+    maxHoursPerDay: number;
+    maxHoursEnabled: boolean;
   };
 }
 
@@ -58,6 +61,11 @@ export interface ImportCsvCommand {
 export interface ExportMonthCsvQuery {
   type: typeof QueryType.ExportCsv;
   payload: { year: number; month: number };
+}
+
+export interface ExportAllCsvQuery {
+  type: typeof QueryType.ExportCsvAll;
+  payload: Record<string, never>;
 }
 
 // Query Interfaces
@@ -89,6 +97,7 @@ export type Query =
   | GetMonthlySummaryQuery
   | GetAllTasksQuery
   | ExportMonthCsvQuery
+  | ExportAllCsvQuery
   | GetSettingsQuery;
 
 export interface DaySummaryDTO {
@@ -103,4 +112,6 @@ export interface SettingsDTO {
   monthlyCost: number;
   darkMode: boolean;
   ignoreWeekends: boolean;
+  maxHoursPerDay: number;
+  maxHoursEnabled: boolean;
 }

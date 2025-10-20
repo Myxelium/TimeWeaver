@@ -48,6 +48,7 @@ async function initializeDatabase() {
   try {
     await applicationDataSource.initialize();
     console.log('Database connection initialized at:', databaseFilePath);
+
     try {
       await applicationDataSource.runMigrations();
       console.log('Migrations executed');
@@ -106,35 +107,49 @@ function setupIpcHandlers() {
   if (!applicationDataSource) {
     throw new Error('DataSource not initialized');
   }
+
   const commandHandlerMap = buildCommandHandlers(applicationDataSource) as Record<CommandTypeKey, (command: Command) => unknown>;
+
   type QueryExtraArgs = [ (defaultName: string, content: string) => Promise<boolean> ] | [];
   const queryHandlerMap = buildQueryHandlers(applicationDataSource) as Record<QueryTypeKey, (query: Query, ...extra: QueryExtraArgs) => unknown>;
 
   ipcMain.handle('cqrs:command', async (_evt, command: Command) => {
     const handler = commandHandlerMap[command.type as CommandTypeKey];
-    if (!handler) throw new Error(`No command handler for ${command.type}`);
+
+    if (!handler)
+      throw new Error(`No command handler for ${command.type}`);
+
     return handler(command);
   });
 
   ipcMain.handle('cqrs:query', async (_evt, query: Query) => {
     const handler = queryHandlerMap[query.type as QueryTypeKey];
-    if (!handler) throw new Error(`No query handler for ${query.type}`);
-    if (query.type === 'export-csv') {
+
+    if (!handler)
+      throw new Error(`No query handler for ${query.type}`);
+
+    if (query.type === 'export-csv' || query.type === 'export-csv-all') {
       const saveCsv = async (defaultName: string, content: string) => {
-        if (!mainWindow) return false;
+        if (!mainWindow)
+          return false;
+
         const result = await dialog.showSaveDialog(mainWindow, {
           title: 'Export Time Report',
           defaultPath: defaultName,
           filters: [{ name: 'CSV Files', extensions: ['csv'] }]
         });
+
         if (!result.canceled && result.filePath) {
           fs.writeFileSync(result.filePath, content, 'utf8');
           return true;
         }
+
         return false;
       };
+
       return handler(query, saveCsv);
     }
+
     return handler(query);
   });
 }
@@ -145,7 +160,8 @@ app.whenReady().then(async () => {
   createWindow();
 
   app.on('activate', function() {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0)
+      createWindow();
   });
 });
 
@@ -158,6 +174,7 @@ app.on('window-all-closed', () => {
 app.on('before-quit', async (event) => {
   if (applicationDataSource && applicationDataSource.isInitialized) {
     event.preventDefault();
+
     try {
       await applicationDataSource.destroy();
       console.log('Database connection closed successfully');
@@ -174,6 +191,7 @@ function debuggingMode(BrowserWindow: BrowserWindow | null) {
   if (BrowserWindow) {
     BrowserWindow.webContents.openDevTools({ mode: 'detach' });
   }
+
   app.commandLine.appendSwitch('remote-debugging-port', '9222');
   // Mitigate some GPU / vsync issues on headless / VM setups
   app.commandLine.appendSwitch('disable-gpu');

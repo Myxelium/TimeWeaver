@@ -10,7 +10,9 @@ import { settings } from './settings';
 // For CLI we store the DB in the project root (weaver.db) so diffs are visible and migrations can be generated.
 
 const projectRootDatabaseFilePath = path.join(__dirname, '..', settings.databaseName);
+
 let databaseFileBuffer: Uint8Array | undefined;
+
 if (fs.existsSync(projectRootDatabaseFilePath)) {
   databaseFileBuffer = fs.readFileSync(projectRootDatabaseFilePath);
 }

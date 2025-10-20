@@ -34,6 +34,8 @@ export const settingsReducer = createReducer(
   on(SettingsActions.importCsvFailure, (state, { error }) => ({ ...state, loading: false, error })),
   on(SettingsActions.applyTheme, (state, { darkMode }) => ({
     ...state,
-    settings: state.settings ? { ...state.settings, darkMode } : { monthlyIncome: 0, monthlyCost: 0, darkMode, ignoreWeekends: true }
+    settings: state.settings
+      ? { ...state.settings, darkMode }
+      : { monthlyIncome: 0, monthlyCost: 0, darkMode, ignoreWeekends: true, maxHoursPerDay: 8, maxHoursEnabled: true }
   }))
 );

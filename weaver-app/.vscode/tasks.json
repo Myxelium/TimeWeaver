@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Sort Template Properties",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "tools/sort-template-properties.js",
+        "${file}"
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Format HTML on Save",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "prettier",
+        "--write",
+        "${file}"
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}
