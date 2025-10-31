@@ -18,6 +18,8 @@ export async function handleGetSettings(dataSource: DataSource): Promise<Setting
     darkMode: !!settings.darkMode,
     ignoreWeekends: settings.ignoreWeekends !== false,
     maxHoursPerDay: settings.maxHoursPerDay ?? 8,
-    maxHoursEnabled: settings.maxHoursEnabled !== false
+    maxHoursEnabled: settings.maxHoursEnabled !== false,
+    holidayCountry: settings.holidayCountry ?? undefined,
+    firstDayOfWeek: settings.firstDayOfWeek ?? 1
   };
 }

@@ -9,5 +9,7 @@ export const selectMonthlyIncome = createSelector(selectSettings, settings => se
 export const selectMonthlyCost = createSelector(selectSettings, settings => settings?.monthlyCost ?? 0);
 export const selectMaxHoursPerDay = createSelector(selectSettings, settings => settings?.maxHoursPerDay ?? 8);
 export const selectMaxHoursEnabled = createSelector(selectSettings, settings => settings?.maxHoursEnabled ?? true);
+export const selectHolidayCountry = createSelector(selectSettings, settings => settings?.holidayCountry);
+export const selectFirstDayOfWeek = createSelector(selectSettings, settings => settings?.firstDayOfWeek ?? 1);
 export const selectLastSaveSuccessAt = createSelector(selectSettingsState, state => state.lastSaveSuccessAt);
 export const selectLastImportResult = createSelector(selectSettingsState, state => state.lastImportResult);

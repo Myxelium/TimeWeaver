@@ -1,0 +1,33 @@
+@if (showSuggestions && filteredSuggestions.length > 0) {
+  <div class="suggestions-dropdown">
+    @if (!showAllSuggestions && recentSuggestions.length > 0) {
+      <div class="suggestion-section">
+        <div class="flex justify-between items-center">
+          <span class="suggestion-meta">Recent Tasks</span>
+          @if (allTaskTitles.length > 5) {
+            <button (click)="onToggleAll()" type="button" class="btn-xs-link">
+              Show more ({{ allTaskTitles.length - 5 }})
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (showAllSuggestions) {
+      <div class="suggestion-section">
+        <div class="flex justify-between items-center">
+          <span class="suggestion-meta">All Tasks (Last 30 days)</span>
+          <button (click)="onToggleAll()" type="button" class="btn-xs-link">
+            Show less
+          </button>
+        </div>
+      </div>
+    }
+
+    @for (suggestion of filteredSuggestions; track suggestion) {
+      <button (click)="onSelectSuggestion(suggestion)" type="button" class="suggestion-btn">
+        {{ suggestion }}
+      </button>
+    }
+  </div>
+}

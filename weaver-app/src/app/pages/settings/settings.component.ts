@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -9,6 +9,7 @@ import { TasksActions } from '../../store/tasks/tasks.actions';
 import { selectIsLoading } from '../../store/tasks/tasks.selectors';
 import { selectLastImportResult, selectLastSaveSuccessAt, selectSettings } from '../../store/settings/settings.selectors';
 import { skip } from 'rxjs';
+import { HolidayService } from '../../shared/services';
 
 @Component({
   selector: 'app-settings',
@@ -31,6 +32,8 @@ export class SettingsComponent implements OnInit {
     ignoreWeekends: [true],
     maxHoursPerDay: [8, [Validators.min(0.1), Validators.max(24)]],
     maxHoursEnabled: [true],
+    holidayCountry: [''],
+    firstDayOfWeek: [1, [Validators.min(0), Validators.max(6)]],
     overwrite: [false]
   });
 
@@ -42,6 +45,8 @@ export class SettingsComponent implements OnInit {
   importError: string | null = null;
   showIncome = false;
   showCost = false;
+
+  private holidayService = inject(HolidayService);
 
   constructor(private formBuilder: FormBuilder, private store: Store) {}
 
@@ -117,5 +122,11 @@ export class SettingsComponent implements OnInit {
 
   exportAllCsv(): void {
     this.store.dispatch(TasksActions.exportCsvAll());
+  }
+
+  setAutoDetectedCountry(): void {
+    const cc = this.holidayService.detectCountryCode();
+
+    this.form.patchValue({ holidayCountry: cc });
   }
 }

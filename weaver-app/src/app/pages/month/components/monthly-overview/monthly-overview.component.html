@@ -53,11 +53,13 @@
             role="button"
             tabindex="0"
             [class.bg-muted]="!day.isCurrentMonth" [class.bg-primary]="day.isToday"
+            [class.bg-red-100]="day.isCurrentMonth && !day.isToday && day.isHoliday"
             [class.border-primary]="day.isToday" [class.opacity-40]="ignoreWeekends && day.isWeekend"
             [class.cursor-not-allowed]="!day.isCurrentMonth"
             [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth">
             <div class="text-sm font-medium mb-1" [class.text-muted-foreground]="!day.isCurrentMonth && !day.isToday"
-              [class.text-primary-foreground]="day.isToday">
+              [class.text-primary-foreground]="day.isToday"
+              [class.text-red-600]="day.isCurrentMonth && !day.isToday && day.isHoliday">
               {{ day.date | date:'d' }}
             </div>
             @if (day.summary && day.isCurrentMonth) {

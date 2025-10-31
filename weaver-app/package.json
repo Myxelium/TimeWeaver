@@ -1,6 +1,6 @@
 {
   "name": "weaver-app",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A time tracking application for productivity management",
   "author": {
     "name": "Weaver Team",
@@ -38,6 +38,7 @@
   },
   "private": true,
   "dependencies": {
+    "date-holidays": "^3.23.0",
     "@angular/cdk": "^19.2.19",
     "@angular/common": "^19.2.0",
     "@angular/compiler": "^19.2.0",

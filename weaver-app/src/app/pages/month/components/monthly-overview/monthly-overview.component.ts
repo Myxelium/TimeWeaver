@@ -4,10 +4,12 @@ import { LucideAngularModule, ChevronLeft, ChevronRight } from 'lucide-angular';
 import { Store } from '@ngrx/store';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
-import { selectIgnoreWeekends, selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+import { selectFirstDayOfWeek } from '../../../../store/settings/settings.selectors';
+import { selectHolidayCountry, selectIgnoreWeekends, selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
 import { DaySummary } from '../../../../shared/models';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { HolidayService } from '../../../../shared/services';
 
 interface CalendarDay {
   date: Date;
@@ -15,6 +17,8 @@ interface CalendarDay {
   isToday: boolean;
   summary?: DaySummary;
   isWeekend: boolean;
+  isHoliday?: boolean;
+  holidayName?: string | null;
 }
 
 interface MonthlyStats {
@@ -35,21 +39,31 @@ export class MonthlyOverviewComponent {
 
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
-  dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  get dayHeaders(): string[] {
+    const first = this.firstDayOfWeekSignal() ?? 1;
+    const headers = [...this.baseHeaders];
+
+    return headers.slice(first).concat(headers.slice(0, first));
+  }
 
   currentDate = signal(new Date());
 
-  canGoToNextMonth = computed(() => this.calculateCanGoToNextMonth());
+  canGoToNextMonth = true;
   calendarDays = computed<CalendarDay[]>(() => this.calculateCalendarDays());
   monthlyStats = computed(() => this.calculateMonthlyStats());
 
   private store = inject(Store);
+  private readonly baseHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+  private firstDayOfWeekSignal = toSignal(this.store.select(selectFirstDayOfWeek), { initialValue: 1 });
   private ignoreWeekendsSignal = toSignal(this.store.select(selectIgnoreWeekends), { initialValue: true });
   private maxHoursPerDaySignal = toSignal(this.store.select(selectMaxHoursPerDay), { initialValue: 8 });
   private monthlyDataSignal = toSignal(this.store.select(selectMonthlyData), { initialValue: [] as DaySummary[] });
+  private holidayCountrySignal = toSignal(this.store.select(selectHolidayCountry), { initialValue: undefined as string | undefined });
   get monthlyData(): DaySummary[] { return this.monthlyDataSignal(); }
   get ignoreWeekends(): boolean { return this.ignoreWeekendsSignal(); }
   get maxHoursPerDay(): number { return this.maxHoursPerDaySignal(); }
+
+  private holidayService = inject(HolidayService);
 
   constructor() {
     const now = new Date();
@@ -71,14 +85,10 @@ export class MonthlyOverviewComponent {
   nextMonth(): void {
     const current = this.currentDate();
     const next = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    const now = new Date();
-    const currentMonthStart = startOfMonth(now);
 
-    if (!isBefore(currentMonthStart, next)) {
-      this.currentDate.set(next);
-      this.store.dispatch(TasksActions.setSelectedMonth({ year: next.getFullYear(), month: next.getMonth() + 1 }));
-      this.store.dispatch(TasksActions.loadMonthlyData({ year: next.getFullYear(), month: next.getMonth() + 1 }));
-    }
+    this.currentDate.set(next);
+    this.store.dispatch(TasksActions.setSelectedMonth({ year: next.getFullYear(), month: next.getMonth() + 1 }));
+    this.store.dispatch(TasksActions.loadMonthlyData({ year: next.getFullYear(), month: next.getMonth() + 1 }));
   }
 
   onDayClick(day: CalendarDay): void {
@@ -134,33 +144,36 @@ export class MonthlyOverviewComponent {
   }
 
   private calculateCalendarDays(): CalendarDay[] {
+    // read to register reactive dependency on holiday country changes
+    void this.holidayCountrySignal();
     const current = this.currentDate();
     const monthStart = startOfMonth(current);
     const monthEnd = endOfMonth(current);
     const calendarStart = new Date(monthStart);
+    const first = this.firstDayOfWeekSignal() ?? 1;
+    // shift calendarStart back to the first day-of-week boundary
+    const startOffset = (monthStart.getDay() - first + 7) % 7;
 
-    calendarStart.setDate(calendarStart.getDate() - monthStart.getDay());
+    calendarStart.setDate(calendarStart.getDate() - startOffset);
     const calendarEnd = new Date(monthEnd);
-    const daysToAdd = 6 - monthEnd.getDay();
+    const weekEnd = (first + 6) % 7;
+    const daysToAdd = (weekEnd - monthEnd.getDay() + 7) % 7;
 
     calendarEnd.setDate(calendarEnd.getDate() + daysToAdd);
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-    return days.map(day => ({
-      date: day,
-      isCurrentMonth: isSameMonth(day, current),
-      isToday: isToday(day),
-      summary: this.getDaySummarySync(day),
-      isWeekend: day.getDay() === 0 || day.getDay() === 6
-    }));
-  }
+    return days.map(day => {
+      const info = this.holidayService.getHolidayInfo(day);
 
-  private calculateCanGoToNextMonth(): boolean {
-    const current = this.currentDate();
-    const next = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    const now = new Date();
-    const currentMonthStart = startOfMonth(now);
-
-    return !isBefore(currentMonthStart, next);
+      return {
+        date: day,
+        isCurrentMonth: isSameMonth(day, current),
+        isToday: isToday(day),
+        summary: this.getDaySummarySync(day),
+        isWeekend: day.getDay() === 0 || day.getDay() === 6,
+        isHoliday: !!info.isBank,
+        holidayName: info.name || null
+      } as CalendarDay;
+    });
   }
 }

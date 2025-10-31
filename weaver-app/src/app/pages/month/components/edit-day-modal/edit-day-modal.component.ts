@@ -9,11 +9,23 @@ import { format, subDays } from 'date-fns';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import { selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
+import { HolidayService } from '../../../../shared/services';
+import { SuggestionsDropdownComponent } from './suggestions-dropdown/suggestions-dropdown.component';
+import { RemainingHoursButtonComponent } from './remaining-hours-button/remaining-hours-button.component';
+import { DaySummaryPanelComponent } from './day-summary-panel/day-summary-panel.component';
+import { DayTasksListComponent } from './day-tasks-list/day-tasks-list.component';
 
 @Component({
   selector: 'app-edit-day-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    SuggestionsDropdownComponent,
+    RemainingHoursButtonComponent,
+    DaySummaryPanelComponent,
+    DayTasksListComponent
+  ],
   templateUrl: './edit-day-modal.component.html'
 })
 export class EditDayModalComponent implements OnChanges {
@@ -41,10 +53,12 @@ export class EditDayModalComponent implements OnChanges {
   allTaskTitles: string[] = [];
   filteredSuggestions: string[] = [];
   recentSuggestions: string[] = [];
+  holidayName: string | null = null;
 
   private store = inject(Store);
   private destroy$ = new Subject<void>();
   private confirm = inject(ConfirmService);
+  private holidayService = inject(HolidayService);
 
   constructor() {
     this.store.dispatch(loadAllTasks());
@@ -82,6 +96,8 @@ export class EditDayModalComponent implements OnChanges {
       const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
 
       this.taskForm.patchValue({ date: dateStr });
+
+      this.holidayName = this.holidayService.getHolidayName(this.selectedDate);
     }
 
     if (changes['taskToEdit'] && this.taskToEdit) {

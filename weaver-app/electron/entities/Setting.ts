@@ -23,6 +23,12 @@ export class Setting {
   @Column({ type: 'boolean', default: true })
   maxHoursEnabled!: boolean;
 
+  @Column({ type: 'text', nullable: true })
+  holidayCountry?: string | null;
+
+  @Column({ type: 'int', default: 1 })
+  firstDayOfWeek!: number;
+
   @UpdateDateColumn({ type: 'datetime', nullable: true })
   updated_at?: string;
 }

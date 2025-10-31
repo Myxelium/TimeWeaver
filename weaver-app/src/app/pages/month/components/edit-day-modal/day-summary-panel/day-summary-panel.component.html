@@ -1,0 +1,39 @@
+@if (show) {
+  <div>
+    <h3 class="panel-heading">Day Summary</h3>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-muted rounded-lg p-4">
+        <div class="text-2xl font-bold text-primary">{{ totalHours | number: '1.1-1' }}h</div>
+        <div class="text-sm text-muted-foreground">Total Hours</div>
+      </div>
+
+      <div class="bg-muted rounded-lg p-4">
+        <div class="text-2xl font-bold text-primary">{{ taskCount }}</div>
+        <div class="text-sm text-muted-foreground">Tasks</div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <div class="flex justify-between text-sm text-muted-foreground mb-1">
+        <span>Progress</span>
+        @if (maxHoursPerDay$ | async; as maxHours) {
+          <span>{{ totalHours | number: '1.1-1' }}h / {{ maxHours }}h</span>
+        }
+      </div>
+
+      @if (maxHoursPerDay$ | async; as maxHours) {
+        <div class="progress-outer">
+          <div
+            [class.bg-green-500]="totalHours >= maxHours"
+            [class.bg-yellow-500]="totalHours >= maxHours * 0.75 && totalHours < maxHours"
+            [class.bg-red-500]="totalHours < maxHours * 0.75 && totalHours > 0"
+            [class.bg-muted]="totalHours === 0"
+            [style.width.%]="(totalHours / maxHours) * 100"
+            class="h-2 rounded-full transition-all duration-300"
+          ></div>
+        </div>
+      }
+    </div>
+  </div>
+}

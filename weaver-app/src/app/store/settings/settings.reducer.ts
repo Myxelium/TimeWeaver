@@ -36,6 +36,6 @@ export const settingsReducer = createReducer(
     ...state,
     settings: state.settings
       ? { ...state.settings, darkMode }
-      : { monthlyIncome: 0, monthlyCost: 0, darkMode, ignoreWeekends: true, maxHoursPerDay: 8, maxHoursEnabled: true }
+      : { monthlyIncome: 0, monthlyCost: 0, darkMode, ignoreWeekends: true, maxHoursPerDay: 8, maxHoursEnabled: true, firstDayOfWeek: 1 }
   }))
 );

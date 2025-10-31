@@ -4,8 +4,11 @@
     <form
         (ngSubmit)="save()"
         [formGroup]="form"
-        class="space-y-6 max-w-md"
+        class="grid grid-cols-1 lg:grid-cols-2 gap-6"
     >
+        <div class="space-y-6">
+        <div class="bg-card border border-border rounded-lg p-4 space-y-4">
+            <h2 class="text-lg font-semibold">General Settings</h2>
         <div>
             <label
                 class="form-label"
@@ -131,6 +134,19 @@
         </div>
         }
 
+        <div>
+            <label class="form-label" for="firstDayOfWeek">First day of week</label>
+            <select id="firstDayOfWeek" class="input-base" formControlName="firstDayOfWeek">
+                <option [ngValue]="1">Monday</option>
+                <option [ngValue]="2">Tuesday</option>
+                <option [ngValue]="3">Wednesday</option>
+                <option [ngValue]="4">Thursday</option>
+                <option [ngValue]="5">Friday</option>
+                <option [ngValue]="6">Saturday</option>
+                <option [ngValue]="0">Sunday</option>
+            </select>
+        </div>
+
         <div class="flex items-center space-x-3">
             <button
                 [disabled]="saving"
@@ -144,8 +160,9 @@
                 }
             </button>
         </div>
+        </div>
 
-        <div class="border-t pt-4 space-y-3">
+        <div class="bg-card border border-border rounded-lg p-4 space-y-3">
             <h2 class="text-lg font-semibold">Import Tasks CSV</h2>
 
             <p class="text-xs text-muted-foreground">
@@ -183,9 +200,7 @@
             </button>
 
             @if (importResult) {
-            <div
-                class="text-sm text-muted-foreground"
-            >
+            <div class="text-sm text-muted-foreground">
                 Imported {{ importResult.imported }} new, Updated {{ importResult.updated }}, Skipped {{ importResult.skipped }} (Total lines:
                 {{ importResult.total }})
             </div>
@@ -200,7 +215,7 @@
             }
         </div>
 
-        <div class="border-t pt-4 space-y-3">
+        <div class="bg-card border border-border rounded-lg p-4 space-y-3">
             <h2 class="text-lg font-semibold">Export</h2>
 
             <button
@@ -213,6 +228,33 @@
             </button>
 
             <p class="text-xs text-muted-foreground">Exports all existing tasks in the same CSV format as the monthly export.</p>
+    </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-card border border-border rounded-lg p-4">
+                <h2 class="text-lg font-semibold mb-4">Holiday Settings</h2>
+
+                <div class="space-y-3">
+                    <label class="form-label" for="holidayCountry">Holiday Country</label>
+                    <div class="flex gap-2">
+                        <input
+                            id="holidayCountry"
+                            type="text"
+                            maxlength="2"
+                            placeholder="e.g., SE"
+                            class="input-base"
+                            formControlName="holidayCountry"
+                        />
+                        <button
+                            type="button"
+                            class="btn-secondary px-3 py-1"
+                            (click)="setAutoDetectedCountry()"
+                        >Auto-detect</button>
+                    </div>
+                    <p class="text-xs text-muted-foreground">Two-letter country code (ISO 3166-1 alpha-2). Used to highlight public holidays and show the holiday name.</p>
+                </div>
+            </div>
         </div>
     </form>
 </div>

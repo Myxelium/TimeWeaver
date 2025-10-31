@@ -47,6 +47,8 @@ export interface SaveSettingsCommand {
     ignoreWeekends: boolean;
     maxHoursPerDay: number;
     maxHoursEnabled: boolean;
+    holidayCountry?: string;
+    firstDayOfWeek?: number;
   };
 }
 
@@ -114,4 +116,6 @@ export interface SettingsDTO {
   ignoreWeekends: boolean;
   maxHoursPerDay: number;
   maxHoursEnabled: boolean;
+  holidayCountry?: string;
+  firstDayOfWeek?: number;
 }

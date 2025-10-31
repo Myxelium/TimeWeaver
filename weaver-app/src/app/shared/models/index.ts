@@ -67,6 +67,8 @@ export interface Settings {
   ignoreWeekends: boolean;
   maxHoursPerDay: number;
   maxHoursEnabled: boolean;
+  holidayCountry?: string; // ISO-3166-1 alpha-2, e.g., SE
+  firstDayOfWeek?: number; // 0=Sunday ... 6=Saturday; default 1 (Monday)
 }
 
 export const DAILY_WORK_HOURS = 8;

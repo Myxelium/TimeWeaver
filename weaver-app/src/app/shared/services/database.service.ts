@@ -155,7 +155,8 @@ export class DatabaseService {
         darkMode: false,
         ignoreWeekends: true,
         maxHoursPerDay: 8,
-        maxHoursEnabled: true
+        maxHoursEnabled: true,
+        holidayCountry: undefined
       });
     }
 
@@ -168,7 +169,9 @@ export class DatabaseService {
         darkMode: false,
         ignoreWeekends: true,
         maxHoursPerDay: 8,
-        maxHoursEnabled: true
+        maxHoursEnabled: true,
+        holidayCountry: undefined,
+        firstDayOfWeek: 1
       });
     }
 

@@ -6,7 +6,7 @@ import { Store } from '@ngrx/store';
 import { TasksActions } from '../../store';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { DateChangeDetectionService } from '../../shared/services';
+import { DateChangeDetectionService, HolidayService } from '../../shared/services';
 
 @Component({
   selector: 'app-home',
@@ -21,11 +21,13 @@ import { DateChangeDetectionService } from '../../shared/services';
 })
 export class HomeComponent implements OnInit, OnDestroy {
   currentDate = new Date();
+  holidayName: string | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
     private _store: Store,
-    private dateChangeService: DateChangeDetectionService
+    private dateChangeService: DateChangeDetectionService,
+    private holidayService: HolidayService
   ) {}
 
   ngOnInit(): void {
@@ -56,6 +58,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this._store.dispatch(TasksActions.setCurrentDate({ date: dateStr }));
     this._store.dispatch(TasksActions.loadTodayTasks({ date: dateStr }));
+
+    this.holidayName = this.holidayService.getHolidayName(currentDate);
   }
 
   private subscribeToDayChanges(): void {

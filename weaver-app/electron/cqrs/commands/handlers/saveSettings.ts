@@ -17,6 +17,11 @@ export async function handleSaveSettings(command: SaveSettingsCommand, dataSourc
   settings.ignoreWeekends = command.payload.ignoreWeekends;
   settings.maxHoursPerDay = command.payload.maxHoursPerDay;
   settings.maxHoursEnabled = command.payload.maxHoursEnabled;
+  settings.holidayCountry = command.payload.holidayCountry ?? null;
+
+  if (typeof command.payload.firstDayOfWeek === 'number')
+    settings.firstDayOfWeek = command.payload.firstDayOfWeek;
+
   await repo.save(settings);
   return true;
 }

@@ -114,15 +114,17 @@
 
                 @if (maxHoursEnabled$ | async) {
                     @if (remainingHours$ | async; as remHours) {
-                        <button
-                            (click)="addEightHours()"
-                            [disabled]="remHours === 0 || weekendBlocked"
-                            [title]="remHours === 0 ? 'No remaining hours' : 'Add remaining hours'"
-                            type="button"
-                            class="btn-secondary whitespace-nowrap px-3 py-2"
-                        >
-                            {{ getAddHoursLabel(remHours) | async }}
-                        </button>
+                        @if (remHours > 0) {
+                            <button
+                                (click)="addEightHours()"
+                                [disabled]="weekendBlocked"
+                                title="Add remaining hours"
+                                type="button"
+                                class="btn-secondary whitespace-nowrap px-3 py-2"
+                            >
+                                {{ getAddHoursLabel(remHours) | async }}
+                            </button>
+                        }
                     }
                 }
             </div>
