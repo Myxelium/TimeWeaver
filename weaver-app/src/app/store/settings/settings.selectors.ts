@@ -11,5 +11,6 @@ export const selectMaxHoursPerDay = createSelector(selectSettings, settings => s
 export const selectMaxHoursEnabled = createSelector(selectSettings, settings => settings?.maxHoursEnabled ?? true);
 export const selectHolidayCountry = createSelector(selectSettings, settings => settings?.holidayCountry);
 export const selectFirstDayOfWeek = createSelector(selectSettings, settings => settings?.firstDayOfWeek ?? 1);
+export const selectOvertimeRate = createSelector(selectSettings, settings => settings?.overtimeRate ?? 0);
 export const selectLastSaveSuccessAt = createSelector(selectSettingsState, state => state.lastSaveSuccessAt);
 export const selectLastImportResult = createSelector(selectSettingsState, state => state.lastImportResult);

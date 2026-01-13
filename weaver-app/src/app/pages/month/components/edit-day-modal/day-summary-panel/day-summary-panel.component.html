@@ -23,15 +23,23 @@
       </div>
 
       @if (maxHoursPerDay$ | async; as maxHours) {
-        <div class="progress-outer">
+        <div class="progress-outer flex">
+          <!-- Base progress bar (capped at 100%) -->
           <div
             [class.bg-green-500]="totalHours >= maxHours"
             [class.bg-yellow-500]="totalHours >= maxHours * 0.75 && totalHours < maxHours"
             [class.bg-red-500]="totalHours < maxHours * 0.75 && totalHours > 0"
             [class.bg-muted]="totalHours === 0"
-            [style.width.%]="(totalHours / maxHours) * 100"
+            [style.width.%]="getBaseProgressWidth(maxHours)"
             class="h-2 rounded-full transition-all duration-300"
           ></div>
+          <!-- Overtime section (yellow) -->
+          @if (totalHours > maxHours) {
+            <div
+              [style.width.%]="getOvertimeWidth(maxHours)"
+              class="h-2 bg-amber-400 rounded-full transition-all duration-300 ml-0.5"
+            ></div>
+          }
         </div>
       }
     </div>

@@ -3,201 +3,225 @@
 @tailwind utilities;
 
 :root {
-	color-scheme: light;
+    color-scheme: light;
 
-	--font-sans: "Inter", sans-serif;
+    --font-sans: 'Inter', sans-serif;
 
-	--background: 0 0% 100%;
-	--foreground: 240 10% 3.9%;
-	--card: 0 0% 100%;
-	--card-foreground: 240 10% 3.9%;
-	--popover: 0 0% 100%;
-	--popover-foreground: 240 10% 3.9%;
-	--primary: 240 5.9% 10%;
-	--primary-foreground: 0 0% 98%;
-	--secondary: 240 4.8% 95.9%;
-	--secondary-foreground: 240 5.9% 10%;
-	--muted: 240 4.8% 95.9%;
-	--muted-foreground: 240 3.8% 46.1%;
-	--accent: 240 4.8% 95.9%;
-	--accent-foreground: 240 5.9% 10%;
-	--destructive: 0 84.2% 60.2%;
-	--destructive-foreground: 0 0% 98%;
-	--border: 240 5.9% 90%;
-	--input: 240 5.9% 90%;
-	--ring: 240 5.9% 10%;
-	--radius: 0.5rem;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+    --holiday: 270 50% 90%;
+    --holiday-foreground: 270 50% 30%;
 }
 
 :root.dark {
-	color-scheme: dark;
-	--background: 240 10% 3.9%;
-	--foreground: 0 0% 98%;
-	--card: 240 10% 3.9%;
-	--card-foreground: 0 0% 98%;
-	--popover: 240 10% 3.9%;
-	--popover-foreground: 0 0% 98%;
-	--primary: 0 0% 98%;
-	--primary-foreground: 240 5.9% 10%;
-	--secondary: 240 3.7% 15.9%;
-	--secondary-foreground: 0 0% 98%;
-	--muted: 240 3.7% 15.9%;
-	--muted-foreground: 240 5% 64.9%;
-	--accent: 240 3.7% 15.9%;
-	--accent-foreground: 0 0% 98%;
-	--destructive: 0 62.8% 30.6%;
-	--destructive-foreground: 0 0% 98%;
-	--border: 240 3.7% 15.9%;
-	--input: 240 3.7% 15.9%;
-	--ring: 240 4.9% 83.9%;
+    color-scheme: dark;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --holiday: 270 50% 25%;
+    --holiday-foreground: 270 50% 85%;
 }
 
 @layer base {
-	* {
-		@apply border-border;
-	}
-	body {
-		@apply bg-background text-foreground;
-		font-feature-settings: "rlig" 1, "calt" 1;
-	}
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings:
+            'rlig' 1,
+            'calt' 1;
+    }
 }
 
 /* Semantic component utilities */
 @layer components {
-	/* Headings */
-	.section-heading {
-		@apply text-xl font-semibold text-foreground mb-4;
-	}
-	.panel-heading {
-		@apply text-lg font-medium mb-4;
-	}
+    /* Headings */
+    .section-heading {
+        @apply text-xl font-semibold text-foreground mb-4;
+    }
+    .panel-heading {
+        @apply text-lg font-medium mb-4;
+    }
 
-	/* Panels / cards */
-	.card-panel {
-		@apply bg-card border border-border rounded-lg p-6;
-	}
+    /* Panels / cards */
+    .card-panel {
+        @apply bg-card border border-border rounded-lg p-6;
+    }
 
-	/* Form elements */
-	.form-label {
-		@apply block text-sm font-medium text-foreground mb-2;
-	}
-	.input-base {
-		@apply w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring;
-	}
-	.textarea-base {
-		@apply w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring;
-	}
+    /* Form elements */
+    .form-label {
+        @apply block text-sm font-medium text-foreground mb-2;
+    }
+    .input-base {
+        @apply w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring;
+    }
+    .textarea-base {
+        @apply w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring;
+    }
 
-	/* Buttons */
-	.btn {
-		@apply inline-flex items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm;
-	}
-	.btn-primary {
-		@apply btn bg-primary text-primary-foreground hover:bg-primary/90;
-	}
-	.btn-secondary {
-		@apply btn bg-secondary text-secondary-foreground hover:bg-secondary/80;
-	}
-	.btn-outline {
-		@apply btn border border-border hover:bg-accent;
-	}
-	.btn-xs-link {
-		@apply text-xs text-primary hover:text-primary/80 font-medium;
-	}
+    /* Buttons */
+    .btn {
+        @apply inline-flex items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm;
+    }
+    .btn-primary {
+        @apply btn bg-primary text-primary-foreground hover:bg-primary/90;
+    }
+    .btn-secondary {
+        @apply btn bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    }
+    .btn-outline {
+        @apply btn border border-border hover:bg-accent;
+    }
+    .btn-xs-link {
+        @apply text-xs text-primary hover:text-primary/80 font-medium;
+    }
 
-	/* Suggestion dropdown */
-	.suggestions-dropdown {
-		@apply absolute top-full left-0 right-0 z-10 mt-1 bg-background border border-input rounded-md shadow-lg max-h-60 overflow-y-auto;
-	}
-	.suggestion-section {
-		@apply px-3 py-2 border-b border-border;
-	}
-	.suggestion-meta {
-		@apply text-xs font-medium text-muted-foreground;
-	}
-	.suggestion-btn {
-		@apply w-full px-3 py-2 text-left hover:bg-accent transition-colors text-sm;
-	}
+    /* Suggestion dropdown */
+    .suggestions-dropdown {
+        @apply absolute top-full left-0 right-0 z-10 mt-1 bg-background border border-input rounded-md shadow-lg max-h-60 overflow-y-auto;
+    }
+    .suggestion-section {
+        @apply px-3 py-2 border-b border-border;
+    }
+    .suggestion-meta {
+        @apply text-xs font-medium text-muted-foreground;
+    }
+    .suggestion-btn {
+        @apply w-full px-3 py-2 text-left hover:bg-accent transition-colors text-sm;
+    }
 
-	/* Layout helpers */
-	.task-actions {
-		@apply flex items-center space-x-2;
-	}
-	.task-row {
-		@apply flex justify-between items-center p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors;
-	}
-	.task-row-compact {
-		@apply flex justify-between items-center py-2 border-b border-border last:border-b-0;
-	}
+    /* Layout helpers */
+    .task-actions {
+        @apply flex items-center space-x-2;
+    }
+    .task-row {
+        @apply flex justify-between items-center p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors;
+    }
+    .task-row-compact {
+        @apply flex justify-between items-center py-2 border-b border-border last:border-b-0;
+    }
 
-	/* Icon buttons */
-	.icon-btn {
-		@apply p-1 hover:bg-accent rounded;
-	}
-	.icon-btn-danger {
-		@apply p-1 hover:bg-destructive hover:text-destructive-foreground rounded;
-	}
+    /* Icon buttons */
+    .icon-btn {
+        @apply p-1 hover:bg-accent rounded;
+    }
+    .icon-btn-danger {
+        @apply p-1 hover:bg-destructive hover:text-destructive-foreground rounded;
+    }
 
-	/* Progress bar */
-	.progress-outer {
-		@apply w-full bg-secondary rounded-full h-2;
-	}
-	.progress-inner {
-		@apply bg-primary h-2 rounded-full transition-all duration-300;
-	}
+    /* Progress bar */
+    .progress-outer {
+        @apply w-full bg-secondary rounded-full h-2;
+    }
+    .progress-inner {
+        @apply bg-primary h-2 rounded-full transition-all duration-300;
+    }
 
-	/* Misc */
-	.section-divider {
-		@apply mt-4 pt-4 border-t border-border;
-	}
-	.empty-state {
-		@apply text-muted-foreground text-center py-8;
-	}
-	.muted-meta {
-		@apply text-sm text-muted-foreground;
-	}
-	.hours-badge {
-		@apply text-sm font-medium;
-	}
+    /* Misc */
+    .section-divider {
+        @apply mt-4 pt-4 border-t border-border;
+    }
+    .empty-state {
+        @apply text-muted-foreground text-center py-8;
+    }
+    .muted-meta {
+        @apply text-sm text-muted-foreground;
+    }
+    .hours-badge {
+        @apply text-sm font-medium;
+    }
 
-	/* Month / dashboard specific */
-	.card-shell {
-		@apply rounded-lg border bg-card text-card-foreground shadow-sm;
-	}
-	.card-header {
-		@apply flex flex-col space-y-1.5 p-6;
-	}
-	.card-body {
-		@apply p-6 pt-0;
-	}
-	.card-title {
-		@apply text-xl font-semibold leading-none tracking-tight;
-	}
-	.card-title-lg {
-		@apply text-2xl font-semibold leading-none tracking-tight;
-	}
-	.btn-icon {
-		@apply inline-flex items-center justify-center rounded-md text-sm font-medium h-8 w-8 hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:pointer-events-none;
-	}
-	.stat-box {
-		@apply text-center p-4 bg-muted rounded-lg;
-	}
-	.progress-outer-xs {
-		@apply w-full bg-secondary rounded-full h-1;
-	}
-	.progress-inner-xs {
-		@apply h-1 rounded-full transition-all;
-	}
-	.calendar-day {
-		@apply min-h-[100px] p-2 border border-border rounded-md cursor-pointer transition-colors relative overflow-hidden hover:opacity-90;
-	}
-	.bar-chart-container {
-		@apply h-64 flex items-end justify-start space-x-2 bg-muted/50 rounded-lg p-4 overflow-x-auto;
-	}
-	.bar-chart-bar {
-		@apply rounded-t w-full transition-all hover:opacity-80 cursor-pointer;
-	}
-	.bar-chart-empty {
-		@apply flex items-center justify-center w-full h-full text-muted-foreground;
-	}
+    /* Month / dashboard specific */
+    .card-shell {
+        @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+    }
+    .card-header {
+        @apply flex flex-col space-y-1.5 p-6;
+    }
+    .card-body {
+        @apply p-6 pt-0;
+    }
+    .card-title {
+        @apply text-xl font-semibold leading-none tracking-tight;
+    }
+    .card-title-lg {
+        @apply text-2xl font-semibold leading-none tracking-tight;
+    }
+    .btn-icon {
+        @apply inline-flex items-center justify-center rounded-md text-sm font-medium h-8 w-8 hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .stat-box {
+        @apply text-center p-4 bg-muted rounded-lg;
+    }
+    .progress-outer-xs {
+        @apply w-full bg-secondary rounded-full h-1;
+    }
+    .progress-inner-xs {
+        @apply h-1 rounded-full transition-all;
+    }
+    .calendar-day {
+        @apply min-h-[100px] p-2 border border-border rounded-md cursor-pointer transition-colors relative overflow-hidden hover:opacity-90;
+    }
+
+    /* Holiday styling for calendar days */
+    .bg-holiday {
+        background-color: hsl(var(--holiday));
+    }
+    .bg-holiday-hover:hover {
+        background-color: hsl(var(--holiday) / 0.8);
+    }
+    .text-holiday-foreground {
+        color: hsl(var(--holiday-foreground));
+    }
+
+    .bar-chart-container {
+        @apply h-64 flex items-end justify-start space-x-2 bg-muted/50 rounded-lg p-4 overflow-x-auto;
+    }
+    .bar-chart-bar {
+        @apply rounded-t w-full transition-all hover:opacity-80 cursor-pointer;
+    }
+    .bar-chart-empty {
+        @apply flex items-center justify-center w-full h-full text-muted-foreground;
+    }
+
+    /* Text security for sensitive inputs */
+    .text-security-disc {
+        -webkit-text-security: disc;
+        text-security: disc;
+    }
 }

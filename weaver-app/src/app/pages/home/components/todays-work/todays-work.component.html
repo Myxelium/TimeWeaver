@@ -255,11 +255,17 @@
     }
 
     <div class="mt-4">
-        <div class="progress-outer">
+        <div class="progress-outer flex">
             <div
                 [style.width.%]="progressPercent(todayTotalHours$ | async)"
                 class="progress-inner"
             ></div>
+            @if (hasOvertime(todayTotalHours$ | async) | async) {
+                <div
+                    [style.width.%]="overtimePercent(todayTotalHours$ | async)"
+                    class="h-2 bg-amber-400 rounded-full ml-0.5"
+                ></div>
+            }
         </div>
     </div>
 </div>

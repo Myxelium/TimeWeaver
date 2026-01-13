@@ -27,6 +27,29 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
   private dateChangeService = inject(DateChangeDetectionService);
   private destroy$ = new Subject<void>();
 
+  getBaseProgressWidth(totalHours: number): number {
+    const maxHours = this.maxHoursPerDay();
+
+    if (maxHours === 0)
+      return 0;
+
+    if (totalHours <= maxHours)
+      return (totalHours / maxHours) * 100;
+
+    return (maxHours / totalHours) * 100;
+  }
+
+  getOvertimeWidth(totalHours: number): number {
+    const maxHours = this.maxHoursPerDay();
+
+    if (maxHours === 0 || totalHours <= maxHours)
+      return 0;
+
+    const overtimeHours = totalHours - maxHours;
+
+    return (overtimeHours / totalHours) * 100;
+  }
+
   ngOnInit(): void {
     this.loadLastSevenDays();
     this.subscribeToDayChanges();

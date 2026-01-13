@@ -11,8 +11,8 @@ import { settings } from './settings';
 
 // Disable sandbox on Linux to avoid SUID issues
 if (process.platform === 'linux') {
-  app.commandLine.appendSwitch('--no-sandbox');
-  app.commandLine.appendSwitch('--disable-dev-shm-usage');
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
 
 let mainWindow: BrowserWindow | null;
@@ -60,7 +60,7 @@ async function initializeDatabase() {
   }
 }
 
-function createWindow(): void {
+async function createWindow(): Promise<void> {
   mainWindow = new BrowserWindow({
     height: 800,
     width: 1200,
@@ -68,7 +68,8 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      sandbox: false // Disable sandbox to avoid Linux permission issues
+      sandbox: false, // Disable sandbox to avoid Linux permission issues
+      devTools: true
     },
     icon: path.join(__dirname, '../src/assets/icon.png'),
     titleBarStyle: 'default',
@@ -79,8 +80,12 @@ function createWindow(): void {
   mainWindow.setMenu(null);
   mainWindow.setMenuBarVisibility(false);
 
-  if (process.env['NODE_ENV'] === 'development' || fs.existsSync('/debug') || settings.debugMode) {
-    debuggingMode(mainWindow);
+  const isDebugMode = process.env['NODE_ENV'] === 'development' || fs.existsSync('/debug') || settings.debugMode;
+
+  if (isDebugMode) {
+    await new Promise(renderer => setTimeout(renderer, 1000));
+
+    enableDebuggingFeatures();
   }
 
   if (process.env['NODE_ENV'] === 'development') {
@@ -94,6 +99,18 @@ function createWindow(): void {
   mainWindow.once('ready-to-show', () => {
     if (mainWindow) {
       mainWindow.show();
+
+      if (isDebugMode) {
+        mainWindow.webContents.openDevTools({ mode: 'right' });
+      }
+    }
+  });
+
+  // Register F12 to toggle DevTools (since menu is disabled)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' && mainWindow) {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
     }
   });
 
@@ -187,14 +204,11 @@ app.on('before-quit', async (event) => {
   }
 });
 
-function debuggingMode(BrowserWindow: BrowserWindow | null) {
-  if (BrowserWindow) {
-    BrowserWindow.webContents.openDevTools({ mode: 'detach' });
-  }
-
+function enableDebuggingFeatures() {
   app.commandLine.appendSwitch('remote-debugging-port', '9222');
   // Mitigate some GPU / vsync issues on headless / VM setups
   app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-software-rasterizer');
   app.commandLine.appendSwitch('disable-features', 'VizDisplayCompositor');
   // Better logging (shows in stdout)
   app.commandLine.appendSwitch('enable-logging');

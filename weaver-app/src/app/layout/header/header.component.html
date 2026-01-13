@@ -7,11 +7,17 @@
         <div class="flex items-center space-x-3">
             <span class="text-sm text-muted-foreground">{{ selectedMonthLabel$ | async }}</span>
             <div class="flex items-center space-x-2">
-                <div class="w-32 h-2 bg-secondary rounded-full overflow-hidden">
+                <div class="w-32 h-2 bg-secondary rounded-full overflow-hidden flex">
                     <div
                         [style.width.%]="progressPercentage$ | async"
                         class="h-full bg-primary transition-all duration-300"
                     ></div>
+                    @if (hasOvertime$ | async) {
+                        <div
+                            [style.width.%]="overtimePercentage$ | async"
+                            class="h-full bg-amber-400 transition-all duration-300"
+                        ></div>
+                    }
                 </div>
                 <span class="text-sm font-medium">{{ monthlySummary$ | async | number: '1.1-1' }}h</span>
             </div>

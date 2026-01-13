@@ -6,7 +6,13 @@ import { map, take } from 'rxjs/operators';
 import { format } from 'date-fns';
 import { Store } from '@ngrx/store';
 import { selectMonthlySummary, selectSelectedMonth, selectIsLoading, selectMonthlyData } from '../../store/tasks/tasks.selectors';
-import { selectIgnoreWeekends, selectMonthlyIncome, selectMonthlyCost, selectMaxHoursPerDay } from '../../store/settings/settings.selectors';
+import {
+  selectIgnoreWeekends,
+  selectMonthlyIncome,
+  selectMonthlyCost,
+  selectMaxHoursPerDay,
+  selectOvertimeRate
+} from '../../store/settings/settings.selectors';
 import { eachDayOfInterval, endOfMonth, startOfMonth } from 'date-fns';
 import { combineLatest } from 'rxjs';
 import { TasksActions } from '../../store/tasks/tasks.actions';
@@ -34,9 +40,68 @@ export class HeaderComponent {
   ignoreWeekends$ = inject(Store).select(selectIgnoreWeekends);
   monthlyIncome$ = inject(Store).select(selectMonthlyIncome);
   monthlyCost$ = inject(Store).select(selectMonthlyCost);
-  progressPercentage$: Observable<number> = this.monthlySummary$.pipe(
-    map((hours: number) => Math.min((hours / 160) * 100, 100))
+  overtimeRate$ = inject(Store).select(selectOvertimeRate);
+  maxHoursPerDay$ = inject(Store).select(selectMaxHoursPerDay);
+
+  progressPercentage$: Observable<number> = combineLatest([
+    this.monthlySummary$,
+    this.maxHoursPerDay$
+  ]).pipe(
+    map(([hours, maxHoursPerDay]) => {
+      const now = new Date();
+      const start = startOfMonth(now);
+      const end = endOfMonth(now);
+      const days = eachDayOfInterval({ start, end });
+      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== 6).length;
+      const expectedHours = weekdays * maxHoursPerDay;
+
+      if (expectedHours === 0)
+        return 0;
+
+      if (hours <= expectedHours)
+        return (hours / expectedHours) * 100;
+
+      return (expectedHours / hours) * 100;
+    })
   );
+
+  overtimePercentage$: Observable<number> = combineLatest([
+    this.monthlySummary$,
+    this.maxHoursPerDay$
+  ]).pipe(
+    map(([hours, maxHoursPerDay]) => {
+      const now = new Date();
+      const start = startOfMonth(now);
+      const end = endOfMonth(now);
+      const days = eachDayOfInterval({ start, end });
+      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== 6).length;
+      const expectedHours = weekdays * maxHoursPerDay;
+
+      if (expectedHours === 0 || hours <= expectedHours)
+        return 0;
+
+      const overtimeHours = hours - expectedHours;
+
+      return (overtimeHours / hours) * 100;
+    })
+  );
+
+  hasOvertime$: Observable<boolean> = combineLatest([
+    this.monthlySummary$,
+    this.maxHoursPerDay$
+  ]).pipe(
+    map(([hours, maxHoursPerDay]) => {
+      const now = new Date();
+      const start = startOfMonth(now);
+      const end = endOfMonth(now);
+      const days = eachDayOfInterval({ start, end });
+      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== 6).length;
+      const expectedHours = weekdays * maxHoursPerDay;
+
+      return hours > expectedHours;
+    })
+  );
+
   earned$ = this.calculateFinancialProgress('income');
   costed$ = this.calculateFinancialProgress('cost');
 
@@ -74,8 +139,8 @@ export class HeaderComponent {
   private calculateFinancialProgress(kind: 'income' | 'cost'): Observable<number> {
     const value$ = kind === 'income' ? this.monthlyIncome$ : this.monthlyCost$;
 
-    return combineLatest([this.monthlySummary$, value$, inject(Store).select(selectMaxHoursPerDay)]).pipe(
-      map(([loggedHours, monthlyValue, maxHoursPerDay]) => {
+    return combineLatest([this.monthlySummary$, value$, inject(Store).select(selectMaxHoursPerDay), this.overtimeRate$]).pipe(
+      map(([loggedHours, monthlyValue, maxHoursPerDay, overtimeRate]) => {
         if (!monthlyValue || monthlyValue === 0)
           return 0;
 
@@ -89,10 +154,13 @@ export class HeaderComponent {
         if (expectedHours === 0)
           return 0;
 
-        const ratio = loggedHours / expectedHours;
-        const value = monthlyValue * ratio;
+        const ratio = Math.min(loggedHours / expectedHours, 1);
+        const baseValue = monthlyValue * ratio;
+        // Calculate overtime: hours beyond expected hours
+        const overtimeHours = Math.max(0, loggedHours - expectedHours);
+        const overtimeValue = overtimeHours * (overtimeRate ?? 0);
 
-        return Math.max(0, Math.min(value, monthlyValue));
+        return Math.max(0, baseValue + overtimeValue);
       })
     );
   }

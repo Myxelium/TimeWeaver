@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
-import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
+import { selectAllTasks, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
 import { DaySummary, Task } from '../../../../shared/models';
 import { map, take } from 'rxjs';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
@@ -85,18 +85,11 @@ export class TaskHoursSummaryComponent {
   onBarClick(taskTitle: string): void {
     this.selectedTaskTitle = taskTitle;
     this.store
-      .select(selectMonthlyData)
+      .select(selectAllTasks)
       .pipe(take(1))
-      .subscribe(days => {
+      .subscribe(tasks => {
         const key = taskTitle.trim().toLowerCase();
-        const matched: Task[] = [];
-
-        days.forEach(day => (day.tasks || []).forEach(task => {
-          const taskKey = (task.title || '').trim().toLowerCase();
-
-          if (taskKey === key)
-            matched.push(task);
-        }));
+        const matched = tasks.filter(task => (task.title || '').trim().toLowerCase() === key);
 
         this.detailedTasks = matched.sort((taskA, taskB) => taskA.date.localeCompare(taskB.date));
         this.showDetails = true;

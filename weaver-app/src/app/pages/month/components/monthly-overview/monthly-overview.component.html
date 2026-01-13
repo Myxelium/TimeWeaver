@@ -53,24 +53,28 @@
             role="button"
             tabindex="0"
             [class.bg-muted]="!day.isCurrentMonth" [class.bg-primary]="day.isToday"
-            [class.bg-red-100]="day.isCurrentMonth && !day.isToday && day.isHoliday"
+            [class.bg-holiday]="day.isCurrentMonth && !day.isToday && day.isHoliday"
             [class.border-primary]="day.isToday" [class.opacity-40]="ignoreWeekends && day.isWeekend"
             [class.cursor-not-allowed]="!day.isCurrentMonth"
-            [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth">
+            [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth && !day.isHoliday"
+            [class.hover:bg-holiday-hover]="!day.isToday && day.isCurrentMonth && day.isHoliday">
             <div class="text-sm font-medium mb-1" [class.text-muted-foreground]="!day.isCurrentMonth && !day.isToday"
               [class.text-primary-foreground]="day.isToday"
-              [class.text-red-600]="day.isCurrentMonth && !day.isToday && day.isHoliday">
+              [class.text-holiday-foreground]="day.isCurrentMonth && !day.isToday && day.isHoliday">
               {{ day.date | date:'d' }}
             </div>
             @if (day.summary && day.isCurrentMonth) {
             <div class="space-y-1">
               <div class="text-xs" [class.text-muted-foreground]="!day.isToday"
                 [class.text-primary-foreground]="day.isToday">{{ day.summary.total_hours | number:'1.1-1' }}h</div>
-              <div class="progress-outer-xs">
+              <div class="progress-outer-xs flex">
                 <div class="progress-inner-xs" [class.bg-green-500]="day.summary.total_hours >= maxHoursPerDay"
                   [class.bg-yellow-500]="day.summary.total_hours >= (maxHoursPerDay * 0.75) && day.summary.total_hours < maxHoursPerDay"
                   [class.bg-red-500]="day.summary.total_hours < (maxHoursPerDay * 0.75) && day.summary.total_hours > 0"
-                  [style.width.%]="(day.summary.total_hours / maxHoursPerDay) * 100"></div>
+                  [style.width.%]="getBaseProgressWidth(day.summary.total_hours)"></div>
+                @if (day.summary.total_hours > maxHoursPerDay) {
+                  <div class="progress-inner-xs bg-amber-400 ml-px" [style.width.%]="getOvertimeWidth(day.summary.total_hours)"></div>
+                }
               </div>
               <div class="text-xs space-y-0.5">
                 @for (task of (day.summary.tasks || []).slice(0, 2); track task.id) {

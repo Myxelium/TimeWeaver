@@ -156,7 +156,10 @@ export class DatabaseService {
         ignoreWeekends: true,
         maxHoursPerDay: 8,
         maxHoursEnabled: true,
-        holidayCountry: undefined
+        holidayCountry: undefined,
+        holidayTypes: ['public', 'bank'],
+        firstDayOfWeek: 1,
+        overtimeRate: 0
       });
     }
 
@@ -171,7 +174,9 @@ export class DatabaseService {
         maxHoursPerDay: 8,
         maxHoursEnabled: true,
         holidayCountry: undefined,
-        firstDayOfWeek: 1
+        holidayTypes: ['public', 'bank'],
+        firstDayOfWeek: 1,
+        overtimeRate: 0
       });
     }
 

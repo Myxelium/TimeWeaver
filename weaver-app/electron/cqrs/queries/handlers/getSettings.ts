@@ -20,6 +20,8 @@ export async function handleGetSettings(dataSource: DataSource): Promise<Setting
     maxHoursPerDay: settings.maxHoursPerDay ?? 8,
     maxHoursEnabled: settings.maxHoursEnabled !== false,
     holidayCountry: settings.holidayCountry ?? undefined,
-    firstDayOfWeek: settings.firstDayOfWeek ?? 1
+    holidayTypes: settings.holidayTypes ? settings.holidayTypes.split(',').filter(Boolean) : ['public', 'bank'],
+    firstDayOfWeek: settings.firstDayOfWeek ?? 1,
+    overtimeRate: settings.overtimeRate ?? 0
   };
 }

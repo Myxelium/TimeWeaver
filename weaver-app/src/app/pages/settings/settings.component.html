@@ -2,7 +2,6 @@
     <h1 class="text-2xl font-semibold">Settings</h1>
 
     <form
-        (ngSubmit)="save()"
         [formGroup]="form"
         class="grid grid-cols-1 lg:grid-cols-2 gap-6"
     >
@@ -18,7 +17,8 @@
 
             <div class="relative">
                 <input
-                    [type]="showIncome ? 'number' : 'password'"
+                    [type]="showIncome ? 'number' : 'text'"
+                    [class.text-security-disc]="!showIncome"
                     id="monthlyIncome"
                     step="0.01"
                     formControlName="monthlyIncome"
@@ -48,7 +48,8 @@
 
             <div class="relative">
                 <input
-                    [type]="showCost ? 'number' : 'password'"
+                    [type]="showCost ? 'number' : 'text'"
+                    [class.text-security-disc]="!showCost"
                     id="monthlyCost"
                     step="0.01"
                     formControlName="monthlyCost"
@@ -63,6 +64,37 @@
                 >
                     <lucide-icon
                         [img]="showCost ? eyeOff : eye"
+                        class="w-4 h-4"
+                    />
+                </button>
+            </div>
+        </div>
+
+        <div>
+            <label
+                class="form-label"
+                for="overtimeRate"
+                >Overtime Income (per hour)</label
+            >
+
+            <div class="relative">
+                <input
+                    [type]="showOvertime ? 'number' : 'text'"
+                    [class.text-security-disc]="!showOvertime"
+                    id="overtimeRate"
+                    step="0.01"
+                    formControlName="overtimeRate"
+                    class="input-base pr-10"
+                />
+
+                <button
+                    (click)="toggleOvertimeVisibility()"
+                    [attr.aria-label]="showOvertime ? 'Hide overtime' : 'Show overtime'"
+                    type="button"
+                    class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                >
+                    <lucide-icon
+                        [img]="showOvertime ? eyeOff : eye"
                         class="w-4 h-4"
                     />
                 </button>
@@ -146,20 +178,7 @@
                 <option [ngValue]="0">Sunday</option>
             </select>
         </div>
-
-        <div class="flex items-center space-x-3">
-            <button
-                [disabled]="saving"
-                type="submit"
-                class="btn-primary px-4 py-2 flex items-center space-x-2"
-            >
-                @if (!justSaved) {
-                <span>Save</span>
-                } @else {
-                <span class="text-green-600 font-semibold">Saved!</span>
-                }
-            </button>
-        </div>
+        
         </div>
 
         <div class="bg-card border border-border rounded-lg p-4 space-y-3">
@@ -235,24 +254,52 @@
             <div class="bg-card border border-border rounded-lg p-4">
                 <h2 class="text-lg font-semibold mb-4">Holiday Settings</h2>
 
-                <div class="space-y-3">
-                    <label class="form-label" for="holidayCountry">Holiday Country</label>
-                    <div class="flex gap-2">
-                        <input
-                            id="holidayCountry"
-                            type="text"
-                            maxlength="2"
-                            placeholder="e.g., SE"
-                            class="input-base"
-                            formControlName="holidayCountry"
-                        />
-                        <button
-                            type="button"
-                            class="btn-secondary px-3 py-1"
-                            (click)="setAutoDetectedCountry()"
-                        >Auto-detect</button>
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <label class="form-label" for="holidayCountry">Holiday Country</label>
+                        <div class="flex gap-2">
+                            <input
+                                id="holidayCountry"
+                                type="text"
+                                maxlength="2"
+                                placeholder="e.g., SE"
+                                class="input-base"
+                                formControlName="holidayCountry"
+                            />
+                            <button
+                                type="button"
+                                class="btn-secondary px-3 py-1"
+                                (click)="setAutoDetectedCountry()"
+                            >Auto-detect</button>
+                        </div>
+                        <p class="text-xs text-muted-foreground">Two-letter country code (ISO 3166-1 alpha-2). Used to highlight public holidays and show the holiday name.</p>
                     </div>
-                    <p class="text-xs text-muted-foreground">Two-letter country code (ISO 3166-1 alpha-2). Used to highlight public holidays and show the holiday name.</p>
+
+                    <div class="space-y-3 pt-3 border-t border-border">
+                        <span class="form-label">Holiday Types to Display</span>
+                        <p class="text-xs text-muted-foreground mb-2">Select which types of holidays should be shown in the calendar.</p>
+                        
+                        <div class="space-y-2">
+                            @for (option of holidayTypeOptions; track option.type) {
+                                <div class="flex items-start space-x-2">
+                                    <input
+                                        [id]="'holidayType_' + option.type"
+                                        type="checkbox"
+                                        [checked]="isHolidayTypeEnabled(option.type)"
+                                        (change)="toggleHolidayType(option.type)"
+                                        class="h-4 w-4 mt-0.5"
+                                    />
+                                    <div class="flex flex-col">
+                                        <label
+                                            [for]="'holidayType_' + option.type"
+                                            class="text-sm font-medium cursor-pointer"
+                                        >{{ option.label }}</label>
+                                        <span class="text-xs text-muted-foreground">{{ option.description }}</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

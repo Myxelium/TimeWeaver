@@ -242,7 +242,34 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   progressPercent(total: number | null | undefined): Observable<number> {
     const totalHours = typeof total === 'number' ? total : 0;
 
-    return this.maxHoursPerDay$.pipe(map(maxHours => Math.min(100, (totalHours / maxHours) * 100)));
+    return this.maxHoursPerDay$.pipe(map(maxHours => {
+      if (maxHours === 0)
+        return 0;
+
+      if (totalHours <= maxHours)
+        return (totalHours / maxHours) * 100;
+
+      return (maxHours / totalHours) * 100;
+    }));
+  }
+
+  overtimePercent(total: number | null | undefined): Observable<number> {
+    const totalHours = typeof total === 'number' ? total : 0;
+
+    return this.maxHoursPerDay$.pipe(map(maxHours => {
+      if (maxHours === 0 || totalHours <= maxHours)
+        return 0;
+
+      const overtimeHours = totalHours - maxHours;
+
+      return (overtimeHours / totalHours) * 100;
+    }));
+  }
+
+  hasOvertime(total: number | null | undefined): Observable<boolean> {
+    const totalHours = typeof total === 'number' ? total : 0;
+
+    return this.maxHoursPerDay$.pipe(map(maxHours => totalHours > maxHours));
   }
 
   private initializeDate(): void {

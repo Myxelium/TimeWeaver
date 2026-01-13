@@ -48,7 +48,9 @@ export interface SaveSettingsCommand {
     maxHoursPerDay: number;
     maxHoursEnabled: boolean;
     holidayCountry?: string;
+    holidayTypes?: string[]; // Array of holiday types: public, bank, school, optional, observance
     firstDayOfWeek?: number;
+    overtimeRate?: number;
   };
 }
 
@@ -117,5 +119,7 @@ export interface SettingsDTO {
   maxHoursPerDay: number;
   maxHoursEnabled: boolean;
   holidayCountry?: string;
+  holidayTypes?: string[]; // Array of holiday types: public, bank, school, optional, observance
   firstDayOfWeek?: number;
+  overtimeRate?: number;
 }

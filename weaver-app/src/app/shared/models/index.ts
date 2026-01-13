@@ -60,6 +60,11 @@ export interface UpdateTaskRequest extends CreateTaskRequest {
   id: number;
 }
 
+// Holiday types supported by date-holidays library
+export type HolidayType = 'public' | 'bank' | 'school' | 'optional' | 'observance';
+export const ALL_HOLIDAY_TYPES: HolidayType[] = ['public', 'bank', 'school', 'optional', 'observance'];
+export const DEFAULT_HOLIDAY_TYPES: HolidayType[] = ['public', 'bank'];
+
 export interface Settings {
   monthlyIncome: number;
   monthlyCost: number;
@@ -68,7 +73,9 @@ export interface Settings {
   maxHoursPerDay: number;
   maxHoursEnabled: boolean;
   holidayCountry?: string; // ISO-3166-1 alpha-2, e.g., SE
+  holidayTypes?: HolidayType[]; // Which holiday types to show in calendar
   firstDayOfWeek?: number; // 0=Sunday ... 6=Saturday; default 1 (Monday)
+  overtimeRate?: number; // Overtime income rate (default 0)
 }
 
 export const DAILY_WORK_HOURS = 8;

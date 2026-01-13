@@ -31,9 +31,11 @@
   }
 
   <div class="mt-4">
-    <div class="progress-outer">
-
-      <div [style.width.%]="(day.totalHours / maxHoursPerDay()) * 100" class="progress-inner"></div>
+    <div class="progress-outer flex">
+      <div [style.width.%]="getBaseProgressWidth(day.totalHours)" class="progress-inner"></div>
+      @if (day.totalHours > maxHoursPerDay()) {
+        <div [style.width.%]="getOvertimeWidth(day.totalHours)" class="h-2 bg-amber-400 rounded-full ml-0.5"></div>
+      }
     </div>
   </div>
 </div>

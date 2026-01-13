@@ -26,8 +26,14 @@ export class Setting {
   @Column({ type: 'text', nullable: true })
   holidayCountry?: string | null;
 
+  @Column({ type: 'text', default: 'public,bank' })
+  holidayTypes!: string; // Comma-separated: public,bank,school,optional,observance
+
   @Column({ type: 'int', default: 1 })
   firstDayOfWeek!: number;
+
+  @Column({ type: 'real', default: 0 })
+  overtimeRate!: number;
 
   @UpdateDateColumn({ type: 'datetime', nullable: true })
   updated_at?: string;

@@ -19,8 +19,14 @@ export async function handleSaveSettings(command: SaveSettingsCommand, dataSourc
   settings.maxHoursEnabled = command.payload.maxHoursEnabled;
   settings.holidayCountry = command.payload.holidayCountry ?? null;
 
+  if (Array.isArray(command.payload.holidayTypes))
+    settings.holidayTypes = command.payload.holidayTypes.join(',');
+
   if (typeof command.payload.firstDayOfWeek === 'number')
     settings.firstDayOfWeek = command.payload.firstDayOfWeek;
+
+  if (typeof command.payload.overtimeRate === 'number')
+    settings.overtimeRate = command.payload.overtimeRate;
 
   await repo.save(settings);
   return true;

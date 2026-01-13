@@ -73,6 +73,25 @@ export class MonthlyOverviewComponent {
     this.store.dispatch(TasksActions.loadMonthlyData({ year: now.getFullYear(), month: now.getMonth() + 1 }));
   }
 
+  getBaseProgressWidth(totalHours: number): number {
+    if (this.maxHoursPerDay === 0)
+      return 0;
+
+    if (totalHours <= this.maxHoursPerDay)
+      return (totalHours / this.maxHoursPerDay) * 100;
+
+    return (this.maxHoursPerDay / totalHours) * 100;
+  }
+
+  getOvertimeWidth(totalHours: number): number {
+    if (this.maxHoursPerDay === 0 || totalHours <= this.maxHoursPerDay)
+      return 0;
+
+    const overtimeHours = totalHours - this.maxHoursPerDay;
+
+    return (overtimeHours / totalHours) * 100;
+  }
+
   previousMonth(): void {
     const current = this.currentDate();
     const previous = new Date(current.getFullYear(), current.getMonth() - 1, 1);
@@ -171,7 +190,7 @@ export class MonthlyOverviewComponent {
         isToday: isToday(day),
         summary: this.getDaySummarySync(day),
         isWeekend: day.getDay() === 0 || day.getDay() === 6,
-        isHoliday: !!info.isBank,
+        isHoliday: info.isHoliday,
         holidayName: info.name || null
       } as CalendarDay;
     });

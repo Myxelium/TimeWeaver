@@ -3,10 +3,12 @@ import Holidays from 'date-holidays';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { selectSettings } from '../../store/settings/settings.selectors';
+import { HolidayType, DEFAULT_HOLIDAY_TYPES } from '../models';
 
 export interface HolidayInfo {
   isHoliday: boolean;
   name?: string;
+  type?: string;
   isBank?: boolean;
 }
 
@@ -39,10 +41,24 @@ export class HolidayService {
       return { isHoliday: false };
 
     const items = (Array.isArray(res) ? res : [res]) as { name?: string; type?: string }[];
-    const name = items[0]?.name;
-    const isBank = items.some(item => (item.type || '').toLowerCase() === 'bank' || (item.type || '').toLowerCase() === 'optional');
+    // Get enabled holiday types from settings
+    const settings = this.settingsSignal();
+    const enabledTypes = (settings as { holidayTypes?: HolidayType[] } | null)?.holidayTypes || DEFAULT_HOLIDAY_TYPES;
+    // Filter items by enabled types
+    const matchingItems = items.filter(item => {
+      const itemType = (item.type || '').toLowerCase() as HolidayType;
 
-    return { isHoliday: true, name, isBank };
+      return enabledTypes.includes(itemType);
+    });
+
+    if (matchingItems.length === 0)
+      return { isHoliday: false };
+
+    const name = matchingItems[0]?.name;
+    const type = matchingItems[0]?.type;
+    const isBank = matchingItems.some(item => (item.type || '').toLowerCase() === 'bank' || (item.type || '').toLowerCase() === 'optional');
+
+    return { isHoliday: true, name, type, isBank };
   }
 
   getHolidayName(date: Date): string | null {
