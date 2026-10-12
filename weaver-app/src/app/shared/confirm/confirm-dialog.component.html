@@ -1,8 +1,8 @@
 @if (open()) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div
-            (click)="cancel()"
-            (keydown.escape)="cancel()"
+            (click)="dismissDialog()"
+            (keydown.escape)="dismissDialog()"
             role="button"
             tabindex="0"
             class="fixed inset-0 bg-black/50"
@@ -17,7 +17,7 @@
 
             <div class="flex justify-end space-x-3 pt-2">
                 <button
-                    (click)="cancel()"
+                    (click)="dismissDialog()"
                     type="button"
                     class="px-4 py-2 border border-border rounded-md hover:bg-accent transition-colors text-sm"
                 >
@@ -25,7 +25,7 @@
                 </button>
 
                 <button
-                    (click)="confirm()"
+                    (click)="acceptDialog()"
                     [class.bg-destructive]="options().destructive"
                     [class.text-destructive-foreground]="options().destructive"
                     type="button"

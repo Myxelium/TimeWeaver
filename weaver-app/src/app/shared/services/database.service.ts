@@ -27,8 +27,8 @@ const secondsPerMinute = 60;
 const previewMaximumHours = 8;
 
 interface ElectronAPI {
-  query(request: { type: string; payload: unknown }): Promise<unknown>;
-  command(request: { type: string; payload: unknown }): Promise<unknown>;
+  runQuery(request: { type: string; payload: unknown }): Promise<unknown>;
+  runCommand(request: { type: string; payload: unknown }): Promise<unknown>;
 }
 
 @Injectable({
@@ -50,7 +50,7 @@ export class DatabaseService {
       if (!api)
         return of([]);
 
-      return from(api.query({ type: 'get-tasks-by-date', payload: { date } })).pipe(map(result => result as Task[]));
+      return from(api.runQuery({ type: 'get-tasks-by-date', payload: { date } })).pipe(map(result => result as Task[]));
     }
   }
 
@@ -64,7 +64,7 @@ export class DatabaseService {
       if (!api)
         return of(0);
 
-      return from(api.command({ type: 'save-task', payload: { ...task, hours: task.hours || 0 } })).pipe(map(result => result as number));
+      return from(api.runCommand({ type: 'save-task', payload: { ...task, hours: task.hours || 0 } })).pipe(map(result => result as number));
     }
   }
 
@@ -78,7 +78,7 @@ export class DatabaseService {
       if (!api)
         return of({ success: true });
 
-      return from(api.command({ type: 'delete-task', payload: { id: taskId } }));
+      return from(api.runCommand({ type: 'delete-task', payload: { id: taskId } }));
     }
   }
 
@@ -91,7 +91,7 @@ export class DatabaseService {
       if (!api)
         return of([]);
 
-      return from(api.query({ type: 'get-tasks-by-month', payload: { year, month } })).pipe(map(result => result as DaySummary[]));
+      return from(api.runQuery({ type: 'get-tasks-by-month', payload: { year, month } })).pipe(map(result => result as DaySummary[]));
     }
   }
 
@@ -104,7 +104,7 @@ export class DatabaseService {
       if (!api)
         return of(0);
 
-      return from(api.query({ type: 'get-monthly-summary', payload: { year, month } })).pipe(map(result => result as number));
+      return from(api.runQuery({ type: 'get-monthly-summary', payload: { year, month } })).pipe(map(result => result as number));
     }
   }
 
@@ -117,7 +117,7 @@ export class DatabaseService {
       if (!api)
         return of([]);
 
-      return from(api.query({ type: 'get-all-tasks', payload: {} })).pipe(map(result => result as Task[]));
+      return from(api.runQuery({ type: 'get-all-tasks', payload: {} })).pipe(map(result => result as Task[]));
     }
   }
 
@@ -131,7 +131,7 @@ export class DatabaseService {
       if (!api)
         return of(false);
 
-      return from(api.query({ type: 'export-csv', payload: { year, month } })).pipe(map(result => result as boolean));
+      return from(api.runQuery({ type: 'export-csv', payload: { year, month } })).pipe(map(result => result as boolean));
     }
   }
 
@@ -145,7 +145,7 @@ export class DatabaseService {
       if (!api)
         return of(false);
 
-      return from(api.query({ type: 'export-csv-all', payload: {} })).pipe(map(result => result as boolean));
+      return from(api.runQuery({ type: 'export-csv-all', payload: {} })).pipe(map(result => result as boolean));
     }
   }
 
@@ -162,7 +162,7 @@ export class DatabaseService {
 
     const contentBase64 = btoa(content);
 
-    return from(api.command({ type: 'import-csv', payload: { contentBase64, overwrite } }))
+    return from(api.runCommand({ type: 'import-csv', payload: { contentBase64, overwrite } }))
       .pipe(map(result => result as { imported: number; updated: number; skipped: number; total: number }));
   }
 
@@ -207,7 +207,7 @@ export class DatabaseService {
       });
     }
 
-    return from(api.query({ type: 'get-settings', payload: {} })).pipe(map(result => result as Settings));
+    return from(api.runQuery({ type: 'get-settings', payload: {} })).pipe(map(result => result as Settings));
   }
 
   saveSettings(settings: Settings): Observable<boolean> {
@@ -221,7 +221,7 @@ export class DatabaseService {
     if (!api)
       return of(false);
 
-    return from(api.command({ type: 'save-settings', payload: settings })).pipe(map(() => true));
+    return from(api.runCommand({ type: 'save-settings', payload: settings })).pipe(map(() => true));
   }
 
   getAdoSuggestions(): Observable<AdoSuggestion[]> {
@@ -233,7 +233,7 @@ export class DatabaseService {
     if (!api)
       return of([]);
 
-    return from(api.query({ type: 'get-ado-suggestions', payload: {} })).pipe(map(result => result as AdoSuggestion[]));
+    return from(api.runQuery({ type: 'get-ado-suggestions', payload: {} })).pipe(map(result => result as AdoSuggestion[]));
   }
 
   syncAdo(): Observable<{ ran: boolean; itemCount: number; error: string | null }> {
@@ -245,7 +245,7 @@ export class DatabaseService {
     if (!api)
       return of({ ran: false, itemCount: 0, error: 'Azure DevOps sync is unavailable.' });
 
-    return from(api.command({ type: 'sync-ado', payload: {} })).pipe(
+    return from(api.runCommand({ type: 'sync-ado', payload: {} })).pipe(
       map(result => result as { ran: boolean; itemCount: number; error: string | null })
     );
   }

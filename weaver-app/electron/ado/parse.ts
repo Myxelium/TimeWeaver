@@ -54,17 +54,17 @@ export function todayLocal(now = new Date()): string {
 }
 
 export function readConnectionUser(body: unknown): AdoUser {
-  const user = record(record(body).authenticatedUser);
+  const user = asRecord(asRecord(body).authenticatedUser);
 
   return {
-    id: text(user.id),
-    displayName: text(user.providerDisplayName),
+    id: readText(user.id),
+    displayName: readText(user.providerDisplayName),
     accounts: accountsFrom(user.properties)
   };
 }
 
 export function readWorkItemIds(body: unknown): number[] {
-  const items = record(body).workItems;
+  const items = asRecord(body).workItems;
 
   if (!Array.isArray(items))
     return [];
@@ -72,7 +72,7 @@ export function readWorkItemIds(body: unknown): number[] {
   const ids: number[] = [];
 
   for (const item of items) {
-    const id = Number(record(item).id);
+    const id = Number(asRecord(item).id);
 
     if (Number.isInteger(id) && id > 0)
       ids.push(id);
@@ -82,14 +82,14 @@ export function readWorkItemIds(body: unknown): number[] {
 }
 
 export function readPullRequestsById(body: unknown): Map<number, PullRequestRef[]> {
-  const items = Array.isArray(body) ? body : record(body).value;
+  const items = Array.isArray(body) ? body : asRecord(body).value;
   const pullRequestsById = new Map<number, PullRequestRef[]>();
 
   if (!Array.isArray(items))
     return pullRequestsById;
 
   for (const item of items) {
-    const entry = record(item);
+    const entry = asRecord(item);
     const adoId = Number(entry.id);
 
     if (!Number.isInteger(adoId) || adoId <= 0)
@@ -102,7 +102,7 @@ export function readPullRequestsById(body: unknown): Map<number, PullRequestRef[
 }
 
 export function readWorkItems(body: unknown): ParsedWorkItem[] {
-  const items = Array.isArray(body) ? body : record(body).value;
+  const items = Array.isArray(body) ? body : asRecord(body).value;
 
   if (!Array.isArray(items))
     return [];
@@ -120,7 +120,7 @@ export function readWorkItems(body: unknown): ParsedWorkItem[] {
 }
 
 export function readActiveOn(body: unknown, user: AdoUser): { activeOn: string | null; user: AdoUser } {
-  const updates = Array.isArray(body) ? body : record(body).value;
+  const updates = Array.isArray(body) ? body : asRecord(body).value;
 
   let latestIso = '';
   let displayName = user.displayName;
@@ -131,26 +131,26 @@ export function readActiveOn(body: unknown, user: AdoUser): { activeOn: string |
     return { activeOn: null, user: { ...user, accounts } };
 
   for (const update of updates) {
-    const entry = record(update);
-    const revisedBy = record(entry.revisedBy);
+    const entry = asRecord(update);
+    const revisedBy = asRecord(entry.revisedBy);
 
     if (!sameIdentity(revisedBy, user))
       continue;
 
-    const uniqueName = text(revisedBy.uniqueName);
+    const uniqueName = readText(revisedBy.uniqueName);
 
     if (uniqueName && !accounts.some(account => sameText(account, uniqueName)))
       accounts.push(uniqueName);
 
     if (!displayName)
-      displayName = text(revisedBy.displayName);
+      displayName = readText(revisedBy.displayName);
 
-    const state = record(record(entry.fields)['System.State']);
+    const state = asRecord(asRecord(entry.fields)['System.State']);
 
-    if (text(state.newValue).toLowerCase() !== ACTIVE_STATE)
+    if (readText(state.newValue).toLowerCase() !== ACTIVE_STATE)
       continue;
 
-    const revisedDate = text(entry.revisedDate);
+    const revisedDate = readText(entry.revisedDate);
 
     if (revisedDate > latestIso)
       latestIso = revisedDate;
@@ -163,7 +163,7 @@ export function readActiveOn(body: unknown, user: AdoUser): { activeOn: string |
 }
 
 export function readPullRequestCommits(body: unknown, user: AdoUser): string | null {
-  const commits = Array.isArray(body) ? body : record(body).value;
+  const commits = Array.isArray(body) ? body : asRecord(body).value;
 
   let latestIso = '';
 
@@ -171,15 +171,15 @@ export function readPullRequestCommits(body: unknown, user: AdoUser): string | n
     return null;
 
   for (const commit of commits) {
-    const entry = record(commit);
-    const author = record(entry.author);
-    const committer = record(entry.committer);
+    const entry = asRecord(commit);
+    const author = asRecord(entry.author);
+    const committer = asRecord(entry.committer);
     const matched = matchesUser(author, user) ? author : matchesUser(committer, user) ? committer : null;
 
     if (!matched)
       continue;
 
-    const date = text(matched.date);
+    const date = readText(matched.date);
 
     if (date > latestIso)
       latestIso = date;
@@ -213,11 +213,11 @@ export function laterDay(current: string | null, next: string | null): string | 
 }
 
 function readWorkItem(item: unknown): ParsedWorkItem | null {
-  const entry = record(item);
-  const fields = record(entry.fields);
+  const entry = asRecord(item);
+  const fields = asRecord(entry.fields);
   const adoId = Number(entry.id ?? fields['System.Id']);
-  const title = text(fields['System.Title']).trim();
-  const type = text(fields['System.WorkItemType']).toLowerCase();
+  const title = readText(fields['System.Title']).trim();
+  const type = readText(fields['System.WorkItemType']).toLowerCase();
 
   if (!Number.isInteger(adoId) || adoId <= 0 || !title)
     return null;
@@ -239,13 +239,13 @@ function readPullRequests(relations: unknown): PullRequestRef[] {
   const pullRequests: PullRequestRef[] = [];
 
   for (const relation of relations) {
-    const entry = record(relation);
-    const attributes = record(entry.attributes);
+    const entry = asRecord(relation);
+    const attributes = asRecord(entry.attributes);
 
     if (entry.rel !== 'ArtifactLink' || attributes.name !== 'Pull Request')
       continue;
 
-    const pullRequest = readPullRequestUrl(text(entry.url));
+    const pullRequest = readPullRequestUrl(readText(entry.url));
 
     if (pullRequest)
       pullRequests.push(pullRequest);
@@ -269,28 +269,28 @@ function readPullRequestUrl(url: string): PullRequestRef | null {
 }
 
 function accountsFrom(properties: unknown): string[] {
-  const account = record(properties).Account;
+  const account = asRecord(properties).Account;
 
   if (typeof account === 'string' && account.trim())
     return [account.trim()];
 
-  const value = text(record(account).$value).trim();
+  const value = readText(asRecord(account).$value).trim();
 
   return value ? [value] : [];
 }
 
 function sameIdentity(revisedBy: Record<string, unknown>, user: AdoUser): boolean {
-  return text(revisedBy['id']) === user.id && user.id.length > 0;
+  return readText(revisedBy['id']) === user.id && user.id.length > 0;
 }
 
 function matchesUser(person: Record<string, unknown>, user: AdoUser): boolean {
-  const email = text(person['email']);
+  const email = readText(person['email']);
   const knownAccount = user.accounts.some(account => sameText(account, email));
 
   if (user.accounts.length > 0)
     return knownAccount;
 
-  return sameText(text(person['name']), user.displayName);
+  return sameText(readText(person['name']), user.displayName);
 }
 
 function sameText(left: string, right: string): boolean {
@@ -308,13 +308,13 @@ function decodePullRequestUrl(url: string): string {
   }
 }
 
-function record(value: unknown): Record<string, unknown> {
+function asRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object')
     return value as Record<string, unknown>;
 
   return {};
 }
 
-function text(value: unknown): string {
+function readText(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }

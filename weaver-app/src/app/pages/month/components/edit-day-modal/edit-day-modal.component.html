@@ -1,8 +1,8 @@
 @if (isOpen) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-            (click)="close()"
-            (keydown.escape)="close()"
+            (click)="closeModal()"
+            (keydown.escape)="closeModal()"
             role="button"
             tabindex="0"
             class="fixed inset-0 bg-black/50"
@@ -66,7 +66,7 @@
                     </button>
 
                     <button
-                        (click)="close()"
+                        (click)="closeModal()"
                         type="button"
                         class="text-muted-foreground hover:text-foreground transition-colors"
                         aria-label="Close"
@@ -92,46 +92,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="space-y-6">
                         @if (isRangeMode) {
-                            <div>
-                                <h3 class="panel-heading">Selected days</h3>
-                                <p class="text-sm text-muted-foreground mb-3">Existing time stays on each day. New tasks are added on top.</p>
-
-                                <div class="space-y-2 max-h-96 overflow-y-auto">
-                                    @for (row of rangeDayRows; track row.dateKey) {
-                                        <div class="border border-border rounded-md px-3 py-2">
-                                            <div class="flex items-center justify-between gap-2">
-                                                <span class="text-sm font-medium">{{ row.date | date: 'EEE, MMM d' }}</span>
-                                                <span class="text-sm text-muted-foreground">{{ row.totalHours | number: '1.1-1' }}h</span>
-                                            </div>
-
-                                            @if (row.holidayName) {
-                                                <p class="text-xs text-red-600">{{ row.holidayName }}</p>
-                                            }
-
-                                            @if (suggestionsForDate(row.date).length) {
-                                                <div class="mt-2">
-                                                    <p class="text-xs font-medium mb-1">Suggested</p>
-
-                                                    <app-ado-suggestion-table
-                                                        (add)="addSuggestion(row.date, $event)"
-                                                        [loggedIds]="loggedSuggestionIds(row.date)"
-                                                        [showAdd]="true"
-                                                        [suggestions]="suggestionsForDate(row.date)"
-                                                    />
-                                                </div>
-                                            }
-
-                                            @if (row.tasks.length) {
-                                                @for (task of row.tasks; track task.id) {
-                                                    <p class="text-xs text-muted-foreground truncate">{{ task.title }} · {{ task.hours | number: '1.1-1' }}h</p>
-                                                }
-                                            } @else {
-                                                <p class="text-xs text-muted-foreground italic">No time yet</p>
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            </div>
+                            <app-range-day-list (addSuggestion)="addSuggestion($event.date, $event.item)" [rows]="rangeDayRows" />
                         } @else {
                             <app-day-summary-panel
                                 [show]="!singleTaskMode"
@@ -163,136 +124,36 @@
                     </div>
 
                     <div class="space-y-6">
-                        <div class="card-panel">
-                            <h3 class="panel-heading">{{ isRangeMode ? 'Add time' : (editingTask ? 'Edit Task' : 'Add New Task') }}</h3>
-
-                            <form
-                                (ngSubmit)="onSubmit()"
-                                [formGroup]="taskForm"
-                                class="space-y-4"
-                            >
-                                @if (isRangeMode) {
-                                    <p class="text-sm text-muted-foreground">This task is added to every selected day. Days that already have time keep those entries.</p>
-                                }
-
-                                @if (allowDateChange) {
-                                    <div>
-                                        <label for="modalTaskDate" class="form-label">Date</label
-                                        >
-
-                                        <input
-                                            type="date"
-                                            id="modalTaskDate"
-                                            formControlName="date"
-                                            class="input-base"
-                                        />
-                                    </div>
-                                }
-
-                                <div>
-                                    <label for="modalTaskTitle" class="form-label">Task Title</label
-                                    >
-
-                                    <div class="relative">
-                                        <input
-                                            (focus)="onTitleFocus()"
-                                            (blur)="onTitleBlur()"
-                                            type="text"
-                                            id="modalTaskTitle"
-                                            formControlName="title"
-                                            class="input-base"
-                                            placeholder="What are you working on?"
-                                            autocomplete="off"
-                                        />
-
-                                        <app-suggestions-dropdown
-                                            (toggleAll)="toggleAllSuggestions()"
-                                            (selectSuggestion)="selectSuggestion($event)"
-                                            [showSuggestions]="showSuggestions"
-                                            [showAllSuggestions]="showAllSuggestions"
-                                            [recentSuggestions]="recentSuggestions"
-                                            [filteredSuggestions]="filteredSuggestions"
-                                            [allTaskTitles]="allTaskTitles"
-                                        />
-                                    </div>
-
-                                    @if (taskForm.get('title')?.invalid && taskForm.get('title')?.touched) {
-                                        <p class="text-destructive text-sm mt-1">Task title is required</p>
-                                    }
-                                </div>
-
-                                <div>
-                                    <label for="modalTaskDescription" class="form-label">Description (Optional)</label
-                                    >
-
-                                    <textarea
-                                        formControlName="description"
-                                        rows="3"
-                                        id="modalTaskDescription"
-                                        class="textarea-base"
-                                        placeholder="Add details about the task..."
-                                    >
-                                    </textarea>
-                                </div>
-
-                                <div>
-                                    <label for="modalTaskHours" class="form-label">Hours</label
-                                    >
-
-                                    <div class="flex gap-2">
-                                        <input
-                                            type="number"
-                                            formControlName="hours"
-                                            min="0"
-                                            max="24"
-                                            step="0.1"
-                                            id="modalTaskHours"
-                                            class="flex-1 input-base"
-                                            placeholder="0.0"
-                                        />
-
-                                        <app-remaining-hours-button
-                                            (addRemaining)="addRemainingHours()"
-                                            [show]="
-                                                !isRangeMode &&
-                                                !singleTaskMode &&
-                                                !!(maxHoursEnabled$ | async) &&
-                                                ((maxHoursPerDay$ | async) ?? 0) - getDayTotalHours() > 0
-                                            "
-                                            [maxHoursPerDay]="(maxHoursPerDay$ | async) ?? 0"
-                                            [dayTotalHours]="getDayTotalHours()"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div class="flex space-x-3">
-                                    <button
-                                        [disabled]="taskForm.invalid || (isLoading$ | async)"
-                                        type="submit"
-                                        class="flex-1 btn-primary py-2 px-4"
-                                    >
-                                        {{ isRangeMode ? 'Add to all days' : (editingTask ? 'Update Task' : 'Add Task') }}
-                                    </button>
-
-                                    @if (editingTask) {
-                                        <button
-                                            (click)="resetForm()"
-                                            type="button"
-                                            class="btn-outline px-4 py-2"
-                                        >
-                                            Cancel
-                                        </button>
-                                    }
-                                </div>
-                            </form>
-                        </div>
+                        <app-day-task-form
+                            (submitForm)="onSubmit()"
+                            (titleFocus)="onTitleFocus()"
+                            (titleBlur)="onTitleBlur()"
+                            (toggleAll)="toggleAllSuggestions()"
+                            (selectSuggestion)="selectSuggestion($event)"
+                            (addRemaining)="addRemainingHours()"
+                            (cancelEdit)="resetForm()"
+                            [isRangeMode]="isRangeMode"
+                            [editingTask]="editingTask"
+                            [allowDateChange]="allowDateChange"
+                            [singleTaskMode]="singleTaskMode"
+                            [showSuggestions]="showSuggestions"
+                            [showAllSuggestions]="showAllSuggestions"
+                            [recentSuggestions]="recentSuggestions"
+                            [filteredSuggestions]="filteredSuggestions"
+                            [allTaskTitles]="allTaskTitles"
+                            [dayTotalHours]="getDayTotalHours()"
+                            [taskForm]="taskForm"
+                            [isLoading$]="isLoading$"
+                            [maxHoursEnabled$]="maxHoursEnabled$"
+                            [maxHoursPerDay$]="maxHoursPerDay$"
+                        />
                     </div>
                 </div>
             </div>
 
             <div class="flex justify-end space-x-3 p-6 border-t border-border flex-shrink-0">
                 <button
-                    (click)="close()"
+                    (click)="closeModal()"
                     type="button"
                     class="btn-outline px-4 py-2"
                 >
@@ -308,7 +169,7 @@
         (saveTask)="saveDetailedTask($event)"
         [isOpen]="taskDetailsOpen"
         [showBack]="true"
-        [tasks]="taskDetailsTasks"
+        [taskList]="taskDetailsTasks"
         [title]="taskDetailsTitle"
     />
 }

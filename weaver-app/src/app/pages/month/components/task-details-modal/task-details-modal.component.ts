@@ -6,19 +6,13 @@ import {
   Input,
   Output
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import {
-  BarChart3,
-  Calendar,
-  ChevronLeft,
-  Clock,
-  LucideAngularModule,
-  TrendingUp
-} from 'lucide-angular';
+import { ChevronLeft, LucideAngularModule } from 'lucide-angular';
 
 import { Task } from '../../../../shared/models';
 import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+import { TaskEntryListComponent } from './task-entry-list/task-entry-list.component';
+import { TaskStatisticsPanelComponent } from './task-statistics-panel/task-statistics-panel.component';
 
 const defaultStatisticHours = 8;
 const yearMonthKeyLength = 7;
@@ -38,8 +32,9 @@ interface TaskStatistics {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    LucideAngularModule
+    LucideAngularModule,
+    TaskStatisticsPanelComponent,
+    TaskEntryListComponent
   ],
   templateUrl: './task-details-modal.component.html'
 })
@@ -52,10 +47,6 @@ export class TaskDetailsModalComponent {
   @Output() back = new EventEmitter<void>();
   @Output() saveTask = new EventEmitter<{ id: number; title: string; description?: string; date: string; hours: number }>();
 
-  readonly Clock = Clock;
-  readonly Calendar = Calendar;
-  readonly TrendingUp = TrendingUp;
-  readonly BarChart3 = BarChart3;
   readonly ChevronLeft = ChevronLeft;
 
   localTasks: EditableTask[] = [];
@@ -75,7 +66,7 @@ export class TaskDetailsModalComponent {
     });
   }
 
-  @Input() set tasks(value: Task[] | null) {
+  @Input() set taskList(value: Task[] | null) {
     const arr = value ?? [];
 
     this._currentTasks = arr;
@@ -95,7 +86,7 @@ export class TaskDetailsModalComponent {
     this.localTasks[index].editing = true;
   }
 
-  cancel(index: number): void {
+  cancelTaskEdit(index: number): void {
     const task = this.localTasks[index];
 
     if (!task)
@@ -105,7 +96,7 @@ export class TaskDetailsModalComponent {
     task.editing = false;
   }
 
-  save(index: number): void {
+  saveTaskEdit(index: number): void {
     const task = this.localTasks[index];
 
     if (!task || !task.id)

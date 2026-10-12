@@ -29,9 +29,9 @@ const SUGGESTION_BLUR_DELAY_MS = 200;
 
 interface PopupApi {
   getContext(ruleId: string): Promise<PopupContext>;
-  submit(ruleId: string, entries: PopupEntry[]): Promise<boolean>;
-  dismiss(ruleId: string): Promise<boolean>;
-  resize(height: number): void;
+  submitTimeEntries(ruleId: string, entries: PopupEntry[]): Promise<boolean>;
+  dismissPopup(ruleId: string): Promise<boolean>;
+  resizePopup(height: number): void;
 }
 
 @Component({
@@ -158,7 +158,7 @@ export class PopupOverlayComponent implements OnInit, AfterViewInit, OnDestroy {
     row.showAllSuggestions = false;
   }
 
-  async submit(): Promise<void> {
+  async submitTimeEntries(): Promise<void> {
     const api = this.popupApi();
     const rows = this.savableRows;
 
@@ -180,19 +180,19 @@ export class PopupOverlayComponent implements OnInit, AfterViewInit, OnDestroy {
     this.saveError = null;
 
     try {
-      await api.submit(this.context.ruleId, entries);
+      await api.submitTimeEntries(this.context.ruleId, entries);
     } catch {
       this.saving = false;
       this.saveError = 'Could not save today\'s time.';
     }
   }
 
-  dismiss(): void {
+  dismissPopup(): void {
     const ruleId = this.context?.ruleId
       || new URLSearchParams(window.location.search).get('ruleId')
       || '';
 
-    void this.popupApi()?.dismiss(ruleId);
+    void this.popupApi()?.dismissPopup(ruleId);
   }
 
   private async loadContext(): Promise<void> {
@@ -267,7 +267,7 @@ export class PopupOverlayComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
 
     this.lastHeight = height;
-    api.resize(height);
+    api.resizePopup(height);
   }
 
   private popupApi(): PopupApi | undefined {

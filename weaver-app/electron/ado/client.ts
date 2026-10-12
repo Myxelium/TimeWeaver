@@ -43,7 +43,7 @@ export class AdoClient {
   ) {}
 
   async currentUser(): Promise<AdoUser> {
-    const body = await this.request('GET', '/_apis/connectionData', undefined, CONNECTION_DATA_VERSION);
+    const body = await this.sendAdoRequest('GET', '/_apis/connectionData', undefined, CONNECTION_DATA_VERSION);
     const user = readConnectionUser(body);
 
     if (!user.id)
@@ -53,13 +53,13 @@ export class AdoClient {
   }
 
   async assignedWorkItems(): Promise<ParsedWorkItem[]> {
-    const queried = await this.request('POST', '/_apis/wit/wiql', { query: ASSIGNED_STORIES_QUERY });
+    const queried = await this.sendAdoRequest('POST', '/_apis/wit/wiql', { query: ASSIGNED_STORIES_QUERY });
     const ids = readWorkItemIds(queried);
     const items: ParsedWorkItem[] = [];
 
     for (let index = 0; index < ids.length; index += PAGE_SIZE) {
       const idsInPage = ids.slice(index, index + PAGE_SIZE);
-      const batch = await this.request('POST', '/_apis/wit/workitemsbatch', {
+      const batch = await this.sendAdoRequest('POST', '/_apis/wit/workitemsbatch', {
         ids: idsInPage,
         fields: [
           'System.Id',
@@ -68,7 +68,7 @@ export class AdoClient {
         ],
         errorPolicy: 'omit'
       });
-      const linked = await this.request('POST', '/_apis/wit/workitemsbatch', {
+      const linked = await this.sendAdoRequest('POST', '/_apis/wit/workitemsbatch', {
         ids: idsInPage,
         $expand: 'relations',
         errorPolicy: 'omit'
@@ -90,7 +90,7 @@ export class AdoClient {
     let activeOn: string | null = null;
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
-      const body = await this.request(
+      const body = await this.sendAdoRequest(
         'GET',
         `/_apis/wit/workItems/${workItemId}/updates?$top=${PAGE_SIZE}&$skip=${skip}`
       );
@@ -136,13 +136,13 @@ export class AdoClient {
       const response = await this.requestResponse('GET', query);
 
       if (response.status === HTTP_NOT_FOUND) {
-        await discard(response);
+        await discardResponseBody(response);
         return lastCommitOn;
       }
 
       if (!response.ok) {
-        await discard(response);
-        throw new AdoRequestError(signInRejected(response) ? this.rejectedMessage : messageForStatus(response.status));
+        await discardResponseBody(response);
+        throw new AdoRequestError(failureMessageFor(response, this.rejectedMessage));
       }
 
       const body: unknown = await response.json();
@@ -157,12 +157,12 @@ export class AdoClient {
     return lastCommitOn;
   }
 
-  private async request(method: 'GET' | 'POST', path: string, payload?: unknown, apiVersion = API_VERSION): Promise<unknown> {
+  private async sendAdoRequest(method: 'GET' | 'POST', path: string, payload?: unknown, apiVersion = API_VERSION): Promise<unknown> {
     const response = await this.requestResponse(method, path, payload, apiVersion);
 
     if (!response.ok) {
-      await discard(response);
-      throw new AdoRequestError(signInRejected(response) ? this.rejectedMessage : messageForStatus(response.status));
+      await discardResponseBody(response);
+      throw new AdoRequestError(failureMessageFor(response, this.rejectedMessage));
     }
 
     return response.json();
@@ -187,7 +187,7 @@ export class AdoClient {
     let response: Response;
 
     try {
-      response = await fetch(this.url(path, apiVersion), {
+      response = await fetch(this.buildRequestUrl(path, apiVersion), {
         method,
         headers,
         body: payload ? JSON.stringify(payload) : undefined,
@@ -198,21 +198,28 @@ export class AdoClient {
     }
 
     if (signInRejected(response)) {
-      await discard(response);
+      await discardResponseBody(response);
       throw new AdoRequestError(this.rejectedMessage);
     }
 
     return response;
   }
 
-  private url(path: string, apiVersion: string): string {
+  private buildRequestUrl(path: string, apiVersion: string): string {
     const joiner = path.includes('?') ? '&' : '?';
 
     return `https://dev.azure.com/${encodeURIComponent(this.organization)}${path}${joiner}api-version=${apiVersion}`;
   }
 }
 
-async function discard(response: Response): Promise<void> {
+function failureMessageFor(response: Response, rejectedMessage: string): string {
+  if (signInRejected(response))
+    return rejectedMessage;
+
+  return messageForStatus(response.status);
+}
+
+async function discardResponseBody(response: Response): Promise<void> {
   await response.arrayBuffer().catch(() => undefined);
 }
 

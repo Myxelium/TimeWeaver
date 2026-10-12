@@ -88,80 +88,12 @@
                             role="button"
                             tabindex="0"
                         >
-                            @if (day.suggestions.length) {
-                                <div class="ado-suggest">
-                                    <span
-                                        (mouseenter)="showSuggestionTip($event, day.suggestions)"
-                                        (mouseleave)="queueHideSuggestionTip()"
-                                        [attr.aria-label]="suggestionText(day.suggestions)"
-                                        class="ado-dot"
-                                    >
-                                    </span>
-                                </div>
-                            }
-
-                            <div
-                                [class.text-muted-foreground]="!day.isCurrentMonth && !day.isToday"
-                                [class.text-primary-foreground]="day.isToday"
-                                [class.text-holiday-foreground]="day.isCurrentMonth && !day.isToday && day.isHoliday"
-                                class="text-sm font-medium mb-1"
-                            >
-                                {{ day.date | date: 'd' }}
-                            </div>
-
-                            @if (day.summary && day.isCurrentMonth) {
-                                <div class="space-y-1">
-                                    <div
-                                        [class.text-muted-foreground]="!day.isToday"
-                                        [class.text-primary-foreground]="day.isToday"
-                                        class="text-xs"
-                                    >
-                                        {{ day.summary.total_hours | number: '1.1-1' }}h
-                                    </div>
-
-                                    <div class="progress-outer-xs flex">
-                                        <div
-                                            [class.bg-green-500]="day.summary.total_hours >= maxHoursPerDay"
-                                            [class.bg-yellow-500]="
-                                                day.summary.total_hours >= maxHoursPerDay * 0.75 && day.summary.total_hours < maxHoursPerDay
-                                            "
-                                            [class.bg-red-500]="day.summary.total_hours < maxHoursPerDay * 0.75 && day.summary.total_hours > 0"
-                                            [style.width.%]="getBaseProgressWidth(day.summary.total_hours)"
-                                            class="progress-inner-xs"
-                                        >
-                                        </div>
-
-                                        @if (day.summary.total_hours > maxHoursPerDay) {
-                                            <div [style.width.%]="getOvertimeWidth(day.summary.total_hours)" class="progress-inner-xs bg-amber-400 ml-px"></div>
-                                        }
-                                    </div>
-
-                                    <div class="text-xs space-y-0.5">
-                                        @for (task of (day.summary.tasks || []).slice(0, 2); track task.id) {
-                                            <div
-                                                [class.text-muted-foreground]="!day.isToday"
-                                                [class.text-primary-foreground]="day.isToday"
-                                                class="truncate"
-                                            >
-                                                {{ task.title }}
-                                            </div>
-                                        }
-
-                                        @if ((day.summary.tasks || []).length > 2) {
-                                            <div
-                                                [class.text-muted-foreground]="!day.isToday"
-                                                [class.text-primary-foreground]="day.isToday"
-                                                class="text-xs"
-                                            >
-                                                +{{ (day.summary.tasks || []).length - 2 }} more
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            } @else if (!day.isCurrentMonth) {
-                            } @else {
-                                <div class="text-xs text-muted-foreground italic">No tasks</div>
-                            }
+                            <app-calendar-day-cell
+                                (suggestionEnter)="showSuggestionTip($event.event, $event.suggestions)"
+                                (suggestionLeave)="queueHideSuggestionTip()"
+                                [day]="day"
+                                [maxHoursPerDay]="maxHoursPerDay"
+                            />
                         </div>
                     }
                 </div>

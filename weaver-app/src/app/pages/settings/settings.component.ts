@@ -41,6 +41,11 @@ import { loadSettings, SettingsActions } from '../../store/settings/settings.act
 import { selectLastImportResult, selectSettings } from '../../store/settings/settings.selectors';
 import { TasksActions } from '../../store/tasks/tasks.actions';
 import { selectIsLoading } from '../../store/tasks/tasks.selectors';
+import { SettingsAzureComponent } from './sections/settings-azure/settings-azure.component';
+import { SettingsDataComponent } from './sections/settings-data/settings-data.component';
+import { SettingsGeneralComponent } from './sections/settings-general/settings-general.component';
+import { SettingsHolidaysComponent } from './sections/settings-holidays/settings-holidays.component';
+import { SettingsPopupsComponent } from './sections/settings-popups/settings-popups.component';
 
 interface SettingsFormValue {
   monthlyIncome: number | null;
@@ -89,7 +94,12 @@ type SettingsSection = 'general' | 'holidays' | 'popups' | 'azure' | 'data';
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
-    RouterLink
+    RouterLink,
+    SettingsGeneralComponent,
+    SettingsHolidaysComponent,
+    SettingsPopupsComponent,
+    SettingsAzureComponent,
+    SettingsDataComponent
   ],
   templateUrl: './settings.component.html'
 })
@@ -202,6 +212,19 @@ export class SettingsComponent implements OnInit {
   private adoAuthDirty = false;
   private savedAdoAuthMethod: 'pat' | 'azure-cli' = 'pat';
   private savedAdoOrganization = '';
+
+  private handleAdoSyncResult = (result: { error: string | null }): void => {
+    this.adoSyncing = false;
+    this.adoFormError = result.error ?? '';
+    this.store.dispatch(loadSettings());
+    this.store.dispatch(TasksActions.loadAdoSuggestions());
+  };
+
+  private handleAdoSyncFailure = (): void => {
+    this.adoSyncing = false;
+    this.adoFormError = 'Azure DevOps could not be read.';
+    this.store.dispatch(loadSettings());
+  };
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe(params => {
@@ -355,17 +378,8 @@ export class SettingsComponent implements OnInit {
     this.adoSyncing = true;
     this.adoFormError = '';
     this.database.syncAdo().subscribe({
-      next: result => {
-        this.adoSyncing = false;
-        this.adoFormError = result.error ?? '';
-        this.store.dispatch(loadSettings());
-        this.store.dispatch(TasksActions.loadAdoSuggestions());
-      },
-      error: () => {
-        this.adoSyncing = false;
-        this.adoFormError = 'Azure DevOps could not be read.';
-        this.store.dispatch(loadSettings());
-      }
+      next: this.handleAdoSyncResult,
+      error: this.handleAdoSyncFailure
     });
   }
 

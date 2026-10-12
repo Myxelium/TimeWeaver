@@ -16,8 +16,8 @@ export class ConfirmService {
 
   private hostRef: ComponentRef<ConfirmDialogHostComponent> | null = null;
 
-  confirm(options: ConfirmOptions): Promise<boolean> {
-    return this.ensureHost().show(options || {});
+  requestConfirmation(options: ConfirmOptions): Promise<boolean> {
+    return this.ensureHost().openDialog(options || {});
   }
 
   private ensureHost(): ConfirmDialogHostComponent {

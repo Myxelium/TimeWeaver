@@ -33,67 +33,32 @@ export function syncAzureDevOps(dataSource: DataSource, force: boolean): Promise
 
 async function runSync(dataSource: DataSource, force: boolean): Promise<AdoSyncResult> {
   const settingsRepo = dataSource.getRepository(Setting);
-
-  let settings = await settingsRepo.findOne({ where: { id: 1 } });
-
-  if (!settings)
-    settings = await settingsRepo.save(settingsRepo.create({ id: 1 }));
-
-  if (!settings.adoSyncEnabled)
-    return { ran: false, itemCount: 0, error: null };
-
+  const settings = await loadSettingsRow(settingsRepo);
   const today = todayLocal();
   const organizationInput = settings.adoOrganization?.trim() ?? '';
   const pat = settings.adoPat?.trim() ?? '';
   const authMethod = settings.adoAuthMethod === 'azure-cli' ? 'azure-cli' : 'pat';
-  const signedIn = authMethod === 'azure-cli' || !!pat;
+  const blocked = blockedSync(settings, force, today, organizationInput, authMethod, pat);
 
-  if (!organizationInput || !signedIn) {
-    if (!force)
-      return { ran: false, itemCount: 0, error: null };
+  if (blocked?.kind === 'remember')
+    return rememberError(settingsRepo, settings, blocked.message);
 
-    const message = authMethod === 'azure-cli'
-      ? 'Add an Azure DevOps organization in Settings.'
-      : 'Add an Azure DevOps organization and a read-only token in Settings.';
-
-    return rememberError(settingsRepo, settings, message);
-  }
-
-  if (!force && (attemptedOn === today || settings.adoLastSyncOn === today))
-    return { ran: false, itemCount: 0, error: null };
+  if (blocked?.kind === 'done')
+    return blocked.result;
 
   if (!force)
     attemptedOn = today;
 
-  let organization: string;
+  const organization = readOrganizationName(organizationInput);
+
+  if (typeof organization !== 'string')
+    return rememberError(settingsRepo, settings, organization.message);
 
   try {
-    organization = organizationName(organizationInput);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Enter an Azure DevOps organization name.';
-
-    return rememberError(settingsRepo, settings, message);
-  }
-
-  try {
-    const accessToken = authMethod === 'azure-cli' ? await azureCliAccessToken() : '';
-    const credential = authMethod === 'azure-cli'
-      ? {
-        authorization: `Bearer ${accessToken}`,
-        rejectedMessage: 'Azure CLI sign-in was rejected. Run az login in a terminal, then sync again.'
-      }
-      : {
-        authorization: `Basic ${Buffer.from(`:${pat}`).toString('base64')}`,
-        rejectedMessage: 'Azure DevOps rejected the token. Use an organization-scoped token with only Work Items (Read) and Code (Read).'
-      };
+    const credential = await credentialFor(authMethod, pat);
     const rows = await collectWorkItems(organization, credential, today);
 
-    await dataSource.transaction(async manager => {
-      await manager.getRepository(AdoWorkItem).clear();
-
-      if (rows.length)
-        await manager.getRepository(AdoWorkItem).save(rows);
-    });
+    await replaceWorkItems(dataSource, rows);
 
     settings.adoOrganization = organization;
     settings.adoLastSyncOn = today;
@@ -106,6 +71,84 @@ async function runSync(dataSource: DataSource, force: boolean): Promise<AdoSyncR
 
     return rememberError(settingsRepo, settings, message);
   }
+}
+
+async function loadSettingsRow(settingsRepo: Repository<Setting>): Promise<Setting> {
+  const existing = await settingsRepo.findOne({ where: { id: 1 } });
+
+  if (existing)
+    return existing;
+
+  return settingsRepo.save(settingsRepo.create({ id: 1 }));
+}
+
+function blockedSync(
+  settings: Setting,
+  force: boolean,
+  today: string,
+  organizationInput: string,
+  authMethod: 'azure-cli' | 'pat',
+  pat: string
+): { kind: 'remember'; message: string } | { kind: 'done'; result: AdoSyncResult } | null {
+  const signedIn = authMethod === 'azure-cli' || !!pat;
+
+  if (!settings.adoSyncEnabled)
+    return { kind: 'done', result: { ran: false, itemCount: 0, error: null } };
+
+  if (!organizationInput || !signedIn) {
+    if (!force)
+      return { kind: 'done', result: { ran: false, itemCount: 0, error: null } };
+
+    const message = authMethod === 'azure-cli'
+      ? 'Add an Azure DevOps organization in Settings.'
+      : 'Add an Azure DevOps organization and a read-only token in Settings.';
+
+    return { kind: 'remember', message };
+  }
+
+  if (!force && (attemptedOn === today || settings.adoLastSyncOn === today))
+    return { kind: 'done', result: { ran: false, itemCount: 0, error: null } };
+
+  return null;
+}
+
+function readOrganizationName(organizationInput: string): string | { message: string } {
+  try {
+    return organizationName(organizationInput);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Enter an Azure DevOps organization name.';
+
+    return { message };
+  }
+}
+
+async function credentialFor(authMethod: 'azure-cli' | 'pat', pat: string): Promise<{ authorization: string; rejectedMessage: string }> {
+  if (authMethod === 'azure-cli') {
+    const accessToken = await azureCliAccessToken();
+
+    return {
+      authorization: `Bearer ${accessToken}`,
+      rejectedMessage: 'Azure CLI sign-in was rejected. Run az login in a terminal, then sync again.'
+    };
+  }
+
+  const encoded = Buffer.from(`:${pat}`).toString('base64');
+
+  return {
+    authorization: `Basic ${encoded}`,
+    rejectedMessage: 'Azure DevOps rejected the token. Use an organization-scoped token with only Work Items (Read) and Code (Read).'
+  };
+}
+
+async function replaceWorkItems(dataSource: DataSource, rows: AdoWorkItem[]): Promise<void> {
+  await dataSource.transaction(async manager => {
+    const repository = manager.getRepository(AdoWorkItem);
+
+    await repository.clear();
+
+    if (rows.length)
+      await repository.save(rows);
+  });
 }
 
 async function collectWorkItems(

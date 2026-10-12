@@ -22,6 +22,7 @@ export const initialSettingsState: SettingsState = {
 
 export const settingsFeatureKey = 'settings';
 
+/* eslint-disable junolint/decompose-complex-expressions */
 export const settingsReducer = createReducer(
   initialSettingsState,
   on(loadSettings, state => ({ ...state, loading: true, error: null })),
@@ -33,14 +34,26 @@ export const settingsReducer = createReducer(
   on(SettingsActions.importCsv, state => ({ ...state, loading: true, error: null, lastImportResult: null })),
   on(SettingsActions.importCsvSuccess, (state, { result }) => ({ ...state, loading: false, lastImportResult: result })),
   on(SettingsActions.importCsvFailure, (state, { error }) => ({ ...state, loading: false, error })),
-  on(SettingsActions.applyTheme, (state, { darkMode }) => ({
-    ...state,
-    settings: state.settings
-      ? { ...state.settings, darkMode }
-      : {
-        monthlyIncome: 0, monthlyCost: 0, darkMode, ignoreWeekends: true,
-        maxHoursPerDay: 8, maxHoursEnabled: true, firstDayOfWeek: 1, overtimeRate: 0,
-        launchAtLogin: false, popupRules: []
-      }
-  }))
+  on(SettingsActions.applyTheme, (state, { darkMode }) => applyTheme(state, darkMode))
 );
+/* eslint-enable junolint/decompose-complex-expressions */
+
+function applyTheme(state: SettingsState, darkMode: boolean): SettingsState {
+  const currentSettings = state.settings;
+  const settings = currentSettings
+    ? { ...currentSettings, darkMode }
+    : {
+      monthlyIncome: 0,
+      monthlyCost: 0,
+      darkMode,
+      ignoreWeekends: true,
+      maxHoursPerDay: 8,
+      maxHoursEnabled: true,
+      firstDayOfWeek: 1,
+      overtimeRate: 0,
+      launchAtLogin: false,
+      popupRules: []
+    };
+
+  return { ...state, settings };
+}

@@ -148,16 +148,16 @@ function ensureTray(): void {
   }
 
   tray.setToolTip('Weaver');
-  tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Open', click: () => hosts?.showMainWindow() },
-    {
-      label: 'Quit',
-      click: () => {
-        quitting = true;
-        app.quit();
-      }
-    }
-  ]));
+
+  const openMainWindow = (): void => {
+    hosts?.showMainWindow();
+  };
+  const quitApplication = (): void => {
+    quitting = true;
+    app.quit();
+  };
+
+  tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open', click: openMainWindow }, { label: 'Quit', click: quitApplication }]));
 
   tray.on('click', () => hosts?.showMainWindow());
 }
@@ -204,19 +204,8 @@ async function runSchedulerTick(): Promise<void> {
     if (minutesNow < hours * MINUTES_PER_HOUR + minutes)
       continue;
 
-    if (rule.type === 'time-log') {
-      const snapshot = await buildTimeSnapshot(dataSource, settings);
-
-      if (rule.onlyIfNothingReported && snapshot.todayHours > 0)
-        continue;
-
-      if (!rule.onlyIfNothingReported && snapshot.remainingHours <= 0) {
-        if (rule.intervalMinutes <= 0)
-          await markResolved(rule.id, today);
-
-        continue;
-      }
-    }
+    if (rule.type === 'time-log' && !(await timeLogShouldOpen(rule, dataSource, settings, today)))
+      continue;
 
     try {
       showPopup(rule);
@@ -224,6 +213,27 @@ async function runSchedulerTick(): Promise<void> {
       console.error('Could not show popup', rule.id, error);
     }
   }
+}
+
+async function timeLogShouldOpen(
+  rule: PopupRule,
+  dataSource: DataSource,
+  settings: Setting,
+  today: string
+): Promise<boolean> {
+  const snapshot = await buildTimeSnapshot(dataSource, settings);
+
+  if (rule.onlyIfNothingReported && snapshot.todayHours > 0)
+    return false;
+
+  if (!rule.onlyIfNothingReported && snapshot.remainingHours <= 0) {
+    if (rule.intervalMinutes <= 0)
+      await markResolved(rule.id, today);
+
+    return false;
+  }
+
+  return true;
 }
 
 function showPopup(rule: PopupRule): void {
@@ -278,8 +288,12 @@ function showPopup(rule: PopupRule): void {
 
     layoutPopups();
 
-    if (!quitting && !record.resolved && !record.suppressResolve)
-      void markResolved(record.ruleId, formatLocalDate(new Date()));
+    if (!quitting && !record.resolved && !record.suppressResolve) {
+      const now = new Date();
+      const resolvedOn = formatLocalDate(now);
+
+      void markResolved(record.ruleId, resolvedOn);
+    }
   });
 
   if (reminder) {
@@ -443,7 +457,10 @@ async function resolvePopup(ruleId: string): Promise<void> {
     return;
 
   try {
-    await markResolved(ruleId, formatLocalDate(new Date()));
+    const now = new Date();
+    const resolvedOn = formatLocalDate(now);
+
+    await markResolved(ruleId, resolvedOn);
   } catch (resolveError) {
     console.error('Could not remember that this popup was resolved', resolveError);
   }

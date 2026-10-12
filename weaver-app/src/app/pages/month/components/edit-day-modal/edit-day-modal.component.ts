@@ -51,9 +51,9 @@ import {
 } from '../../../../store/tasks/tasks.selectors';
 import { TaskDetailsModalComponent } from '../task-details-modal/task-details-modal.component';
 import { DaySummaryPanelComponent } from './day-summary-panel/day-summary-panel.component';
+import { DayTaskFormComponent } from './day-task-form/day-task-form.component';
 import { DayTasksListComponent } from './day-tasks-list/day-tasks-list.component';
-import { RemainingHoursButtonComponent } from './remaining-hours-button/remaining-hours-button.component';
-import { SuggestionsDropdownComponent } from './suggestions-dropdown/suggestions-dropdown.component';
+import { RangeDayListComponent } from './range-day-list/range-day-list.component';
 
 const HOUR_HUNDREDTHS = 100;
 const titleBlurDelayMs = 200;
@@ -76,6 +76,8 @@ interface RangeDayRow {
   totalHours: number;
   tasks: Task[];
   holidayName: string | null;
+  suggestions: AdoSuggestion[];
+  loggedIds: number[];
 }
 
 @Component({
@@ -85,10 +87,10 @@ interface RangeDayRow {
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
-    SuggestionsDropdownComponent,
-    RemainingHoursButtonComponent,
     DaySummaryPanelComponent,
     DayTasksListComponent,
+    DayTaskFormComponent,
+    RangeDayListComponent,
     AdoSuggestionTableComponent,
     TaskDetailsModalComponent
   ],
@@ -264,7 +266,9 @@ export class EditDayModalComponent implements OnChanges {
         date,
         totalHours: summary?.total_hours ?? 0,
         tasks: summary?.tasks ?? [],
-        holidayName: this.holidayService.getHolidayName(date)
+        holidayName: this.holidayService.getHolidayName(date),
+        suggestions: this.suggestionsForDate(date),
+        loggedIds: this.loggedSuggestionIds(date)
       };
     });
   }
@@ -362,7 +366,7 @@ export class EditDayModalComponent implements OnChanges {
     this.resetForm();
 
     if (this.singleTaskMode) {
-      this.close();
+      this.closeModal();
     }
   }
 
@@ -377,7 +381,7 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   async deleteTask(taskId: number): Promise<void> {
-    const confirmed = await this.confirm.confirm({
+    const confirmed = await this.confirm.requestConfirmation({
       title: 'Delete Task',
       message: 'Are you sure you want to delete this task?\nThis action cannot be undone.',
       confirmText: 'Delete',
@@ -483,13 +487,15 @@ export class EditDayModalComponent implements OnChanges {
     }));
   }
 
-  close(): void {
+  closeModal(): void {
     this.taskDetailsOpen = false;
     this.closed.emit();
   }
 
   resetForm(): void {
-    const currentDate = this.selectedDate ? format(this.selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+    const today = new Date();
+    const dateSource = this.selectedDate ?? today;
+    const currentDate = format(dateSource, 'yyyy-MM-dd');
 
     this.taskForm.reset();
     this.taskForm.patchValue({ hours: 0, date: currentDate });

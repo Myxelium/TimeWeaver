@@ -5,6 +5,7 @@ import { initialTasksState } from './tasks.state';
 
 export const tasksFeatureKey = 'tasks';
 
+/* eslint-disable junolint/decompose-complex-expressions */
 export const tasksReducer = createReducer(
   initialTasksState,
   on(TasksActions.setCurrentDate, (state, { date }) => ({ ...state, currentDate: date })),
@@ -53,3 +54,4 @@ export const tasksReducer = createReducer(
   on(TasksActions.exportCsvAllSuccess, (state) => ({ ...state, isLoading: false })),
   on(TasksActions.exportCsvAllFailure, (state, { error }) => ({ ...state, isLoading: false, error }))
 );
+/* eslint-enable junolint/decompose-complex-expressions */

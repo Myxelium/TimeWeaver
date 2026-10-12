@@ -14,14 +14,11 @@ export async function handleExportCsv(
   saveCsv: (defaultName: string, content: string) => Promise<boolean>
 ): Promise<boolean> {
   const { year, month } = query.payload;
-  const startDate = format(
-    startOfMonth(new Date(year, month - 1)),
-    'yyyy-MM-dd'
-  );
-  const endDate = format(
-    endOfMonth(new Date(year, month - 1)),
-    'yyyy-MM-dd'
-  );
+  const monthDate = new Date(year, month - 1);
+  const monthStart = startOfMonth(monthDate);
+  const monthEnd = endOfMonth(monthDate);
+  const startDate = format(monthStart, 'yyyy-MM-dd');
+  const endDate = format(monthEnd, 'yyyy-MM-dd');
   const taskRepository = dataSource.getRepository(Task);
   const tasks = await taskRepository.find({
     where: { date: Between(startDate, endDate) },

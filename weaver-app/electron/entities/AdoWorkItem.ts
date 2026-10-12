@@ -9,7 +9,7 @@ export class AdoWorkItem {
   @PrimaryColumn({ type: 'int' })
   adoId!: number;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', name: 'title' })
   title!: string;
 
   @Column({ type: 'text', nullable: true })

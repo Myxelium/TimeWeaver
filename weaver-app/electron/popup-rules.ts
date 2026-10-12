@@ -124,7 +124,7 @@ function normalizePopupRule(item: unknown): PopupRule | null {
     time: normalizeTime(source['time']),
     weekdays,
     message: typeof source['message'] === 'string' ? source['message'].slice(0, MAX_MESSAGE_LENGTH) : '',
-    durationSeconds: Number.isFinite(duration) ? Math.min(MAX_DURATION_SECONDS, Math.max(1, Math.round(duration))) : DEFAULT_DURATION_SECONDS,
+    durationSeconds: clampDuration(duration),
     intervalMinutes: normalizeInterval(interval),
     onlyIfNothingReported: source['onlyIfNothingReported'] === true,
     lastResolvedDate,
@@ -156,6 +156,16 @@ function normalizeWeekdays(value: unknown): number[] {
     .filter(day => Number.isInteger(day) && day >= 0 && day <= SATURDAY);
 
   return [...new Set(days)];
+}
+
+function clampDuration(duration: number): number {
+  if (!Number.isFinite(duration))
+    return DEFAULT_DURATION_SECONDS;
+
+  const roundedDuration = Math.round(duration);
+  const atLeastOneSecond = Math.max(1, roundedDuration);
+
+  return Math.min(MAX_DURATION_SECONDS, atLeastOneSecond);
 }
 
 function normalizeInterval(interval: number): number {

@@ -11,16 +11,16 @@ import { Task } from './Task';
 
 @Entity('time_entries')
 export class TimeEntry {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id' })
   id!: number;
 
   @Column({ nullable: true })
   task_id!: number;
 
-  @Column()
+  @Column({ name: 'date' })
   date!: string;
 
-  @Column('real')
+  @Column('real', { name: 'hours' })
   hours!: number;
 
   @CreateDateColumn()

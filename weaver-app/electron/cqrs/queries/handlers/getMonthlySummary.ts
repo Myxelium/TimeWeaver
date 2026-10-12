@@ -14,8 +14,11 @@ interface MonthlySummaryRawRow {
 
 export async function handleGetMonthlySummary(query: GetMonthlySummaryQuery, dataSource: DataSource): Promise<number> {
   const { year, month } = query.payload;
-  const startDate = format(startOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
-  const endDate = format(endOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
+  const monthDate = new Date(year, month - 1);
+  const monthStart = startOfMonth(monthDate);
+  const monthEnd = endOfMonth(monthDate);
+  const startDate = format(monthStart, 'yyyy-MM-dd');
+  const endDate = format(monthEnd, 'yyyy-MM-dd');
   const taskRepository = dataSource.getRepository(Task);
   const result = await taskRepository.createQueryBuilder('task')
     .select('SUM(task.hours)', 'total_hours')

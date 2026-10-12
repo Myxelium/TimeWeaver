@@ -10,6 +10,12 @@ import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
 const dayCheckIntervalMs = 60000;
 
+function currentDateKey(): string {
+  const today = new Date();
+
+  return format(today, 'yyyy-MM-dd');
+}
+
 /**
  * Service to detect when the day changes and notify subscribers.
  * Useful for applications that need to update data when a new day starts.
@@ -18,7 +24,7 @@ const dayCheckIntervalMs = 60000;
   providedIn: 'root'
 })
 export class DateChangeDetectionService implements OnDestroy {
-  private currentDateSubject = new BehaviorSubject<string>(format(new Date(), 'yyyy-MM-dd'));
+  private currentDateSubject = new BehaviorSubject<string>(currentDateKey());
 
   private destroy$ = new Subject<void>();
 

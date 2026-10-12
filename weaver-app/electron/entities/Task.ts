@@ -8,19 +8,19 @@ import {
 
 @Entity('tasks')
 export class Task {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id' })
   id!: number;
 
-  @Column()
+  @Column({ name: 'title' })
   title!: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'description' })
   description!: string;
 
-  @Column()
+  @Column({ name: 'date' })
   date!: string;
 
-  @Column('real', { default: 0 })
+  @Column('real', { default: 0, name: 'hours' })
   hours!: number;
 
   @Column({ type: 'int', nullable: true })

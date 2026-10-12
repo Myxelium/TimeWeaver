@@ -43,6 +43,8 @@ import {
   selectIsLoading,
   selectTodayTasks
 } from '../../../../store/tasks/tasks.selectors';
+import { SuggestionsDropdownComponent } from '../../../month/components/edit-day-modal/suggestions-dropdown/suggestions-dropdown.component';
+import { TodaysTaskListComponent } from './todays-task-list/todays-task-list.component';
 
 const saturdayIndex = 6;
 const titleBlurDelayMs = 200;
@@ -53,7 +55,12 @@ const collapsedTitleCount = 5;
 @Component({
   selector: 'app-todays-work',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    SuggestionsDropdownComponent,
+    TodaysTaskListComponent
+  ],
   templateUrl: './todays-work.component.html'
 })
 export class TodaysWorkComponent implements OnInit, OnDestroy {
@@ -156,7 +163,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   }
 
   async deleteTask(taskId: number): Promise<void> {
-    const confirmed = await this.confirm.confirm({
+    const confirmed = await this.confirm.requestConfirmation({
       title: 'Delete Task',
       message: 'Are you sure you want to delete this task?\nThis action cannot be undone.',
       confirmText: 'Delete',

@@ -33,7 +33,7 @@
                 <p class="text-sm">Today is already at {{ context?.targetHours | number: '1.2-2' }} hours.</p>
 
                 <button
-                    (click)="dismiss()"
+                    (click)="dismissPopup()"
                     type="button"
                     class="btn-secondary px-3 py-1"
                 >
@@ -108,7 +108,7 @@
 
                 <div class="flex justify-end gap-2">
                     <button
-                        (click)="dismiss()"
+                        (click)="dismissPopup()"
                         type="button"
                         class="btn-secondary px-3 py-1"
                     >
@@ -116,7 +116,7 @@
                     </button>
 
                     <button
-                        (click)="submit()"
+                        (click)="submitTimeEntries()"
                         [disabled]="saving || savableRows.length === 0"
                         type="button"
                         class="btn-primary px-3 py-1"

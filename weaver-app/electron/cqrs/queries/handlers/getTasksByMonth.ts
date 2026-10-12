@@ -10,8 +10,11 @@ import { DaySummaryDTO, GetTasksByMonthQuery } from '../../types';
 
 export async function handleGetTasksByMonth(query: GetTasksByMonthQuery, dataSource: DataSource): Promise<DaySummaryDTO[]> {
   const { year, month } = query.payload;
-  const startDate = format(startOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
-  const endDate = format(endOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
+  const monthDate = new Date(year, month - 1);
+  const monthStart = startOfMonth(monthDate);
+  const monthEnd = endOfMonth(monthDate);
+  const startDate = format(monthStart, 'yyyy-MM-dd');
+  const endDate = format(monthEnd, 'yyyy-MM-dd');
   const taskRepository = dataSource.getRepository(Task);
   const summaryRows = await taskRepository.createQueryBuilder('task')
     .select('task.date', 'date')

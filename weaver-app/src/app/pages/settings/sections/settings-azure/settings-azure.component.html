@@ -1,0 +1,127 @@
+<div [formGroup]="form" class="bg-card border border-border rounded-lg p-4 space-y-3">
+    <p class="text-xs text-muted-foreground">
+        Reads user stories and features assigned to you that you have set to Active at least once. Done or Closed does not remove
+        them. A sync keeps the work item id, title, that Active day, and the day of your last commit on its pull request.
+    </p>
+
+    <div class="flex items-center space-x-2">
+        <input
+            id="adoSyncEnabled"
+            type="checkbox"
+            formControlName="adoSyncEnabled"
+            class="h-4 w-4"
+        />
+
+        <label for="adoSyncEnabled" class="text-sm">Enable sync</label
+        >
+    </div>
+
+    <div>
+        <label class="form-label" for="adoOrganization">Organization</label
+        >
+
+        <input
+            (input)="organizationInput.emit($event)"
+            [value]="adoOrganization"
+            id="adoOrganization"
+            type="text"
+            class="input-base"
+            autocomplete="off"
+            placeholder="my-organization"
+        />
+    </div>
+
+    <div>
+        <label class="form-label" for="adoAuthMethod">Sign-in</label
+        >
+
+        <select
+            (change)="authMethodChange.emit($event)"
+            [value]="adoAuthMethod"
+            id="adoAuthMethod"
+            class="input-base"
+        >
+            <option value="pat">Personal access token</option>
+            <option value="azure-cli">Azure CLI</option>
+        </select>
+    </div>
+
+    @if (adoAuthMethod === 'pat') {
+        <div>
+            <label class="form-label" for="adoToken">Personal access token</label
+            >
+
+            <div class="relative">
+                <input
+                    (input)="tokenInput.emit($event)"
+                    [type]="showAdoToken ? 'text' : 'password'"
+                    [value]="adoToken"
+                    id="adoToken"
+                    class="input-base pr-10"
+                    autocomplete="off"
+                    placeholder="Work Items (Read) and Code (Read) only"
+                />
+
+                <button
+                    (click)="toggleToken.emit()"
+                    [attr.aria-label]="showAdoToken ? 'Hide token' : 'Show token'"
+                    type="button"
+                    class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                >
+                    <lucide-icon [img]="showAdoToken ? eyeOff : eye" class="w-4 h-4" />
+                </button>
+            </div>
+
+            <p class="text-xs text-muted-foreground">
+                Create an organization-scoped token with only those two read scopes. It stays on this computer and is not shown
+                again.
+                @if (adoPatConfigured) {
+                    A token is saved.
+                }
+            </p>
+        </div>
+    } @else {
+        <p class="text-xs text-muted-foreground">
+            Uses the Azure CLI session on this computer. Run az login in a terminal first. At sync, Weaver asks Azure CLI for a
+            one-hour token and does not save it. The same work item id, title, Active day, and last commit day are the only data
+            kept.
+        </p>
+    }
+
+    <div class="flex flex-wrap gap-2">
+        <button
+            (click)="saveConnection.emit()"
+            type="button"
+            class="btn-secondary px-3 py-1"
+        >
+            Save connection
+        </button>
+
+        <button
+            (click)="syncNow.emit()"
+            [disabled]="adoSyncing || !adoSyncReady"
+            type="button"
+            class="btn-primary px-3 py-1"
+        >
+            {{ adoSyncing ? 'Syncing...' : 'Sync now' }}
+        </button>
+
+        @if (adoPatConfigured) {
+            <button
+                (click)="clearToken.emit()"
+                type="button"
+                class="btn-secondary px-3 py-1"
+            >
+                Remove token
+            </button>
+        }
+    </div>
+
+    @if (adoLastSyncOn) {
+        <p class="text-sm text-muted-foreground">Last synced {{ adoLastSyncOn }}</p>
+    }
+
+    @if (adoFormError || adoLastSyncError) {
+        <p class="text-sm text-red-600">{{ adoFormError || adoLastSyncError }}</p>
+    }
+</div>

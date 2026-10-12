@@ -7,7 +7,7 @@ import {
 
 @Entity('settings')
 export class Setting {
-  @PrimaryColumn({ type: 'int' })
+  @PrimaryColumn({ type: 'int', name: 'id' })
   id!: number;
 
   @Column({ type: 'real', default: 0 })

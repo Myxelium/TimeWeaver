@@ -40,6 +40,7 @@ import {
 } from '../../../../store/settings/settings.selectors';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectAdoSuggestions, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
+import { CalendarDayCellComponent } from './calendar-day-cell/calendar-day-cell.component';
 
 const REGISTER_MENU_HEIGHT = 48;
 const SUGGESTED_MENU_HEIGHT = 92;
@@ -88,7 +89,8 @@ interface MonthlyStats {
   imports: [
     CommonModule,
     LucideAngularModule,
-    AdoSuggestionTableComponent
+    AdoSuggestionTableComponent,
+    CalendarDayCellComponent
   ],
   templateUrl: './monthly-overview.component.html'
 })
@@ -218,21 +220,28 @@ export class MonthlyOverviewComponent {
 
   previousMonth(): void {
     const current = this.currentDate();
+    const year = current.getFullYear();
+    const previousMonthIndex = current.getMonth() - 1;
 
-    this.setMonth(new Date(current.getFullYear(), current.getMonth() - 1, 1));
+    this.setMonth(new Date(year, previousMonthIndex, 1));
   }
 
   nextMonth(): void {
     const current = this.currentDate();
+    const year = current.getFullYear();
+    const nextMonthIndex = current.getMonth() + 1;
 
-    this.setMonth(new Date(current.getFullYear(), current.getMonth() + 1, 1));
+    this.setMonth(new Date(year, nextMonthIndex, 1));
   }
 
   showMonthOf(date: Date): void {
     if (isSameMonth(date, this.currentDate()))
       return;
 
-    this.setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+    const year = date.getFullYear();
+    const monthIndex = date.getMonth();
+
+    this.setMonth(new Date(year, monthIndex, 1));
   }
 
   isSelected(day: CalendarDay): boolean {
