@@ -1,4 +1,5 @@
 import { Task } from '../entities/Task';
+import { PopupRule } from '../popup-rules';
 
 // Centralized names to avoid scattered string literals
 export const CommandType = {
@@ -51,6 +52,8 @@ export interface SaveSettingsCommand {
     holidayTypes?: string[]; // Array of holiday types: public, bank, school, optional, observance
     firstDayOfWeek?: number;
     overtimeRate?: number;
+    launchAtLogin?: boolean;
+    popupRules?: PopupRule[];
   };
 }
 
@@ -122,4 +125,6 @@ export interface SettingsDTO {
   holidayTypes?: string[]; // Array of holiday types: public, bank, school, optional, observance
   firstDayOfWeek?: number;
   overtimeRate?: number;
+  launchAtLogin: boolean;
+  popupRules: PopupRule[];
 }

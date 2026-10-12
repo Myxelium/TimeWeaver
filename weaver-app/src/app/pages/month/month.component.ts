@@ -1,4 +1,11 @@
-import { Component, inject, OnInit, OnDestroy, signal, HostListener } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  OnDestroy,
+  signal,
+  HostListener
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -26,19 +33,15 @@ import { EditDayModalComponent } from './components/edit-day-modal/edit-day-moda
 })
 export class MonthComponent implements OnInit, OnDestroy {
   selectedDay = signal<Date | null>(null);
+
   showDayModal = signal(false);
 
   monthlyData$ = inject(Store).select(selectMonthlyData);
 
   private destroy$ = new Subject<void>();
+
   private monthlyDataCache: DaySummary[] = [];
 
-  @HostListener('document:keydown.escape', ['$event'])
-  onEscapeKey(_event: KeyboardEvent): void {
-    if (this.showDayModal()) {
-      this.closeDayModal();
-    }
-  }
   ngOnInit(): void {
     this.monthlyData$
       .pipe(takeUntil(this.destroy$))
@@ -48,6 +51,13 @@ export class MonthComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(_event: KeyboardEvent): void {
+    if (this.showDayModal()) {
+      this.closeDayModal();
+    }
   }
 
   closeDayModal(): void {

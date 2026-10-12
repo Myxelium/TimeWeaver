@@ -1,4 +1,9 @@
-import { Entity, PrimaryColumn, Column, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  UpdateDateColumn
+} from 'typeorm';
 
 @Entity('settings')
 export class Setting {
@@ -34,6 +39,12 @@ export class Setting {
 
   @Column({ type: 'real', default: 0 })
   overtimeRate!: number;
+
+  @Column({ type: 'boolean', default: false })
+  launchAtLogin!: boolean;
+
+  @Column({ type: 'text', default: '[]' })
+  popupRules!: string;
 
   @UpdateDateColumn({ type: 'datetime', nullable: true })
   updated_at?: string;

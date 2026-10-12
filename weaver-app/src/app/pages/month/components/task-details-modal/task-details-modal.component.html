@@ -6,15 +6,16 @@
             role="button"
             tabindex="0"
             class="fixed inset-0 bg-black/50"
-        ></div>
+        >
+        </div>
 
-        <div class="relative bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
+        <div class="relative bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="sticky top-0 z-10 bg-background flex items-center justify-between p-6 border-b border-border flex-shrink-0">
                 <h2 class="section-heading mb-0">Task Details - {{ title || 'Tasks' }}</h2>
 
                 <button
-                    type="button"
                     (click)="onClose()"
+                    type="button"
                     class="text-muted-foreground hover:text-foreground transition-colors"
                     aria-label="Close"
                 >
@@ -34,10 +35,11 @@
                 </button>
             </div>
 
-            <div class="p-6 overflow-y-auto flex-1" (scroll)="onScroll($event)">
+            <div class="p-6">
                 <!-- Statistics Summary -->
                 <div class="mb-6">
                     <h3 class="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">All-Time Statistics</h3>
+
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div class="card-panel !p-3">
                             <div class="flex items-start justify-between">
@@ -45,8 +47,13 @@
                                     <p class="text-xs text-muted-foreground mb-1">Total Hours</p>
                                     <p class="text-xl font-bold text-foreground">{{ statistics.totalHours }}</p>
                                 </div>
+
                                 <div class="p-1.5 rounded-lg bg-primary/10">
-                                    <lucide-icon [img]="Clock" class="text-primary" [size]="18" />
+                                    <lucide-icon
+                                        [img]="Clock"
+                                        [size]="18"
+                                        class="text-primary"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -57,8 +64,13 @@
                                     <p class="text-xs text-muted-foreground mb-1">Items</p>
                                     <p class="text-xl font-bold text-foreground">{{ statistics.totalItems }}</p>
                                 </div>
+
                                 <div class="p-1.5 rounded-lg bg-purple-500/10">
-                                    <lucide-icon [img]="BarChart3" class="text-purple-600 dark:text-purple-400" [size]="18" />
+                                    <lucide-icon
+                                        [img]="BarChart3"
+                                        [size]="18"
+                                        class="text-purple-600 dark:text-purple-400"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -69,8 +81,13 @@
                                     <p class="text-xs text-muted-foreground mb-1">Avg Hours/Day</p>
                                     <p class="text-xl font-bold text-foreground">{{ statistics.averageHoursPerDay }}</p>
                                 </div>
+
                                 <div class="p-1.5 rounded-lg bg-green-500/10">
-                                    <lucide-icon [img]="TrendingUp" class="text-green-600 dark:text-green-400" [size]="18" />
+                                    <lucide-icon
+                                        [img]="TrendingUp"
+                                        [size]="18"
+                                        class="text-green-600 dark:text-green-400"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -81,8 +98,13 @@
                                     <p class="text-xs text-muted-foreground mb-1">Days</p>
                                     <p class="text-xl font-bold text-foreground">{{ statistics.calculatedDays }}</p>
                                 </div>
+
                                 <div class="p-1.5 rounded-lg bg-blue-500/10">
-                                    <lucide-icon [img]="Calendar" class="text-blue-600 dark:text-blue-400" [size]="18" />
+                                    <lucide-icon
+                                        [img]="Calendar"
+                                        [size]="18"
+                                        class="text-blue-600 dark:text-blue-400"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -92,6 +114,7 @@
                         <div class="card-panel !p-3 mt-3">
                             <div class="text-center">
                                 <p class="text-xs text-muted-foreground mb-1">Date Range</p>
+
                                 <p class="text-sm font-semibold text-foreground">
                                     {{ statistics.dateRange.start }}
                                     <span class="text-muted-foreground mx-2">to</span>
@@ -106,12 +129,8 @@
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Task Entries</h3>
-                        @if (localTasks.length > 15) {
-                            <span class="text-xs text-muted-foreground">
-                                Showing {{ visibleCount }} of {{ localTasks.length }}
-                            </span>
-                        }
                     </div>
+
                     <div class="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground">
                         <div class="col-span-3">Date</div>
                         <div class="col-span-5">Title & Description</div>
@@ -120,14 +139,16 @@
                     </div>
 
                     <div>
-                        @for (task of localTasks.slice(0, visibleCount); let index = $index; track task.id ?? index) {
+                        @for (task of localTasks; let index = $index; track task.id ?? index) {
                             <!-- Month separator -->
                             @if (isNewMonth(index)) {
-                                <div class="flex items-center gap-3 py-3" [class.pt-0]="index === 0">
+                                <div [class.pt-0]="index === 0" class="flex items-center gap-3 py-3">
                                     <div class="flex-1 h-px bg-border"></div>
+
                                     <span class="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
                                         {{ formatMonthLabel(task.date) }}
                                     </span>
+
                                     <div class="flex-1 h-px bg-border"></div>
                                 </div>
                             }
@@ -170,24 +191,24 @@
                                 <div class="col-span-2 flex items-center space-x-2">
                                     @if (!task.editing) {
                                         <button
-                                            type="button"
                                             (click)="enableEdit(index)"
+                                            type="button"
                                             class="btn-secondary px-2 py-1 text-xs"
                                         >
                                             Edit
                                         </button>
                                     } @else {
                                         <button
-                                            type="button"
                                             (click)="save(index)"
+                                            type="button"
                                             class="btn-primary px-2 py-1 text-xs"
                                         >
                                             Save
                                         </button>
 
                                         <button
-                                            type="button"
                                             (click)="cancel(index)"
+                                            type="button"
                                             class="btn-outline px-2 py-1 text-xs"
                                         >
                                             Cancel
@@ -200,10 +221,10 @@
                 </div>
             </div>
 
-            <div class="flex justify-end space-x-3 p-6 border-t border-border flex-shrink-0">
+            <div class="sticky bottom-0 z-10 bg-background flex justify-end space-x-3 p-6 border-t border-border flex-shrink-0">
                 <button
-                    type="button"
                     (click)="onClose()"
+                    type="button"
                     class="btn-outline px-4 py-2"
                 >
                     Close

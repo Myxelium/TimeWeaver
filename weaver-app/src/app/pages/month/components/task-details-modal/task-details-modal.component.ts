@@ -1,10 +1,22 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  Output
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Task } from '../../../../shared/models';
 import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
-import { LucideAngularModule, Clock, Calendar, TrendingUp, BarChart3 } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Clock,
+  Calendar,
+  TrendingUp,
+  BarChart3
+} from 'lucide-angular';
 
 type EditableTask = Task & { editing?: boolean };
 
@@ -19,36 +31,38 @@ interface TaskStatistics {
 @Component({
   selector: 'app-task-details-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule
+  ],
   templateUrl: './task-details-modal.component.html'
 })
 export class TaskDetailsModalComponent {
   @Input() isOpen = false;
-  @Input() title: string | null = null;
-  @Input() set tasks(value: Task[] | null) {
-    const arr = value ?? [];
 
-    this._currentTasks = arr;
-    this.localTasks = arr.map(task => ({ ...task, editing: false }));
-    this.statistics = this._calculateStatistics(arr, this._maxHoursPerDay);
-    this.visibleCount = Math.min(15, arr.length);
-  }
+  @Input() title: string | null = null;
 
   @Output() closed = new EventEmitter<void>();
+
   @Output() saveTask = new EventEmitter<{ id: number; title: string; description?: string; date: string; hours: number }>();
 
-  // Lucide icons
   readonly Clock = Clock;
+
   readonly Calendar = Calendar;
+
   readonly TrendingUp = TrendingUp;
+
   readonly BarChart3 = BarChart3;
 
   localTasks: EditableTask[] = [];
+
   statistics: TaskStatistics = this._calculateStatistics([], 8);
-  visibleCount = 15;
 
   private _store = inject(Store);
+
   private _maxHoursPerDay = 8;
+
   private _currentTasks: Task[] = [];
 
   constructor() {
@@ -56,6 +70,14 @@ export class TaskDetailsModalComponent {
       this._maxHoursPerDay = maxHours;
       this.statistics = this._calculateStatistics(this._currentTasks, maxHours);
     });
+  }
+
+  @Input() set tasks(value: Task[] | null) {
+    const arr = value ?? [];
+
+    this._currentTasks = arr;
+    this.localTasks = arr.map(task => ({ ...task, editing: false }));
+    this.statistics = this._calculateStatistics(arr, this._maxHoursPerDay);
   }
 
   onClose(): void {
@@ -91,20 +113,6 @@ export class TaskDetailsModalComponent {
     });
 
     task.editing = false;
-  }
-
-  onScroll(event: Event): void {
-    const element = event.target as HTMLElement;
-    const threshold = 100;
-    const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
-
-    if (atBottom && this.visibleCount < this.localTasks.length) {
-      this.loadMore();
-    }
-  }
-
-  loadMore(): void {
-    this.visibleCount = Math.min(this.visibleCount + 15, this.localTasks.length);
   }
 
   getMonthKey(date: string): string {

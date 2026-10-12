@@ -1,13 +1,35 @@
-import { Component, EventEmitter, Output, computed, signal, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Output,
+  computed,
+  signal,
+  inject
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, ChevronLeft, ChevronRight } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-angular';
 import { Store } from '@ngrx/store';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
 import { selectFirstDayOfWeek } from '../../../../store/settings/settings.selectors';
-import { selectHolidayCountry, selectIgnoreWeekends, selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+import {
+  selectHolidayCountry,
+  selectIgnoreWeekends,
+  selectMaxHoursPerDay
+} from '../../../../store/settings/settings.selectors';
 import { DaySummary } from '../../../../shared/models';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isToday
+} from 'date-fns';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HolidayService } from '../../../../shared/services';
 
@@ -38,30 +60,35 @@ export class MonthlyOverviewComponent {
   @Output() daySelected = new EventEmitter<Date>();
 
   readonly ChevronLeft = ChevronLeft;
-  readonly ChevronRight = ChevronRight;
-  get dayHeaders(): string[] {
-    const first = this.firstDayOfWeekSignal() ?? 1;
-    const headers = [...this.baseHeaders];
 
-    return headers.slice(first).concat(headers.slice(0, first));
-  }
+  readonly ChevronRight = ChevronRight;
 
   currentDate = signal(new Date());
-
   canGoToNextMonth = true;
   calendarDays = computed<CalendarDay[]>(() => this.calculateCalendarDays());
   monthlyStats = computed(() => this.calculateMonthlyStats());
 
   private store = inject(Store);
-  private readonly baseHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+  private readonly baseHeaders = [
+    'Sun',
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat'
+  ] as const;
+
   private firstDayOfWeekSignal = toSignal(this.store.select(selectFirstDayOfWeek), { initialValue: 1 });
+
   private ignoreWeekendsSignal = toSignal(this.store.select(selectIgnoreWeekends), { initialValue: true });
+
   private maxHoursPerDaySignal = toSignal(this.store.select(selectMaxHoursPerDay), { initialValue: 8 });
+
   private monthlyDataSignal = toSignal(this.store.select(selectMonthlyData), { initialValue: [] as DaySummary[] });
+
   private holidayCountrySignal = toSignal(this.store.select(selectHolidayCountry), { initialValue: undefined as string | undefined });
-  get monthlyData(): DaySummary[] { return this.monthlyDataSignal(); }
-  get ignoreWeekends(): boolean { return this.ignoreWeekendsSignal(); }
-  get maxHoursPerDay(): number { return this.maxHoursPerDaySignal(); }
 
   private holidayService = inject(HolidayService);
 
@@ -72,6 +99,19 @@ export class MonthlyOverviewComponent {
     this.store.dispatch(TasksActions.setSelectedMonth({ year: now.getFullYear(), month: now.getMonth() + 1 }));
     this.store.dispatch(TasksActions.loadMonthlyData({ year: now.getFullYear(), month: now.getMonth() + 1 }));
   }
+
+  get dayHeaders(): string[] {
+    const first = this.firstDayOfWeekSignal() ?? 1;
+    const headers = [...this.baseHeaders];
+
+    return headers.slice(first).concat(headers.slice(0, first));
+  }
+
+  get monthlyData(): DaySummary[] { return this.monthlyDataSignal(); }
+
+  get ignoreWeekends(): boolean { return this.ignoreWeekendsSignal(); }
+
+  get maxHoursPerDay(): number { return this.maxHoursPerDaySignal(); }
 
   getBaseProgressWidth(totalHours: number): number {
     if (this.maxHoursPerDay === 0)

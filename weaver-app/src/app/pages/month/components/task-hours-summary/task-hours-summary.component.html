@@ -8,20 +8,19 @@
         <div class="bar-chart-container">
             @if (chartData$ | async; as chartData) {
                 @for (taskData of chartData; track taskData.taskTitle) {
-                    <div
-                        [style.min-width.px]="60"
-                        class="flex flex-col items-center flex-shrink-0 min-w-0"
-                    >
+                    <div [style.min-width.px]="60" class="flex flex-col items-center flex-shrink-0 min-w-0">
                         <div
                             (click)="onBarClick(taskData.taskTitle)"
                             (keydown.enter)="onBarClick(taskData.taskTitle)"
-                            role="button"
-                            tabindex="0"
                             [style.height.px]="taskData.totalHours > 0 ? Math.max((taskData.totalHours / getMaxTaskHours(chartData)) * 185, 4) : 4"
                             [style.background-color]="taskData.color"
                             [title]="taskData.taskTitle + ': ' + (taskData.totalHours | number: '1.1-1') + 'h (' + taskData.taskCount + ' tasks)'"
+                            role="button"
+                            tabindex="0"
                             class="bar-chart-bar cursor-pointer"
-                        ></div>
+                        >
+                        </div>
+
                         <div class="text-xs text-center mt-2 max-w-full break-words leading-tight">
                             <div class="font-medium">{{ taskData.taskTitle | slice: 0 : 10 }}{{ taskData.taskTitle.length > 10 ? '...' : '' }}</div>
                             <div class="text-muted-foreground">{{ taskData.totalHours | number: '1.1-1' }}h</div>
@@ -34,6 +33,7 @@
                 }
             }
         </div>
+
         <div class="flex justify-between text-xs text-muted-foreground mt-2">
             <span>Task Categories</span>
             <span>Hover bars for details</span>

@@ -1,4 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PreviousDaysComponent } from './components/previous-days/previous-days.component';
 import { TodaysWorkComponent } from './components/todays-work/todays-work.component';
@@ -11,24 +16,21 @@ import { DateChangeDetectionService, HolidayService } from '../../shared/service
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, PreviousDaysComponent, TodaysWorkComponent],
+  imports: [
+    CommonModule,
+    PreviousDaysComponent,
+    TodaysWorkComponent
+  ],
   templateUrl: './home.component.html',
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  host: { style: 'display: block' }
 })
 export class HomeComponent implements OnInit, OnDestroy {
   currentDate = new Date();
   holidayName: string | null = null;
   private destroy$ = new Subject<void>();
-
-  constructor(
-    private _store: Store,
-    private dateChangeService: DateChangeDetectionService,
-    private holidayService: HolidayService
-  ) {}
+  private _store = inject(Store);
+  private dateChangeService = inject(DateChangeDetectionService);
+  private holidayService = inject(HolidayService);
 
   ngOnInit(): void {
     this.currentDate = this.dateChangeService.currentDate;

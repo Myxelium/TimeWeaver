@@ -1,12 +1,30 @@
-import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  model,
+  signal
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { selectAllTasks, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
+import {
+  AlignLeft,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Calendar,
+  Clock,
+  FileText,
+  LucideAngularModule,
+  Search
+} from 'lucide-angular';
+
+import { DaySummary, Task } from '../../../../shared/models';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
-import { LucideAngularModule, Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar, Clock, FileText, AlignLeft } from 'lucide-angular';
-import { Task, DaySummary } from '../../../../shared/models';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
 import { EditDayModalComponent } from '../../../month/components/edit-day-modal/edit-day-modal.component';
 
 type SortField = 'date' | 'title' | 'hours';
@@ -15,7 +33,12 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-tasks-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, EditDayModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    EditDayModalComponent
+  ],
   templateUrl: './tasks-table.component.html'
 })
 export class TasksTableComponent {
@@ -29,28 +52,17 @@ export class TasksTableComponent {
   readonly FileText = FileText;
   readonly AlignLeft = AlignLeft;
 
-  searchTerm = signal('');
+  tasks = input<Task[]>([]);
+
+  searchTerm = model('');
+
   sortField = signal<SortField>('date');
   sortDirection = signal<SortDirection>('desc');
-
   showEditModal = signal(false);
   selectedTask = signal<Task | null>(null);
 
   filteredAndSortedTasks = computed(() => {
-    let tasks = [...this.allTasks()];
-
-    const search = this.searchTerm()
-      .toLowerCase()
-      .trim();
-
-    if (search) {
-      tasks = tasks.filter(task =>
-        task.title.toLowerCase().includes(search) ||
-        task.description?.toLowerCase().includes(search) ||
-        task.date.includes(search)
-      );
-    }
-
+    const tasks = [...this.tasks()];
     const field = this.sortField();
     const direction = this.sortDirection();
 
@@ -75,14 +87,9 @@ export class TasksTableComponent {
     return tasks;
   });
 
-  private allTasks = toSignal(this._store.select(selectAllTasks), { initialValue: [] });
+  private _store = inject(Store);
+
   private monthlyData = toSignal(this._store.select(selectMonthlyData), { initialValue: [] });
-
-  constructor(private _store: Store) {}
-
-  onSearchChange(value: string): void {
-    this.searchTerm.set(value);
-  }
 
   toggleSort(field: SortField): void {
     if (this.sortField() === field) {

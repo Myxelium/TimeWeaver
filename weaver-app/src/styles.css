@@ -225,3 +225,12 @@
         text-security: disc;
     }
 }
+
+html.overlay-window,
+html.overlay-window body,
+html.overlay-window app-root {
+    background: transparent !important;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+}

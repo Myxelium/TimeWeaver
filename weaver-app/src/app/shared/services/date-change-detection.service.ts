@@ -1,5 +1,10 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, interval, Subject } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  interval,
+  Subject
+} from 'rxjs';
 import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { format } from 'date-fns';
 
@@ -64,7 +69,7 @@ export class DateChangeDetectionService implements OnDestroy {
     const previousDateStr = this.currentDateSubject.value;
 
     if (currentDateStr !== previousDateStr) {
-      console.log(`Day change detected: ${previousDateStr} → ${currentDateStr}`);
+      console.log(`Day change detected: ${previousDateStr} -> ${currentDateStr}`);
       this.currentDateSubject.next(currentDateStr);
     }
   }

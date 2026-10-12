@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/settings/settings.component').then(module => module.SettingsComponent)
   },
   {
+    path: 'overlay/:type/:ruleId',
+    loadComponent: () => import('./pages/overlay/popup-overlay.component').then(module => module.PopupOverlayComponent)
+  },
+  {
     path: '**',
     redirectTo: ''
   }

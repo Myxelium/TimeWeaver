@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { SaveSettingsCommand } from '../../types';
 import { Setting } from '../../../entities/Setting';
+import { mergePopupRules } from '../../../popup-rules';
 
 export async function handleSaveSettings(command: SaveSettingsCommand, dataSource: DataSource): Promise<boolean> {
   const repo = dataSource.getRepository(Setting);
@@ -27,6 +28,15 @@ export async function handleSaveSettings(command: SaveSettingsCommand, dataSourc
 
   if (typeof command.payload.overtimeRate === 'number')
     settings.overtimeRate = command.payload.overtimeRate;
+
+  if (typeof command.payload.launchAtLogin === 'boolean')
+    settings.launchAtLogin = command.payload.launchAtLogin;
+
+  if (Array.isArray(command.payload.popupRules)) {
+    const merged = mergePopupRules(settings.popupRules, command.payload.popupRules);
+
+    settings.popupRules = JSON.stringify(merged);
+  }
 
   await repo.save(settings);
   return true;

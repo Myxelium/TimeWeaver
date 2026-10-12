@@ -51,7 +51,13 @@ function parseCsv(content: string): ParsedRow[] {
     if (cells.length < 4)
       continue; // need at least date,title,desc,hours
 
-    const [dateRaw, titleRaw, descriptionRaw, hoursRaw, createdRaw] = cells;
+    const [
+      dateRaw,
+      titleRaw,
+      descriptionRaw,
+      hoursRaw,
+      createdRaw
+    ] = cells;
     const date = dateRaw.replace(/"/g, '').trim();
     const title = titleRaw.replace(/"/g, '').trim();
 

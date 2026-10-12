@@ -1,4 +1,8 @@
-import { createActionGroup, props, createAction } from '@ngrx/store';
+import {
+  createActionGroup,
+  props,
+  createAction
+} from '@ngrx/store';
 import { Settings } from '../../shared/models';
 
 export const SettingsActions = createActionGroup({

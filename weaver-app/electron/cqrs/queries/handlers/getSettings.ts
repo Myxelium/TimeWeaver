@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Setting } from '../../../entities/Setting';
 import { SettingsDTO } from '../../types';
+import { parsePopupRules } from '../../../popup-rules';
 
 export async function handleGetSettings(dataSource: DataSource): Promise<SettingsDTO> {
   const repo = dataSource.getRepository(Setting);
@@ -22,6 +23,8 @@ export async function handleGetSettings(dataSource: DataSource): Promise<Setting
     holidayCountry: settings.holidayCountry ?? undefined,
     holidayTypes: settings.holidayTypes ? settings.holidayTypes.split(',').filter(Boolean) : ['public', 'bank'],
     firstDayOfWeek: settings.firstDayOfWeek ?? 1,
-    overtimeRate: settings.overtimeRate ?? 0
+    overtimeRate: settings.overtimeRate ?? 0,
+    launchAtLogin: !!settings.launchAtLogin,
+    popupRules: parsePopupRules(settings.popupRules)
   };
 }

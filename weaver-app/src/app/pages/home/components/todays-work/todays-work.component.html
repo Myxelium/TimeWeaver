@@ -1,4 +1,5 @@
 <h2 class="section-heading">Today's Work</h2>
+
 <div class="card-panel mb-6">
     <h3 class="panel-heading">Add New Task</h3>
 
@@ -8,11 +9,9 @@
         class="space-y-4"
     >
         <div>
-            <label
-                for="taskTitle"
-                class="form-label"
-                >Task Title</label
+            <label for="taskTitle" class="form-label">Task Title</label
             >
+
             <div class="relative">
                 <input
                     (focus)="onTitleFocus()"
@@ -24,6 +23,7 @@
                     placeholder="What are you working on?"
                     autocomplete="off"
                 />
+
                 @if (showSuggestions && filteredSuggestions.length > 0) {
                     <div class="suggestions-dropdown">
                         @if (!showAllSuggestions && recentSuggestions.length > 0) {
@@ -72,16 +72,14 @@
                     </div>
                 }
             </div>
+
             @if (taskForm.get('title')?.invalid && taskForm.get('title')?.touched) {
                 <p class="text-destructive text-sm mt-1">Task title is required</p>
             }
         </div>
 
         <div>
-            <label
-                for="taskDescription"
-                class="form-label"
-                >Description (Optional)</label
+            <label for="taskDescription" class="form-label">Description (Optional)</label
             >
 
             <textarea
@@ -90,14 +88,12 @@
                 id="taskDescription"
                 class="textarea-base"
                 placeholder="Add details about the task..."
-            ></textarea>
+            >
+            </textarea>
         </div>
 
         <div>
-            <label
-                for="taskHours"
-                class="form-label"
-                >Hours</label
+            <label for="taskHours" class="form-label">Hours</label
             >
 
             <div class="flex gap-2">
@@ -131,9 +127,7 @@
         </div>
 
         @if (weekendBlocked) {
-            <div
-                class="text-sm text-black-600 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-800 rounded p-2"
-            >
+            <div class="text-sm text-black-600 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-800 rounded p-2">
                 Weekend tasks are disabled (Ignore Weekends setting). Change the setting to add tasks today.
             </div>
         }
@@ -146,6 +140,7 @@
             >
                 {{ editingTask ? 'Update Task' : 'Add Task' }}
             </button>
+
             @if (editingTask) {
                 <button
                     (click)="cancelEdit()"
@@ -162,11 +157,10 @@
 <div class="card-panel">
     <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-medium">Tasks</h3>
+
         @if (todayTotalHours$ | async; as totalHours) {
             @if (maxHoursPerDay$ | async; as maxHours) {
-                <span class="text-sm text-muted-foreground"
-                    >{{ totalHours | number: '1.1-1' }}h / {{ maxHours | number: '1.1-1' }}h</span
-                >
+                <span class="text-sm text-muted-foreground">{{ totalHours | number: '1.1-1' }}h / {{ maxHours | number: '1.1-1' }}h</span>
             }
         }
     </div>
@@ -177,6 +171,7 @@
                 <div class="task-row">
                     <div class="flex-1">
                         <p class="font-medium">{{ task.title }}</p>
+
                         @if (task.description) {
                             <p class="text-sm text-muted-foreground">
                                 {{ task.description }}
@@ -187,47 +182,47 @@
                     <div class="task-actions">
                         <span class="hours-badge">{{ task.hours | number: '1.1-1' }}h</span>
 
-                    <button
-                        type="button"
-                        (click)="editTask(task)"
-                        class="icon-btn"
-                        title="Edit task"
-                    >
-                        <svg
-                            class="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <button
+                            (click)="editTask(task)"
+                            type="button"
+                            class="icon-btn"
+                            title="Edit task"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                        </svg>
-                    </button>
+                            <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                            </svg>
+                        </button>
 
-                    <button
-                        type="button"
-                        (click)="deleteTask(task.id!)"
-                        class="icon-btn-danger"
-                        title="Delete task"
-                    >
-                        <svg
-                            class="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <button
+                            (click)="deleteTask(task.id!)"
+                            type="button"
+                            class="icon-btn-danger"
+                            title="Delete task"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                        </svg>
-                    </button>
+                            <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             }
@@ -239,8 +234,8 @@
                     @if (remaining > 0) {
                         <div class="section-divider">
                             <button
-                                type="button"
                                 (click)="autoDistributeHours()"
+                                type="button"
                                 class="w-full btn-secondary py-2 px-4"
                             >
                                 Auto-distribute remaining {{ remaining | number: '1.1-1' }}h across tasks
@@ -256,15 +251,10 @@
 
     <div class="mt-4">
         <div class="progress-outer flex">
-            <div
-                [style.width.%]="progressPercent(todayTotalHours$ | async)"
-                class="progress-inner"
-            ></div>
+            <div [style.width.%]="progressPercent(todayTotalHours$ | async)" class="progress-inner"></div>
+
             @if (hasOvertime(todayTotalHours$ | async) | async) {
-                <div
-                    [style.width.%]="overtimePercent(todayTotalHours$ | async)"
-                    class="h-2 bg-amber-400 rounded-full ml-0.5"
-                ></div>
+                <div [style.width.%]="overtimePercent(todayTotalHours$ | async)" class="h-2 bg-amber-400 rounded-full ml-0.5"></div>
             }
         </div>
     </div>

@@ -1,4 +1,11 @@
-import { Injectable, ApplicationRef, ComponentRef, createComponent, EnvironmentInjector, inject } from '@angular/core';
+import {
+  Injectable,
+  ApplicationRef,
+  ComponentRef,
+  createComponent,
+  EnvironmentInjector,
+  inject
+} from '@angular/core';
 import { ConfirmDialogHostComponent, ConfirmOptions } from './confirm-dialog.component';
 
 @Injectable({ providedIn: 'root' })

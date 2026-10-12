@@ -1,13 +1,29 @@
-import { Injectable } from '@angular/core';
-import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { DatabaseService } from '../../shared/services/database.service';
-import { TasksActions, loadAllTasks } from './tasks.actions';
-import { catchError, map, mergeMap, of, withLatestFrom } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import {
+  Actions,
+  createEffect,
+  ofType
+} from '@ngrx/effects';
 import { Store } from '@ngrx/store';
+import {
+  catchError,
+  map,
+  mergeMap,
+  of,
+  switchMap,
+  withLatestFrom
+} from 'rxjs';
+
+import { DatabaseService } from '../../shared/services/database.service';
+import { loadAllTasks, TasksActions } from './tasks.actions';
 import { selectCurrentDate, selectSelectedMonth } from './tasks.selectors';
 
 @Injectable({ providedIn: 'root' })
 export class TasksEffects {
+  private actions$ = inject(Actions);
+  private databaseService = inject(DatabaseService);
+  private store = inject(Store);
+
   readonly loadToday$ = createEffect(() => this.actions$.pipe(
     ofType(TasksActions.loadTodayTasks),
     mergeMap(({ date }) => this.databaseService.getTasksByDate(date).pipe(
@@ -28,7 +44,7 @@ export class TasksEffects {
 
   readonly loadAll$ = createEffect(() => this.actions$.pipe(
     ofType(loadAllTasks),
-    mergeMap(() => this.databaseService.getAllTasks().pipe(
+    switchMap(() => this.databaseService.getAllTasks().pipe(
       map(tasks => TasksActions.loadAllTasksSuccess({ tasks })),
       catchError(err => of(TasksActions.loadAllTasksFailure({ error: err.message || 'Load all tasks failed' })))
     ))
@@ -48,7 +64,11 @@ export class TasksEffects {
       this.store.select(selectCurrentDate),
       this.store.select(selectSelectedMonth)
     ),
-    mergeMap(([_, currentDate, selectedMonth]) => [
+    mergeMap(([
+      _,
+      currentDate,
+      selectedMonth
+    ]) => [
       TasksActions.loadTodayTasks({ date: currentDate }),
       TasksActions.loadMonthlyData({ year: selectedMonth.year, month: selectedMonth.month }),
       loadAllTasks()
@@ -78,10 +98,4 @@ export class TasksEffects {
       catchError(err => of(TasksActions.exportCsvAllFailure({ error: err.message || 'Export failed' })))
     ))
   ));
-
-  constructor(
-    private actions$: Actions,
-    private databaseService: DatabaseService,
-    private store: Store
-  ) {}
 }

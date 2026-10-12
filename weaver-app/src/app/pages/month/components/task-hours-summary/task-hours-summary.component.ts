@@ -1,10 +1,19 @@
-import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {
+  Component,
+  inject,
+  OnDestroy
+} from '@angular/core';
 import { Store } from '@ngrx/store';
-import { selectAllTasks, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
+import {
+  map,
+  Subject,
+  takeUntil
+} from 'rxjs';
+
 import { DaySummary, Task } from '../../../../shared/models';
-import { map, take } from 'rxjs';
-import { TasksActions } from '../../../../store/tasks/tasks.actions';
+import { loadAllTasks, TasksActions } from '../../../../store/tasks/tasks.actions';
+import { selectAllTasks, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
 import { TaskDetailsModalComponent } from '../task-details-modal/task-details-modal.component';
 
 interface TaskChartDataPoint {
@@ -20,9 +29,11 @@ interface TaskChartDataPoint {
   imports: [CommonModule, TaskDetailsModalComponent],
   templateUrl: './task-hours-summary.component.html'
 })
-export class TaskHoursSummaryComponent {
+export class TaskHoursSummaryComponent implements OnDestroy {
   Math = Math;
+
   monthlyData$ = inject(Store).select(selectMonthlyData);
+
   chartData$ = this.monthlyData$.pipe(
     map(days => {
       return Object.entries(this.calculateTaskHours(days))
@@ -38,9 +49,34 @@ export class TaskHoursSummaryComponent {
 
   showDetails = false;
   selectedTaskTitle: string | null = null;
+
   detailedTasks: Task[] = [];
 
   store = inject(Store);
+
+  private destroy$ = new Subject<void>();
+
+  private allTasks: Task[] = [];
+  private monthlyDays: DaySummary[] = [];
+
+  constructor() {
+    this.store.dispatch(loadAllTasks());
+
+    this.store
+      .select(selectAllTasks)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(tasks => {
+        this.allTasks = tasks ?? [];
+        this.syncDetailedTasks();
+      });
+
+    this.monthlyData$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(days => {
+        this.monthlyDays = days ?? [];
+        this.syncDetailedTasks();
+      });
+  }
 
   getMaxTaskHours(data: TaskChartDataPoint[]): number {
     if (!data?.length)
@@ -61,14 +97,14 @@ export class TaskHoursSummaryComponent {
     const lightness = 45 + (hash % 10);
 
     return `hsl(${hue} ${saturation}% ${lightness}%)`;
-  };
+  }
 
   calculateTaskHours(daySummary: DaySummary[]): Record<string, { totalHours: number; taskCount: number }> {
     const aggregate: Record<string, { totalHours: number; taskCount: number }> = {};
 
     daySummary.forEach(day => {
       (day.tasks || []).forEach((task: Task) => {
-        const key = task.title.trim() || 'Untitled';
+        const key = this.taskKey(task.title);
 
         if (!aggregate[key]) {
           aggregate[key] = { totalHours: 0, taskCount: 0 };
@@ -84,16 +120,9 @@ export class TaskHoursSummaryComponent {
 
   onBarClick(taskTitle: string): void {
     this.selectedTaskTitle = taskTitle;
-    this.store
-      .select(selectAllTasks)
-      .pipe(take(1))
-      .subscribe(tasks => {
-        const key = taskTitle.trim().toLowerCase();
-        const matched = tasks.filter(task => (task.title || '').trim().toLowerCase() === key);
-
-        this.detailedTasks = matched.sort((taskA, taskB) => taskA.date.localeCompare(taskB.date));
-        this.showDetails = true;
-      });
+    this.showDetails = true;
+    this.syncDetailedTasks();
+    this.store.dispatch(loadAllTasks());
   }
 
   onModalClosed(): void {
@@ -112,5 +141,73 @@ export class TaskHoursSummaryComponent {
         hours: updated.hours || 0
       }
     }));
+  }
+
+  private syncDetailedTasks(): void {
+    if (!this.showDetails || !this.selectedTaskTitle)
+      return;
+
+    const key = this.taskKey(this.selectedTaskTitle);
+    const matched = this.mergeTasks(
+      this.allTasks.filter(task => this.taskKey(task.title) === key),
+      this.monthlyDays
+        .flatMap(day => day.tasks || [])
+        .filter(task => this.taskKey(task.title) === key)
+    ).sort((taskA, taskB) => taskA.date.localeCompare(taskB.date) || (taskA.id ?? 0) - (taskB.id ?? 0));
+
+    if (this.sameTasks(this.detailedTasks, matched))
+      return;
+
+    this.detailedTasks = matched;
+  }
+
+  private taskKey(title: string | null | undefined): string {
+    return (title || '').trim() || 'Untitled';
+  }
+
+  private mergeTasks(stored: Task[], fromMonth: Task[]): Task[] {
+    const byId = new Map<number, Task>();
+    const withoutId: Task[] = [];
+
+    for (const task of stored) {
+      if (task.id == null) {
+        withoutId.push(task);
+        continue;
+      }
+
+      byId.set(task.id, task);
+    }
+
+    for (const task of fromMonth) {
+      if (task.id == null) {
+        withoutId.push(task);
+        continue;
+      }
+
+      if (!byId.has(task.id))
+        byId.set(task.id, task);
+    }
+
+    return [...byId.values(), ...withoutId];
+  }
+
+  private sameTasks(left: Task[], right: Task[]): boolean {
+    if (left.length !== right.length)
+      return false;
+
+    return left.every((task, index) => {
+      const other = right[index];
+
+      return task.id === other.id
+        && task.date === other.date
+        && task.hours === other.hours
+        && task.title === other.title
+        && (task.description || '') === (other.description || '');
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

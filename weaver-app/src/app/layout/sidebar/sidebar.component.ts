@@ -7,11 +7,7 @@ import { NAV_ITEMS } from '../../shared/models';
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './sidebar.component.html',
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  host: { style: 'display: block' }
 })
 export class SidebarComponent {
   navItems = NAV_ITEMS;

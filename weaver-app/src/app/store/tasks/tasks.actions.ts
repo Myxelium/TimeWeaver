@@ -1,5 +1,15 @@
-import { createActionGroup, props, emptyProps, createAction } from '@ngrx/store';
-import { Task, DaySummary, CreateTaskRequest, UpdateTaskRequest } from '../../shared/models';
+import {
+  createActionGroup,
+  props,
+  emptyProps,
+  createAction
+} from '@ngrx/store';
+import {
+  Task,
+  DaySummary,
+  CreateTaskRequest,
+  UpdateTaskRequest
+} from '../../shared/models';
 
 export const TasksActions = createActionGroup({
   source: 'Tasks',

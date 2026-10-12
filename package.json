@@ -1,7 +1,9 @@
 {
   "devDependencies": {
+    "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "junolint": "^1.4.0",
     "prettier": "^3.6.2",
     "prettier-plugin-organize-attributes": "^1.0.0"
   }

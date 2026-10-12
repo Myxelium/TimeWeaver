@@ -6,248 +6,257 @@
         class="grid grid-cols-1 lg:grid-cols-2 gap-6"
     >
         <div class="space-y-6">
-        <div class="bg-card border border-border rounded-lg p-4 space-y-4">
-            <h2 class="text-lg font-semibold">General Settings</h2>
-        <div>
-            <label
-                class="form-label"
-                for="monthlyIncome"
-                >Monthly Income (What I earn)</label
-            >
+            <div class="bg-card border border-border rounded-lg p-4 space-y-4">
+                <h2 class="text-lg font-semibold">General Settings</h2>
 
-            <div class="relative">
+                <div>
+                    <label
+                        class="form-label"
+                        for="monthlyIncome"
+                        >Monthly Income (What I earn)</label
+                    >
+
+                    <div class="relative">
+                        <input
+                            [type]="showIncome ? 'number' : 'text'"
+                            [class.text-security-disc]="!showIncome"
+                            id="monthlyIncome"
+                            step="0.01"
+                            formControlName="monthlyIncome"
+                            class="input-base pr-10"
+                        />
+
+                        <button
+                            (click)="toggleIncomeVisibility()"
+                            [attr.aria-label]="showIncome ? 'Hide income' : 'Show income'"
+                            type="button"
+                            class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                        >
+                            <lucide-icon
+                                [img]="showIncome ? eyeOff : eye"
+                                class="w-4 h-4"
+                            />
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                        class="form-label"
+                        for="monthlyCost"
+                        >Monthly Cost (Business pays)</label
+                    >
+
+                    <div class="relative">
+                        <input
+                            [type]="showCost ? 'number' : 'text'"
+                            [class.text-security-disc]="!showCost"
+                            id="monthlyCost"
+                            step="0.01"
+                            formControlName="monthlyCost"
+                            class="input-base pr-10"
+                        />
+
+                        <button
+                            (click)="toggleCostVisibility()"
+                            [attr.aria-label]="showCost ? 'Hide cost' : 'Show cost'"
+                            type="button"
+                            class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                        >
+                            <lucide-icon
+                                [img]="showCost ? eyeOff : eye"
+                                class="w-4 h-4"
+                            />
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                        class="form-label"
+                        for="overtimeRate"
+                        >Overtime Income (per hour)</label
+                    >
+
+                    <div class="relative">
+                        <input
+                            [type]="showOvertime ? 'number' : 'text'"
+                            [class.text-security-disc]="!showOvertime"
+                            id="overtimeRate"
+                            step="0.01"
+                            formControlName="overtimeRate"
+                            class="input-base pr-10"
+                        />
+
+                        <button
+                            (click)="toggleOvertimeVisibility()"
+                            [attr.aria-label]="showOvertime ? 'Hide overtime' : 'Show overtime'"
+                            type="button"
+                            class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                        >
+                            <lucide-icon
+                                [img]="showOvertime ? eyeOff : eye"
+                                class="w-4 h-4"
+                            />
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="darkMode"
+                        type="checkbox"
+                        formControlName="darkMode"
+                        class="h-4 w-4"
+                    />
+
+                    <label
+                        for="darkMode"
+                        class="text-sm"
+                        >Dark Mode</label
+                    >
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="ignoreWeekends"
+                        type="checkbox"
+                        formControlName="ignoreWeekends"
+                        class="h-4 w-4"
+                    />
+
+                    <label
+                        for="ignoreWeekends"
+                        class="text-sm"
+                        >Ignore Weekends (exclude from working day stats)</label
+                    >
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="maxHoursEnabled"
+                        type="checkbox"
+                        formControlName="maxHoursEnabled"
+                        class="h-4 w-4"
+                    />
+
+                    <label
+                        for="maxHoursEnabled"
+                        class="text-sm"
+                        >Enable Maximum Hours Per Day</label
+                    >
+                </div>
+
+                @if (form.get('maxHoursEnabled')?.value) {
+                    <div>
+                        <label
+                            class="form-label"
+                            for="maxHoursPerDay"
+                            >Maximum Hours Per Day</label
+                        >
+
+                        <input
+                            type="number"
+                            id="maxHoursPerDay"
+                            step="0.5"
+                            min="0.1"
+                            max="24"
+                            formControlName="maxHoursPerDay"
+                            class="input-base"
+                        />
+                    </div>
+                }
+
+                <div>
+                    <label
+                        class="form-label"
+                        for="firstDayOfWeek"
+                        >First day of week</label
+                    >
+
+                    <select
+                        id="firstDayOfWeek"
+                        class="input-base"
+                        formControlName="firstDayOfWeek"
+                    >
+                        <option [ngValue]="1">Monday</option>
+                        <option [ngValue]="2">Tuesday</option>
+                        <option [ngValue]="3">Wednesday</option>
+                        <option [ngValue]="4">Thursday</option>
+                        <option [ngValue]="5">Friday</option>
+                        <option [ngValue]="6">Saturday</option>
+                        <option [ngValue]="0">Sunday</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-card border border-border rounded-lg p-4 space-y-3">
+                <h2 class="text-lg font-semibold">Import Tasks CSV</h2>
+
+                <p class="text-xs text-muted-foreground">
+                    Import a CSV previously exported (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can be
+                    overwritten.
+                </p>
+
                 <input
-                    [type]="showIncome ? 'number' : 'text'"
-                    [class.text-security-disc]="!showIncome"
-                    id="monthlyIncome"
-                    step="0.01"
-                    formControlName="monthlyIncome"
-                    class="input-base pr-10"
+                    (change)="onFileSelected($event)"
+                    type="file"
+                    accept=".csv,text/csv"
+                    class="block"
                 />
+
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="overwrite"
+                        type="checkbox"
+                        formControlName="overwrite"
+                        class="h-4 w-4"
+                    />
+
+                    <label
+                        for="overwrite"
+                        class="text-sm"
+                        >Overwrite existing tasks (match by Date + Title)</label
+                    >
+                </div>
 
                 <button
-                    (click)="toggleIncomeVisibility()"
-                    [attr.aria-label]="showIncome ? 'Hide income' : 'Show income'"
+                    (click)="importCsv()"
+                    [disabled]="!selectedFile || importing"
                     type="button"
-                    class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                    class="btn-secondary px-3 py-1"
                 >
-                    <lucide-icon
-                        [img]="showIncome ? eyeOff : eye"
-                        class="w-4 h-4"
-                    />
+                    Import
                 </button>
+
+                @if (importResult) {
+                    <div class="text-sm text-muted-foreground">
+                        Imported {{ importResult.imported }} new, Updated {{ importResult.updated }}, Skipped {{ importResult.skipped }} (Total lines:
+                        {{ importResult.total }})
+                    </div>
+                }
+
+                @if (importError) {
+                    <div class="text-sm text-red-600">
+                        {{ importError }}
+                    </div>
+                }
             </div>
-        </div>
 
-        <div>
-            <label
-                class="form-label"
-                for="monthlyCost"
-                >Monthly Cost (Business pays)</label
-            >
-
-            <div class="relative">
-                <input
-                    [type]="showCost ? 'number' : 'text'"
-                    [class.text-security-disc]="!showCost"
-                    id="monthlyCost"
-                    step="0.01"
-                    formControlName="monthlyCost"
-                    class="input-base pr-10"
-                />
+            <div class="bg-card border border-border rounded-lg p-4 space-y-3">
+                <h2 class="text-lg font-semibold">Export</h2>
 
                 <button
-                    (click)="toggleCostVisibility()"
-                    [attr.aria-label]="showCost ? 'Hide cost' : 'Show cost'"
+                    (click)="exportAllCsv()"
+                    [disabled]="(isLoading$ | async) ?? false"
                     type="button"
-                    class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+                    class="btn-primary px-3 py-1"
                 >
-                    <lucide-icon
-                        [img]="showCost ? eyeOff : eye"
-                        class="w-4 h-4"
-                    />
+                    Export all tasks (CSV)
                 </button>
+
+                <p class="text-xs text-muted-foreground">Exports all existing tasks in the same CSV format as the monthly export.</p>
             </div>
-        </div>
-
-        <div>
-            <label
-                class="form-label"
-                for="overtimeRate"
-                >Overtime Income (per hour)</label
-            >
-
-            <div class="relative">
-                <input
-                    [type]="showOvertime ? 'number' : 'text'"
-                    [class.text-security-disc]="!showOvertime"
-                    id="overtimeRate"
-                    step="0.01"
-                    formControlName="overtimeRate"
-                    class="input-base pr-10"
-                />
-
-                <button
-                    (click)="toggleOvertimeVisibility()"
-                    [attr.aria-label]="showOvertime ? 'Hide overtime' : 'Show overtime'"
-                    type="button"
-                    class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
-                >
-                    <lucide-icon
-                        [img]="showOvertime ? eyeOff : eye"
-                        class="w-4 h-4"
-                    />
-                </button>
-            </div>
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <input
-                id="darkMode"
-                type="checkbox"
-                formControlName="darkMode"
-                class="h-4 w-4"
-            />
-
-            <label
-                for="darkMode"
-                class="text-sm"
-                >Dark Mode</label
-            >
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <input
-                id="ignoreWeekends"
-                type="checkbox"
-                formControlName="ignoreWeekends"
-                class="h-4 w-4"
-            />
-
-            <label
-                for="ignoreWeekends"
-                class="text-sm"
-                >Ignore Weekends (exclude from working day stats)</label
-            >
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <input
-                id="maxHoursEnabled"
-                type="checkbox"
-                formControlName="maxHoursEnabled"
-                class="h-4 w-4"
-            />
-
-            <label
-                for="maxHoursEnabled"
-                class="text-sm"
-                >Enable Maximum Hours Per Day</label
-            >
-        </div>
-
-        @if (form.get('maxHoursEnabled')?.value) {
-        <div>
-            <label
-                class="form-label"
-                for="maxHoursPerDay"
-                >Maximum Hours Per Day</label
-            >
-
-            <input
-                type="number"
-                id="maxHoursPerDay"
-                step="0.5"
-                min="0.1"
-                max="24"
-                formControlName="maxHoursPerDay"
-                class="input-base"
-            />
-        </div>
-        }
-
-        <div>
-            <label class="form-label" for="firstDayOfWeek">First day of week</label>
-            <select id="firstDayOfWeek" class="input-base" formControlName="firstDayOfWeek">
-                <option [ngValue]="1">Monday</option>
-                <option [ngValue]="2">Tuesday</option>
-                <option [ngValue]="3">Wednesday</option>
-                <option [ngValue]="4">Thursday</option>
-                <option [ngValue]="5">Friday</option>
-                <option [ngValue]="6">Saturday</option>
-                <option [ngValue]="0">Sunday</option>
-            </select>
-        </div>
-        
-        </div>
-
-        <div class="bg-card border border-border rounded-lg p-4 space-y-3">
-            <h2 class="text-lg font-semibold">Import Tasks CSV</h2>
-
-            <p class="text-xs text-muted-foreground">
-                Import a CSV previously exported (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can be overwritten.
-            </p>
-            <input
-                (change)="onFileSelected($event)"
-                type="file"
-                accept=".csv,text/csv"
-                class="block"
-            />
-
-            <div class="flex items-center space-x-2">
-                <input
-                    id="overwrite"
-                    type="checkbox"
-                    formControlName="overwrite"
-                    class="h-4 w-4"
-                />
-
-                <label
-                    for="overwrite"
-                    class="text-sm"
-                    >Overwrite existing tasks (match by Date + Title)</label
-                >
-            </div>
-
-            <button
-                (click)="importCsv()"
-                [disabled]="!selectedFile || importing"
-                type="button"
-                class="btn-secondary px-3 py-1"
-            >
-                Import
-            </button>
-
-            @if (importResult) {
-            <div class="text-sm text-muted-foreground">
-                Imported {{ importResult.imported }} new, Updated {{ importResult.updated }}, Skipped {{ importResult.skipped }} (Total lines:
-                {{ importResult.total }})
-            </div>
-            }
-
-            @if (importError) {
-            <div
-                class="text-sm text-red-600"
-            >
-                {{ importError }}
-            </div>
-            }
-        </div>
-
-        <div class="bg-card border border-border rounded-lg p-4 space-y-3">
-            <h2 class="text-lg font-semibold">Export</h2>
-
-            <button
-                (click)="exportAllCsv()"
-                [disabled]="(isLoading$ | async) ?? false"
-                type="button"
-                class="btn-primary px-3 py-1"
-            >
-                Export all tasks (CSV)
-            </button>
-
-            <p class="text-xs text-muted-foreground">Exports all existing tasks in the same CSV format as the monthly export.</p>
-    </div>
         </div>
 
         <div class="space-y-6">
@@ -256,7 +265,12 @@
 
                 <div class="space-y-4">
                     <div class="space-y-3">
-                        <label class="form-label" for="holidayCountry">Holiday Country</label>
+                        <label
+                            class="form-label"
+                            for="holidayCountry"
+                            >Holiday Country</label
+                        >
+
                         <div class="flex gap-2">
                             <input
                                 id="holidayCountry"
@@ -266,34 +280,43 @@
                                 class="input-base"
                                 formControlName="holidayCountry"
                             />
+
                             <button
+                                (click)="setAutoDetectedCountry()"
                                 type="button"
                                 class="btn-secondary px-3 py-1"
-                                (click)="setAutoDetectedCountry()"
-                            >Auto-detect</button>
+                            >
+                                Auto-detect
+                            </button>
                         </div>
-                        <p class="text-xs text-muted-foreground">Two-letter country code (ISO 3166-1 alpha-2). Used to highlight public holidays and show the holiday name.</p>
+
+                        <p class="text-xs text-muted-foreground">
+                            Two-letter country code (ISO 3166-1 alpha-2). Used to highlight public holidays and show the holiday name.
+                        </p>
                     </div>
 
                     <div class="space-y-3 pt-3 border-t border-border">
                         <span class="form-label">Holiday Types to Display</span>
                         <p class="text-xs text-muted-foreground mb-2">Select which types of holidays should be shown in the calendar.</p>
-                        
+
                         <div class="space-y-2">
                             @for (option of holidayTypeOptions; track option.type) {
                                 <div class="flex items-start space-x-2">
                                     <input
-                                        [id]="'holidayType_' + option.type"
-                                        type="checkbox"
-                                        [checked]="isHolidayTypeEnabled(option.type)"
                                         (change)="toggleHolidayType(option.type)"
+                                        [id]="'holidayType_' + option.type"
+                                        [checked]="isHolidayTypeEnabled(option.type)"
+                                        type="checkbox"
                                         class="h-4 w-4 mt-0.5"
                                     />
+
                                     <div class="flex flex-col">
                                         <label
                                             [for]="'holidayType_' + option.type"
                                             class="text-sm font-medium cursor-pointer"
-                                        >{{ option.label }}</label>
+                                            >{{ option.label }}</label
+                                        >
+
                                         <span class="text-xs text-muted-foreground">{{ option.description }}</span>
                                     </div>
                                 </div>
@@ -302,6 +325,217 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="bg-card border border-border rounded-lg p-4 space-y-4 lg:col-span-2">
+            <h2 class="text-lg font-semibold">Side popups</h2>
+
+            <p class="text-xs text-muted-foreground">
+                Popups sit at the bottom-right of the screen, just above the taskbar. They only run when Weaver launches with the system. Closing the
+                window leaves Weaver in the tray so they can still appear.
+            </p>
+
+            <div class="flex items-center space-x-2">
+                <input
+                    id="launchAtLogin"
+                    type="checkbox"
+                    formControlName="launchAtLogin"
+                    class="h-4 w-4"
+                />
+
+                <label
+                    for="launchAtLogin"
+                    class="text-sm"
+                    >Launch with system</label
+                >
+            </div>
+
+            <div
+                class="space-y-4"
+                formArrayName="popupRules"
+            >
+                @for (rule of popupRules.controls; track rule.get('id')?.value; let index = $index) {
+                    <div
+                        [formGroupName]="index"
+                        class="border border-border rounded-lg p-4 space-y-3"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center space-x-2">
+                                <input
+                                    [id]="'popupEnabled_' + index"
+                                    type="checkbox"
+                                    formControlName="enabled"
+                                    class="h-4 w-4"
+                                />
+
+                                <label
+                                    [for]="'popupEnabled_' + index"
+                                    class="text-sm"
+                                    >Enabled</label
+                                >
+                            </div>
+
+                            <button
+                                (click)="removePopupRule(index)"
+                                type="button"
+                                class="btn-secondary px-3 py-1"
+                            >
+                                Remove
+                            </button>
+                        </div>
+
+                        @if (!form.get('launchAtLogin')?.value) {
+                            <p class="text-xs text-muted-foreground">Turn on launch with system before this popup can be enabled.</p>
+                        }
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label
+                                    class="form-label"
+                                    [for]="'popupType_' + index"
+                                    >Type</label
+                                >
+
+                                <select
+                                    [id]="'popupType_' + index"
+                                    class="input-base"
+                                    formControlName="type"
+                                >
+                                    <option value="time-log">Time logging</option>
+                                    <option value="reminder">Reminder</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label
+                                    class="form-label"
+                                    [for]="'popupTime_' + index"
+                                    >Time</label
+                                >
+
+                                <input
+                                    [id]="'popupTime_' + index"
+                                    type="time"
+                                    class="input-base"
+                                    formControlName="time"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="form-label">Days</span>
+
+                            <div class="flex flex-wrap gap-2">
+                                @for (day of weekdayOptions; track day.value) {
+                                    <button
+                                        (click)="toggleWeekday(index, day.value)"
+                                        [class.bg-primary]="isWeekdaySelected(index, day.value)"
+                                        [class.text-primary-foreground]="isWeekdaySelected(index, day.value)"
+                                        type="button"
+                                        class="px-2 py-1 text-xs rounded-md border border-border"
+                                    >
+                                        {{ day.label }}
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="form-label"
+                                [for]="'popupInterval_' + index"
+                                >Repeat every (minutes)</label
+                            >
+
+                            <input
+                                [id]="'popupInterval_' + index"
+                                type="number"
+                                min="0"
+                                max="1440"
+                                class="input-base"
+                                formControlName="intervalMinutes"
+                            />
+
+                            <p class="text-xs text-muted-foreground">
+                                0 shows this popup once at the time above. Any other number shows it again that many minutes after it is closed.
+                            </p>
+                        </div>
+
+                        @if (rule.get('type')?.value === 'reminder') {
+                            <div>
+                                <label
+                                    class="form-label"
+                                    [for]="'popupMessage_' + index"
+                                    >Message</label
+                                >
+
+                                <textarea
+                                    [id]="'popupMessage_' + index"
+                                    rows="3"
+                                    class="textarea-base"
+                                    formControlName="message"
+                                    placeholder="Reminder text"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label
+                                    class="form-label"
+                                    [for]="'popupDuration_' + index"
+                                    >Show for (seconds)</label
+                                >
+
+                                <input
+                                    [id]="'popupDuration_' + index"
+                                    type="number"
+                                    min="1"
+                                    max="86400"
+                                    class="input-base"
+                                    formControlName="durationSeconds"
+                                />
+                            </div>
+                        }
+
+                        @if (rule.get('type')?.value === 'time-log') {
+                            <div class="flex items-start space-x-2">
+                                <input
+                                    [id]="'popupOnlyIfEmpty_' + index"
+                                    type="checkbox"
+                                    formControlName="onlyIfNothingReported"
+                                    class="h-4 w-4 mt-0.5"
+                                />
+
+                                <label
+                                    [for]="'popupOnlyIfEmpty_' + index"
+                                    class="text-sm"
+                                    >Only show if nothing has been reported today</label
+                                >
+                            </div>
+
+                            <p class="text-xs text-muted-foreground">
+                                Use this on a later popup so it still appears when an earlier one was closed and today still has no logged time.
+                            </p>
+
+                            <p class="text-xs text-muted-foreground">
+                                Asks which user stories to log, starting from the previous filled-in day. Selected stories split the hours still
+                                needed to reach the daily target.
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (popupRules.length === 0) {
+                <p class="text-sm text-muted-foreground">No popups yet.</p>
+            }
+
+            <button
+                (click)="addPopupRule()"
+                type="button"
+                class="btn-secondary px-3 py-1"
+            >
+                Add popup
+            </button>
         </div>
     </form>
 </div>

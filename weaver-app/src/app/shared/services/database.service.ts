@@ -1,7 +1,17 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import {
+  Observable,
+  from,
+  of
+} from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Task, DaySummary, CreateTaskRequest, UpdateTaskRequest, Settings } from '../models';
+import {
+  Task,
+  DaySummary,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  Settings
+} from '../models';
 
 interface ElectronAPI {
   query(request: { type: string; payload: unknown }): Promise<unknown>;
@@ -12,10 +22,6 @@ interface ElectronAPI {
   providedIn: 'root'
 })
 export class DatabaseService {
-  private get electronAPI(): ElectronAPI | undefined {
-    return (window as unknown as { electronAPI?: ElectronAPI }).electronAPI;
-  }
-
   constructor() {
     if (!this.electronAPI) {
       console.warn('Electron API not available. Running in development mode?');
@@ -159,7 +165,9 @@ export class DatabaseService {
         holidayCountry: undefined,
         holidayTypes: ['public', 'bank'],
         firstDayOfWeek: 1,
-        overtimeRate: 0
+        overtimeRate: 0,
+        launchAtLogin: false,
+        popupRules: []
       });
     }
 
@@ -176,7 +184,9 @@ export class DatabaseService {
         holidayCountry: undefined,
         holidayTypes: ['public', 'bank'],
         firstDayOfWeek: 1,
-        overtimeRate: 0
+        overtimeRate: 0,
+        launchAtLogin: false,
+        popupRules: []
       });
     }
 
@@ -195,6 +205,10 @@ export class DatabaseService {
       return of(false);
 
     return from(api.command({ type: 'save-settings', payload: settings })).pipe(map(() => true));
+  }
+
+  private get electronAPI(): ElectronAPI | undefined {
+    return (window as unknown as { electronAPI?: ElectronAPI }).electronAPI;
   }
 
   private isElectron(): boolean {

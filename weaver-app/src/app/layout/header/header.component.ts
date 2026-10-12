@@ -1,11 +1,20 @@
 import { Component, inject } from '@angular/core';
 import { AsyncPipe, DecimalPipe } from '@angular/common';
-import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Eye,
+  EyeOff
+} from 'lucide-angular';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { format } from 'date-fns';
 import { Store } from '@ngrx/store';
-import { selectMonthlySummary, selectSelectedMonth, selectIsLoading, selectMonthlyData } from '../../store/tasks/tasks.selectors';
+import {
+  selectMonthlySummary,
+  selectSelectedMonth,
+  selectIsLoading,
+  selectMonthlyData
+} from '../../store/tasks/tasks.selectors';
 import {
   selectIgnoreWeekends,
   selectMonthlyIncome,
@@ -13,20 +22,24 @@ import {
   selectMaxHoursPerDay,
   selectOvertimeRate
 } from '../../store/settings/settings.selectors';
-import { eachDayOfInterval, endOfMonth, startOfMonth } from 'date-fns';
+import {
+  eachDayOfInterval,
+  endOfMonth,
+  startOfMonth
+} from 'date-fns';
 import { combineLatest } from 'rxjs';
 import { TasksActions } from '../../store/tasks/tasks.actions';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [AsyncPipe, DecimalPipe, LucideAngularModule],
+  imports: [
+    AsyncPipe,
+    DecimalPipe,
+    LucideAngularModule
+  ],
   templateUrl: './header.component.html',
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  host: { style: 'display: block' }
 })
 export class HeaderComponent {
   eye = Eye;
@@ -43,10 +56,7 @@ export class HeaderComponent {
   overtimeRate$ = inject(Store).select(selectOvertimeRate);
   maxHoursPerDay$ = inject(Store).select(selectMaxHoursPerDay);
 
-  progressPercentage$: Observable<number> = combineLatest([
-    this.monthlySummary$,
-    this.maxHoursPerDay$
-  ]).pipe(
+  progressPercentage$: Observable<number> = combineLatest([this.monthlySummary$, this.maxHoursPerDay$]).pipe(
     map(([hours, maxHoursPerDay]) => {
       const now = new Date();
       const start = startOfMonth(now);
@@ -65,10 +75,7 @@ export class HeaderComponent {
     })
   );
 
-  overtimePercentage$: Observable<number> = combineLatest([
-    this.monthlySummary$,
-    this.maxHoursPerDay$
-  ]).pipe(
+  overtimePercentage$: Observable<number> = combineLatest([this.monthlySummary$, this.maxHoursPerDay$]).pipe(
     map(([hours, maxHoursPerDay]) => {
       const now = new Date();
       const start = startOfMonth(now);
@@ -86,10 +93,7 @@ export class HeaderComponent {
     })
   );
 
-  hasOvertime$: Observable<boolean> = combineLatest([
-    this.monthlySummary$,
-    this.maxHoursPerDay$
-  ]).pipe(
+  hasOvertime$: Observable<boolean> = combineLatest([this.monthlySummary$, this.maxHoursPerDay$]).pipe(
     map(([hours, maxHoursPerDay]) => {
       const now = new Date();
       const start = startOfMonth(now);
@@ -139,8 +143,18 @@ export class HeaderComponent {
   private calculateFinancialProgress(kind: 'income' | 'cost'): Observable<number> {
     const value$ = kind === 'income' ? this.monthlyIncome$ : this.monthlyCost$;
 
-    return combineLatest([this.monthlySummary$, value$, inject(Store).select(selectMaxHoursPerDay), this.overtimeRate$]).pipe(
-      map(([loggedHours, monthlyValue, maxHoursPerDay, overtimeRate]) => {
+    return combineLatest([
+      this.monthlySummary$,
+      value$,
+      inject(Store).select(selectMaxHoursPerDay),
+      this.overtimeRate$
+    ]).pipe(
+      map(([
+        loggedHours,
+        monthlyValue,
+        maxHoursPerDay,
+        overtimeRate
+      ]) => {
         if (!monthlyValue || monthlyValue === 0)
           return 0;
 

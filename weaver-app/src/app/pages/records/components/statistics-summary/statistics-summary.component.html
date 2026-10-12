@@ -1,4 +1,4 @@
-@if (statistics$ | async; as stats) {
+@if (statistics(); as stats) {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card-panel">
             <div class="flex items-start justify-between">
@@ -6,8 +6,13 @@
                     <p class="text-sm text-muted-foreground mb-1">Total Hours</p>
                     <p class="text-3xl font-bold text-foreground">{{ stats.totalHours }}</p>
                 </div>
+
                 <div class="p-2 rounded-lg bg-primary/10">
-                    <lucide-icon [img]="Clock" class="text-primary" [size]="24" />
+                    <lucide-icon
+                        [img]="Clock"
+                        [size]="24"
+                        class="text-primary"
+                    />
                 </div>
             </div>
         </div>
@@ -18,8 +23,13 @@
                     <p class="text-sm text-muted-foreground mb-1">Total Tasks</p>
                     <p class="text-3xl font-bold text-foreground">{{ stats.totalTasks }}</p>
                 </div>
+
                 <div class="p-2 rounded-lg bg-purple-500/10">
-                    <lucide-icon [img]="BarChart3" class="text-purple-600 dark:text-purple-400" [size]="24" />
+                    <lucide-icon
+                        [img]="BarChart3"
+                        [size]="24"
+                        class="text-purple-600 dark:text-purple-400"
+                    />
                 </div>
             </div>
         </div>
@@ -30,8 +40,13 @@
                     <p class="text-sm text-muted-foreground mb-1">Avg Hours/Day</p>
                     <p class="text-3xl font-bold text-foreground">{{ stats.averageHoursPerDay }}</p>
                 </div>
+
                 <div class="p-2 rounded-lg bg-green-500/10">
-                    <lucide-icon [img]="TrendingUp" class="text-green-600 dark:text-green-400" [size]="24" />
+                    <lucide-icon
+                        [img]="TrendingUp"
+                        [size]="24"
+                        class="text-green-600 dark:text-green-400"
+                    />
                 </div>
             </div>
         </div>
@@ -42,8 +57,13 @@
                     <p class="text-sm text-muted-foreground mb-1">Days Tracked</p>
                     <p class="text-3xl font-bold text-foreground">{{ stats.uniqueDays }}</p>
                 </div>
+
                 <div class="p-2 rounded-lg bg-blue-500/10">
-                    <lucide-icon [img]="Calendar" class="text-blue-600 dark:text-blue-400" [size]="24" />
+                    <lucide-icon
+                        [img]="Calendar"
+                        [size]="24"
+                        class="text-blue-600 dark:text-blue-400"
+                    />
                 </div>
             </div>
         </div>
@@ -53,9 +73,10 @@
         <div class="card-panel mt-4 mb-6">
             <div class="text-center">
                 <p class="text-sm text-muted-foreground mb-2">Date Range</p>
+
                 <p class="text-lg font-semibold text-foreground">
-                    {{ stats.dateRange.start }} 
-                    <span class="text-muted-foreground mx-2">to</span> 
+                    {{ stats.dateRange.start }}
+                    <span class="text-muted-foreground mx-2">to</span>
                     {{ stats.dateRange.end }}
                 </p>
             </div>

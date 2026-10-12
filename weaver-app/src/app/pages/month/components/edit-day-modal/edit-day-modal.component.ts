@@ -1,12 +1,29 @@
-import { Component, EventEmitter, Input, Output, inject, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  inject,
+  OnChanges,
+  SimpleChanges
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
 import { selectAllTasks, selectIsLoading } from '../../../../store/tasks/tasks.selectors';
 import { Task, DaySummary } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
-import { Observable, Subject, takeUntil } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  takeUntil
+} from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import { selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
 import { HolidayService } from '../../../../shared/services';

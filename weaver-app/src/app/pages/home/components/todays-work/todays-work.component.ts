@@ -1,15 +1,43 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnDestroy,
+  OnInit
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  Validators,
+  FormGroup
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { selectTodayTasks, selectIsLoading, selectAllTasks } from '../../../../store/tasks/tasks.selectors';
+import {
+  selectTodayTasks,
+  selectIsLoading,
+  selectAllTasks
+} from '../../../../store/tasks/tasks.selectors';
 import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
 import { Task } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
-import { combineLatest, of, Subject, Observable } from 'rxjs';
+import {
+  combineLatest,
+  of,
+  Subject,
+  Observable
+} from 'rxjs';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
-import { map, take, startWith, takeUntil } from 'rxjs/operators';
-import { selectIgnoreWeekends, selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
+import {
+  map,
+  take,
+  startWith,
+  takeUntil
+} from 'rxjs/operators';
+import {
+  selectIgnoreWeekends,
+  selectMaxHoursPerDay,
+  selectMaxHoursEnabled
+} from '../../../../store/settings/settings.selectors';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DateChangeDetectionService } from '../../../../shared/services';
 
@@ -20,6 +48,7 @@ import { DateChangeDetectionService } from '../../../../shared/services';
   templateUrl: './todays-work.component.html'
 })
 export class TodaysWorkComponent implements OnInit, OnDestroy {
+  private _store = inject(Store);
   maxHoursPerDay$ = this._store.select(selectMaxHoursPerDay);
   maxHoursEnabled$ = this._store.select(selectMaxHoursEnabled);
   currentDate = new Date();
@@ -49,8 +78,6 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   private confirm = inject(ConfirmService);
   private dateChangeService = inject(DateChangeDetectionService);
   private ignoreWeekendsSignal = toSignal(inject(Store).select(selectIgnoreWeekends), { initialValue: true });
-
-  constructor(private _store: Store) {}
 
   ngOnInit(): void {
     this.initializeDate();
@@ -140,9 +167,17 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
     const currentTasks$ = this.todayTasks$.pipe(take(1));
     const totalHours$ = this.todayTotalHours$.pipe(take(1));
 
-    combineLatest([currentTasks$, totalHours$, this.maxHoursPerDay$.pipe(take(1))])
+    combineLatest([
+      currentTasks$,
+      totalHours$,
+      this.maxHoursPerDay$.pipe(take(1))
+    ])
       .pipe(take(1))
-      .subscribe(([tasks, total, maxHours]) => {
+      .subscribe(([
+        tasks,
+        total,
+        maxHours
+      ]) => {
         if (!tasks.length)
           return;
 
@@ -177,8 +212,16 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
         startWith(this.taskForm.get('hours')?.value || 0)
       ) || of(0);
 
-    return combineLatest([this.todayTotalHours$, hoursValueChanges, this.maxHoursPerDay$]).pipe(
-      map(([totalHours, currentTaskHours, maxHours]) => {
+    return combineLatest([
+      this.todayTotalHours$,
+      hoursValueChanges,
+      this.maxHoursPerDay$
+    ]).pipe(
+      map(([
+        totalHours,
+        currentTaskHours,
+        maxHours
+      ]) => {
         const remainingForDay = maxHours - totalHours;
         const editingTaskHours = this.editingTask ? this.editingTask.hours : 0;
 

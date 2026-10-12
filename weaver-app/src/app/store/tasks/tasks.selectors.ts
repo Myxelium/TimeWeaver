@@ -1,7 +1,8 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
+
+import { Task } from '../../shared/models';
 import { tasksFeatureKey } from './tasks.reducer';
 import { TasksState } from './tasks.state';
-import { Task } from '../../shared/models';
 
 export const selectTasksState = createFeatureSelector<TasksState>(tasksFeatureKey);
 export const selectCurrentDate = createSelector(selectTasksState, state => state.currentDate);
@@ -13,36 +14,47 @@ export const selectMonthlySummary = createSelector(selectTasksState, state => st
 export const selectIsLoading = createSelector(selectTasksState, state => state.isLoading);
 export const selectError = createSelector(selectTasksState, state => state.error);
 
-export const selectTaskStatistics = createSelector(
-  selectAllTasks,
-  (tasks: Task[]) => {
-    if (!tasks || tasks.length === 0) {
-      return {
-        totalTasks: 0,
-        totalHours: 0,
-        averageHoursPerTask: 0,
-        averageHoursPerDay: 0,
-        uniqueDays: 0,
-        dateRange: { start: null as string | null, end: null as string | null }
-      };
-    }
+export interface TaskStatistics {
+  totalTasks: number;
+  totalHours: number;
+  averageHoursPerTask: number;
+  averageHoursPerDay: number;
+  uniqueDays: number;
+  dateRange: { start: string | null; end: string | null };
+}
 
-    const totalHours = tasks.reduce((sum, task) => sum + (task.hours || 0), 0);
-    const uniqueDates = new Set(tasks.map(task => task.date));
-    const sortedDates = Array.from(uniqueDates).sort();
-
+export function calculateTaskStatistics(tasks: Task[] | null | undefined): TaskStatistics {
+  if (!tasks || tasks.length === 0) {
     return {
-      totalTasks: tasks.length,
-      totalHours: Math.round(totalHours * 100) / 100,
-      averageHoursPerTask: Math.round((totalHours / tasks.length) * 100) / 100,
-      averageHoursPerDay: Math.round((totalHours / uniqueDates.size) * 100) / 100,
-      uniqueDays: uniqueDates.size,
-      dateRange: {
-        start: sortedDates[0] || null,
-        end: sortedDates[sortedDates.length - 1] || null
-      }
+      totalTasks: 0,
+      totalHours: 0,
+      averageHoursPerTask: 0,
+      averageHoursPerDay: 0,
+      uniqueDays: 0,
+      dateRange: { start: null, end: null }
     };
   }
+
+  const totalHours = tasks.reduce((sum, task) => sum + (task.hours || 0), 0);
+  const uniqueDates = new Set(tasks.map(task => task.date));
+  const sortedDates = Array.from(uniqueDates).sort();
+
+  return {
+    totalTasks: tasks.length,
+    totalHours: Math.round(totalHours * 100) / 100,
+    averageHoursPerTask: Math.round((totalHours / tasks.length) * 100) / 100,
+    averageHoursPerDay: Math.round((totalHours / uniqueDates.size) * 100) / 100,
+    uniqueDays: uniqueDates.size,
+    dateRange: {
+      start: sortedDates[0] || null,
+      end: sortedDates[sortedDates.length - 1] || null
+    }
+  };
+}
+
+export const selectTaskStatistics = createSelector(
+  selectAllTasks,
+  calculateTaskStatistics
 );
 
 export const selectTasksByMonth = createSelector(

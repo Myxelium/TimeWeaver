@@ -1,13 +1,36 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog
+} from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { Task, TimeEntry, Setting } from './entities';
+import {
+  Task,
+  TimeEntry,
+  Setting
+} from './entities';
 import { buildCommandHandlers } from './cqrs/commands';
 import { buildQueryHandlers } from './cqrs/queries';
-import { Command, Query, CommandTypeKey, QueryTypeKey } from './cqrs/types';
+import {
+  Command,
+  Query,
+  CommandTypeKey,
+  QueryTypeKey
+} from './cqrs/types';
 import { settings } from './settings';
+import {
+  attachMainWindow,
+  markSidePopupsQuitting,
+  refreshSidePopups,
+  shouldKeepSidePopupsAlive
+} from './side-popups';
+
+// Notification sounds play when a popup appears, without a prior click.
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 // Disable sandbox on Linux to avoid SUID issues
 if (process.platform === 'linux') {
@@ -34,11 +57,12 @@ async function initializeDatabase() {
   applicationDataSource = new DataSource({
     type: 'sqljs',
     database: database,
-    entities: [Task, TimeEntry, Setting],
-    migrations: [
-      __dirname + '/migrations/*.js',
-      __dirname + '/migrations/*.ts'
+    entities: [
+      Task,
+      TimeEntry,
+      Setting
     ],
+    migrations: [__dirname + '/migrations/*.js', __dirname + '/migrations/*.ts'],
     synchronize: false, // Use migrations instead of auto sync
     logging: false,
     autoSave: true,
@@ -88,13 +112,7 @@ async function createWindow(): Promise<void> {
     enableDebuggingFeatures();
   }
 
-  if (process.env['NODE_ENV'] === 'development') {
-    mainWindow.loadURL('http://localhost:4200');
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, '../dist/weaver-app/index.html')
-    );
-  }
+  loadRenderer(mainWindow);
 
   mainWindow.once('ready-to-show', () => {
     if (mainWindow) {
@@ -117,6 +135,33 @@ async function createWindow(): Promise<void> {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  attachMainWindow(mainWindow);
+}
+
+function loadRenderer(win: BrowserWindow, query?: Record<string, string>): void {
+  if (process.env['NODE_ENV'] === 'development') {
+    const params = new URLSearchParams(query ?? {});
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+
+    void win.loadURL(`http://localhost:4200/${suffix}`);
+    return;
+  }
+
+  void win.loadFile(path.join(__dirname, '../dist/weaver-app/index.html'), query ? { query } : undefined);
+}
+
+function showMainWindow(): void {
+  if (!mainWindow) {
+    void createWindow();
+    return;
+  }
+
+  if (mainWindow.isMinimized())
+    mainWindow.restore();
+
+  mainWindow.show();
+  mainWindow.focus();
 }
 
 // IPC handlers for database operations
@@ -136,7 +181,12 @@ function setupIpcHandlers() {
     if (!handler)
       throw new Error(`No command handler for ${command.type}`);
 
-    return handler(command);
+    const result = await handler(command);
+
+    if (command.type === 'save-settings')
+      await refreshSidePopups(sidePopupHosts());
+
+    return result;
   });
 
   ipcMain.handle('cqrs:query', async (_evt, query: Query) => {
@@ -174,21 +224,27 @@ function setupIpcHandlers() {
 app.whenReady().then(async () => {
   await initializeDatabase();
   setupIpcHandlers();
-  createWindow();
+  await createWindow();
+  await refreshSidePopups(sidePopupHosts());
 
   app.on('activate', function() {
     if (BrowserWindow.getAllWindows().length === 0)
-      createWindow();
+      void createWindow();
   });
 });
 
 app.on('window-all-closed', () => {
+  if (shouldKeepSidePopupsAlive())
+    return;
+
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
 app.on('before-quit', async (event) => {
+  markSidePopupsQuitting();
+
   if (applicationDataSource && applicationDataSource.isInitialized) {
     event.preventDefault();
 
@@ -203,6 +259,14 @@ app.on('before-quit', async (event) => {
     }
   }
 });
+
+function sidePopupHosts() {
+  return {
+    getDataSource: () => applicationDataSource,
+    showMainWindow,
+    loadRenderer
+  };
+}
 
 function enableDebuggingFeatures() {
   app.commandLine.appendSwitch('remote-debugging-port', '9222');

@@ -1,12 +1,27 @@
-import { Injectable } from '@angular/core';
-import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { Injectable, inject } from '@angular/core';
+import {
+  Actions,
+  createEffect,
+  ofType
+} from '@ngrx/effects';
 import { DatabaseService } from '../../shared/services/database.service';
 import { SettingsActions, loadSettings } from './settings.actions';
-import { EMPTY, catchError, map, mergeMap, of, tap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  map,
+  mergeMap,
+  of,
+  tap
+} from 'rxjs';
 import { HolidayService } from '../../shared/services';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsEffects {
+  private actions$ = inject(Actions);
+  private db = inject(DatabaseService);
+  private holidayService = inject(HolidayService);
+
   load$ = createEffect(() => this.actions$.pipe(
     ofType(loadSettings),
     mergeMap(() => this.db.getSettings().pipe(
@@ -61,5 +76,4 @@ export class SettingsEffects {
       return EMPTY;
     })
   ));
-  constructor(private actions$: Actions, private db: DatabaseService, private holidayService: HolidayService) {}
 }
