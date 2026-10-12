@@ -21,6 +21,16 @@ export interface ParsedWorkItem {
   pullRequests: PullRequestRef[];
 }
 
+export interface AdoStateChange {
+  revisedDate: string;
+  active: boolean;
+}
+
+export interface ActiveWindow {
+  activeOn: string | null;
+  inactiveOn: string | null;
+}
+
 export function loggingTitle(adoId: number, title: string): string {
   return `#${adoId} ${title.trim()}`;
 }
@@ -119,16 +129,16 @@ export function readWorkItems(body: unknown): ParsedWorkItem[] {
   return parsed;
 }
 
-export function readActiveOn(body: unknown, user: AdoUser): { activeOn: string | null; user: AdoUser } {
+export function readActiveOn(body: unknown, user: AdoUser): ActiveWindow & { changes: AdoStateChange[]; user: AdoUser } {
   const updates = Array.isArray(body) ? body : asRecord(body).value;
+  const changes: AdoStateChange[] = [];
 
-  let latestIso = '';
   let displayName = user.displayName;
 
   const accounts = [...user.accounts];
 
   if (!Array.isArray(updates))
-    return { activeOn: null, user: { ...user, accounts } };
+    return { activeOn: null, inactiveOn: null, changes, user: { ...user, accounts } };
 
   for (const update of updates) {
     const entry = asRecord(update);
@@ -145,20 +155,43 @@ export function readActiveOn(body: unknown, user: AdoUser): { activeOn: string |
     if (!displayName)
       displayName = readText(revisedBy.displayName);
 
-    const state = asRecord(asRecord(entry.fields)['System.State']);
+    const change = readStateChange(entry);
 
-    if (readText(state.newValue).toLowerCase() !== ACTIVE_STATE)
-      continue;
-
-    const revisedDate = readText(entry.revisedDate);
-
-    if (revisedDate > latestIso)
-      latestIso = revisedDate;
+    if (change)
+      changes.push(change);
   }
 
   return {
-    activeOn: latestIso ? localDay(latestIso) : null,
+    ...activeWindow(changes),
+    changes,
     user: { id: user.id, displayName, accounts }
+  };
+}
+
+export function activeWindow(changes: AdoStateChange[]): ActiveWindow {
+  let activeIso = '';
+
+  for (const change of changes) {
+    if (change.active && change.revisedDate > activeIso)
+      activeIso = change.revisedDate;
+  }
+
+  if (!activeIso)
+    return { activeOn: null, inactiveOn: null };
+
+  let inactiveIso = '';
+
+  for (const change of changes) {
+    const leftActive = !change.active && change.revisedDate > activeIso;
+    const earlier = !inactiveIso || change.revisedDate < inactiveIso;
+
+    if (leftActive && earlier)
+      inactiveIso = change.revisedDate;
+  }
+
+  return {
+    activeOn: localDay(activeIso),
+    inactiveOn: inactiveIso ? localDay(inactiveIso) : null
   };
 }
 
@@ -191,15 +224,21 @@ export function readPullRequestCommits(body: unknown, user: AdoUser): string | n
 export function suggestionRange(
   activeOn: string | null,
   lastCommitOn: string | null,
-  syncDate: string
+  syncDate: string,
+  inactiveOn: string | null = null
 ): { activeOn: string | null; rangeEnd: string | null } {
   if (!activeOn)
     return { activeOn: null, rangeEnd: null };
 
-  if (!lastCommitOn || lastCommitOn < activeOn)
-    return { activeOn, rangeEnd: syncDate };
+  let rangeEnd = syncDate;
 
-  return { activeOn, rangeEnd: lastCommitOn };
+  if (lastCommitOn && lastCommitOn >= activeOn)
+    rangeEnd = lastCommitOn;
+
+  if (inactiveOn && inactiveOn >= activeOn && inactiveOn < rangeEnd)
+    rangeEnd = inactiveOn;
+
+  return { activeOn, rangeEnd };
 }
 
 export function laterDay(current: string | null, next: string | null): string | null {
@@ -210,6 +249,20 @@ export function laterDay(current: string | null, next: string | null): string | 
     return next;
 
   return current;
+}
+
+function readStateChange(entry: Record<string, unknown>): AdoStateChange | null {
+  const state = asRecord(asRecord(entry.fields)['System.State']);
+  const newState = readText(state.newValue);
+  const revisedDate = readText(entry.revisedDate);
+
+  if (!newState || !revisedDate)
+    return null;
+
+  return {
+    revisedDate,
+    active: newState.toLowerCase() === ACTIVE_STATE
+  };
 }
 
 function readWorkItem(item: unknown): ParsedWorkItem | null {

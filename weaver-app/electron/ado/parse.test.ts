@@ -120,6 +120,27 @@ function testActiveDateUsesOnlyThisUsersChange(): void {
   }, user);
 
   assert.equal(read.activeOn, localDay('2026-10-08T08:00:00.000Z'));
+  assert.equal(read.inactiveOn, null);
+}
+
+function testClosedStateEndsTheActiveWindow(): void {
+  const read = readActiveOn({
+    value: [
+      {
+        revisedBy: { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' },
+        revisedDate: '2026-07-15T08:00:00.000Z',
+        fields: { 'System.State': { newValue: 'Active' } }
+      },
+      {
+        revisedBy: { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' },
+        revisedDate: '2026-07-16T08:00:00.000Z',
+        fields: { 'System.State': { newValue: 'Closed' } }
+      }
+    ]
+  }, user);
+
+  assert.equal(read.activeOn, localDay('2026-07-15T08:00:00.000Z'));
+  assert.equal(read.inactiveOn, localDay('2026-07-16T08:00:00.000Z'));
 }
 
 function testCommitDateUsesOnlyThisUser(): void {
@@ -138,6 +159,9 @@ function testSuggestionRange(): void {
   assert.deepEqual(suggestionRange('2026-10-02', null, '2026-10-12'), { activeOn: '2026-10-02', rangeEnd: '2026-10-12' });
   assert.deepEqual(suggestionRange('2026-10-02', '2026-10-10', '2026-10-12'), { activeOn: '2026-10-02', rangeEnd: '2026-10-10' });
   assert.deepEqual(suggestionRange('2026-10-08', '2026-10-04', '2026-10-12'), { activeOn: '2026-10-08', rangeEnd: '2026-10-12' });
+  assert.deepEqual(suggestionRange('2026-07-15', null, '2026-10-12', '2026-07-16'), { activeOn: '2026-07-15', rangeEnd: '2026-07-16' });
+  assert.deepEqual(suggestionRange('2026-10-02', '2026-10-10', '2026-10-12', '2026-10-08'), { activeOn: '2026-10-02', rangeEnd: '2026-10-08' });
+  assert.deepEqual(suggestionRange('2026-10-02', '2026-10-06', '2026-10-12', '2026-10-10'), { activeOn: '2026-10-02', rangeEnd: '2026-10-06' });
   assert.equal(laterDay('2026-10-04', '2026-10-10'), '2026-10-10');
   assert.equal(laterDay('2026-10-10', null), '2026-10-10');
 }
@@ -147,6 +171,7 @@ testConnectionUserDropsExtraFields();
 testQueryKeepsIdsOnly();
 testWorkItemKeepsTitleIdAndPullRequests();
 testActiveDateUsesOnlyThisUsersChange();
+testClosedStateEndsTheActiveWindow();
 testCommitDateUsesOnlyThisUser();
 testSuggestionRange();
 

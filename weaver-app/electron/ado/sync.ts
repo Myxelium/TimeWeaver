@@ -172,7 +172,7 @@ async function collectWorkItems(
       continue;
 
     const lastCommitOn = await client.lastCommitOn(item.pullRequests, user);
-    const range = suggestionRange(active.activeOn, lastCommitOn, syncDate);
+    const range = suggestionRange(active.activeOn, lastCommitOn, syncDate, active.inactiveOn);
 
     rows.push({
       adoId: item.adoId,

@@ -1,4 +1,7 @@
 import {
+  ActiveWindow,
+  activeWindow,
+  AdoStateChange,
   AdoUser,
   laterDay,
   ParsedWorkItem,
@@ -84,10 +87,11 @@ export class AdoClient {
     return items;
   }
 
-  async activeOn(workItemId: number, user: AdoUser): Promise<{ activeOn: string | null; user: AdoUser }> {
+  async activeOn(workItemId: number, user: AdoUser): Promise<ActiveWindow & { user: AdoUser }> {
     let skip = 0;
     let currentUser = user;
-    let activeOn: string | null = null;
+
+    const changes: AdoStateChange[] = [];
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const body = await this.sendAdoRequest(
@@ -98,7 +102,7 @@ export class AdoClient {
       const count = updateCount(body);
 
       currentUser = read.user;
-      activeOn = laterDay(activeOn, read.activeOn);
+      changes.push(...read.changes);
 
       if (count < PAGE_SIZE)
         break;
@@ -106,7 +110,7 @@ export class AdoClient {
       skip += PAGE_SIZE;
     }
 
-    return { activeOn, user: currentUser };
+    return { ...activeWindow(changes), user: currentUser };
   }
 
   async lastCommitOn(pullRequests: PullRequestRef[], user: AdoUser): Promise<string | null> {
