@@ -16,6 +16,11 @@ import { loadAllTasks, TasksActions } from '../../../../store/tasks/tasks.action
 import { selectAllTasks, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
 import { TaskDetailsModalComponent } from '../task-details-modal/task-details-modal.component';
 
+const titleHashMultiplier = 31;
+const hueCircleDegrees = 360;
+const minimumColorSaturation = 55;
+const minimumColorLightness = 45;
+
 interface TaskChartDataPoint {
   taskTitle: string;
   totalHours: number;
@@ -89,12 +94,12 @@ export class TaskHoursSummaryComponent implements OnDestroy {
     let hash = 0;
 
     for (let idx = 0; idx < title.length; idx++) {
-      hash = (hash * 31 + title.charCodeAt(idx)) >>> 0;
+      hash = (hash * titleHashMultiplier + title.charCodeAt(idx)) >>> 0;
     }
 
-    const hue = hash % 360;
-    const saturation = 55 + (hash % 10);
-    const lightness = 45 + (hash % 10);
+    const hue = hash % hueCircleDegrees;
+    const saturation = minimumColorSaturation + (hash % 10);
+    const lightness = minimumColorLightness + (hash % 10);
 
     return `hsl(${hue} ${saturation}% ${lightness}%)`;
   }

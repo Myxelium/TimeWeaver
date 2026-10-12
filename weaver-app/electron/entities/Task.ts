@@ -1,8 +1,8 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
 
@@ -22,6 +22,9 @@ export class Task {
 
   @Column('real', { default: 0 })
   hours!: number;
+
+  @Column({ type: 'int', nullable: true })
+  adoWorkItemId!: number | null;
 
   @CreateDateColumn()
   created_at!: Date;

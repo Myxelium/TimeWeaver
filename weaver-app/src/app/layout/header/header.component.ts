@@ -1,34 +1,37 @@
-import { Component, inject } from '@angular/core';
 import { AsyncPipe, DecimalPipe } from '@angular/common';
-import {
-  LucideAngularModule,
-  Eye,
-  EyeOff
-} from 'lucide-angular';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-import { format } from 'date-fns';
+import { Component, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
-import {
-  selectMonthlySummary,
-  selectSelectedMonth,
-  selectIsLoading,
-  selectMonthlyData
-} from '../../store/tasks/tasks.selectors';
-import {
-  selectIgnoreWeekends,
-  selectMonthlyIncome,
-  selectMonthlyCost,
-  selectMaxHoursPerDay,
-  selectOvertimeRate
-} from '../../store/settings/settings.selectors';
+import { format } from 'date-fns';
 import {
   eachDayOfInterval,
   endOfMonth,
   startOfMonth
 } from 'date-fns';
+import {
+  Eye,
+  EyeOff,
+  LucideAngularModule
+} from 'lucide-angular';
+import { Observable } from 'rxjs';
 import { combineLatest } from 'rxjs';
+import { map, take } from 'rxjs/operators';
+
+import {
+  selectIgnoreWeekends,
+  selectMaxHoursPerDay,
+  selectMonthlyCost,
+  selectMonthlyIncome,
+  selectOvertimeRate
+} from '../../store/settings/settings.selectors';
 import { TasksActions } from '../../store/tasks/tasks.actions';
+import {
+  selectIsLoading,
+  selectMonthlyData,
+  selectMonthlySummary,
+  selectSelectedMonth
+} from '../../store/tasks/tasks.selectors';
+
+const saturdayIndex = 6;
 
 @Component({
   selector: 'app-header',
@@ -44,8 +47,10 @@ import { TasksActions } from '../../store/tasks/tasks.actions';
 export class HeaderComponent {
   eye = Eye;
   eyeOff = EyeOff;
+
   showEarnedFinance = false;
   showCostFinance = false;
+
   monthlySummary$ = inject(Store).select(selectMonthlySummary);
   selectedMonth$ = inject(Store).select(selectSelectedMonth);
   isLoading$ = inject(Store).select(selectIsLoading);
@@ -62,7 +67,7 @@ export class HeaderComponent {
       const start = startOfMonth(now);
       const end = endOfMonth(now);
       const days = eachDayOfInterval({ start, end });
-      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== 6).length;
+      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== saturdayIndex).length;
       const expectedHours = weekdays * maxHoursPerDay;
 
       if (expectedHours === 0)
@@ -81,7 +86,7 @@ export class HeaderComponent {
       const start = startOfMonth(now);
       const end = endOfMonth(now);
       const days = eachDayOfInterval({ start, end });
-      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== 6).length;
+      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== saturdayIndex).length;
       const expectedHours = weekdays * maxHoursPerDay;
 
       if (expectedHours === 0 || hours <= expectedHours)
@@ -99,7 +104,7 @@ export class HeaderComponent {
       const start = startOfMonth(now);
       const end = endOfMonth(now);
       const days = eachDayOfInterval({ start, end });
-      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== 6).length;
+      const weekdays = days.filter(day => day.getDay() !== 0 && day.getDay() !== saturdayIndex).length;
       const expectedHours = weekdays * maxHoursPerDay;
 
       return hours > expectedHours;
@@ -120,6 +125,7 @@ export class HeaderComponent {
       return format(new Date(date.year, date.month - 1, 1), 'MMMM yyyy');
     })
   );
+
   private store = inject(Store);
 
   toggleCostFinanceVisibility(): void {
@@ -162,7 +168,7 @@ export class HeaderComponent {
         const start = startOfMonth(now);
         const end = endOfMonth(now);
         const days = eachDayOfInterval({ start, end });
-        const weekdays = days.filter(dayItem => dayItem.getDay() !== 0 && dayItem.getDay() !== 6).length;
+        const weekdays = days.filter(dayItem => dayItem.getDay() !== 0 && dayItem.getDay() !== saturdayIndex).length;
         const expectedHours = weekdays * maxHoursPerDay;
 
         if (expectedHours === 0)

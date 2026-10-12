@@ -1,11 +1,12 @@
+import {
+  endOfMonth,
+  format,
+  startOfMonth
+} from 'date-fns';
 import { DataSource } from 'typeorm';
+
 import { Task } from '../../../entities/Task';
 import { GetMonthlySummaryQuery } from '../../types';
-import {
-  format,
-  startOfMonth,
-  endOfMonth
-} from 'date-fns';
 
 interface MonthlySummaryRawRow {
   total_hours: string | null;

@@ -1,4 +1,8 @@
-import { Task, DaySummary } from '../../shared/models';
+import {
+  AdoSuggestion,
+  DaySummary,
+  Task
+} from '../../shared/models';
 
 export interface TasksState {
   currentDate: string;
@@ -6,6 +10,7 @@ export interface TasksState {
   todayTasks: Task[];
   monthlyData: DaySummary[];
   allTasks: Task[];
+  adoSuggestions: AdoSuggestion[];
   monthlySummary: number;
   isLoading: boolean;
   error: string | null;
@@ -18,6 +23,7 @@ export const initialTasksState: TasksState = {
   todayTasks: [],
   monthlyData: [],
   allTasks: [],
+  adoSuggestions: [],
   monthlySummary: 0,
   isLoading: false,
   error: null

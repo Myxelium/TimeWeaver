@@ -5,6 +5,7 @@ import { Command, Query } from './cqrs/types';
 export interface CqrsAPI {
   command: <T = unknown>(command: Command) => Promise<T>;
   query: <T = unknown>(query: Query) => Promise<T>;
+  onAdoSynced: (listener: () => void) => () => void;
 }
 
 export interface PopupEntryPayload {
@@ -36,7 +37,16 @@ export interface PopupAPI {
 
 const cqrsAPI: CqrsAPI = {
   command: <T = unknown>(command: Command): Promise<T> => ipcRenderer.invoke('cqrs:command', command) as Promise<T>,
-  query: <T = unknown>(query: Query): Promise<T> => ipcRenderer.invoke('cqrs:query', query) as Promise<T>
+  query: <T = unknown>(query: Query): Promise<T> => ipcRenderer.invoke('cqrs:query', query) as Promise<T>,
+  onAdoSynced: (listener: () => void): (() => void) => {
+    const wrapped = (): void => listener();
+
+    ipcRenderer.on('ado:synced', wrapped);
+
+    return (): void => {
+      ipcRenderer.removeListener('ado:synced', wrapped);
+    };
+  }
 };
 const popupAPI: PopupAPI = {
   getContext: (ruleId): Promise<PopupContextPayload> => ipcRenderer.invoke('popup:get-context', ruleId),

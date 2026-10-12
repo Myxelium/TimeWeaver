@@ -1,26 +1,31 @@
 import {
   app,
   BrowserWindow,
-  ipcMain,
-  dialog
+  dialog,
+  ipcMain
 } from 'electron';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+
 import 'reflect-metadata';
+
 import { DataSource } from 'typeorm';
-import {
-  Task,
-  TimeEntry,
-  Setting
-} from './entities';
+
+import { syncAzureDevOps } from './ado/sync';
 import { buildCommandHandlers } from './cqrs/commands';
 import { buildQueryHandlers } from './cqrs/queries';
 import {
   Command,
-  Query,
   CommandTypeKey,
+  Query,
   QueryTypeKey
 } from './cqrs/types';
+import {
+  AdoWorkItem,
+  Setting,
+  Task,
+  TimeEntry
+} from './entities';
 import { settings } from './settings';
 import {
   attachMainWindow,
@@ -42,7 +47,7 @@ let mainWindow: BrowserWindow | null;
 let applicationDataSource: DataSource | undefined;
 
 // Database initialization
-async function initializeDatabase() {
+async function initializeDatabase(): Promise<void> {
   // Use userData directory for the database in production
   const userDataPath = app.getPath('userData');
   const databaseFilePath = path.join(userDataPath, settings.databaseName);
@@ -60,7 +65,8 @@ async function initializeDatabase() {
     entities: [
       Task,
       TimeEntry,
-      Setting
+      Setting,
+      AdoWorkItem
     ],
     migrations: [__dirname + '/migrations/*.js', __dirname + '/migrations/*.ts'],
     synchronize: false, // Use migrations instead of auto sync
@@ -113,6 +119,9 @@ async function createWindow(): Promise<void> {
   }
 
   loadRenderer(mainWindow);
+  mainWindow.webContents.once('did-finish-load', () => {
+    void runScheduledAdoSync();
+  });
 
   mainWindow.once('ready-to-show', () => {
     if (mainWindow) {
@@ -165,7 +174,7 @@ function showMainWindow(): void {
 }
 
 // IPC handlers for database operations
-function setupIpcHandlers() {
+function setupIpcHandlers(): void {
   if (!applicationDataSource) {
     throw new Error('DataSource not initialized');
   }
@@ -186,6 +195,9 @@ function setupIpcHandlers() {
     if (command.type === 'save-settings')
       await refreshSidePopups(sidePopupHosts());
 
+    if (command.type === 'sync-ado' && result && typeof result === 'object' && 'ran' in result && result.ran)
+      notifyAdoSynced();
+
     return result;
   });
 
@@ -196,7 +208,7 @@ function setupIpcHandlers() {
       throw new Error(`No query handler for ${query.type}`);
 
     if (query.type === 'export-csv' || query.type === 'export-csv-all') {
-      const saveCsv = async (defaultName: string, content: string) => {
+      const saveCsv = async (defaultName: string, content: string): Promise<boolean> => {
         if (!mainWindow)
           return false;
 
@@ -226,6 +238,9 @@ app.whenReady().then(async () => {
   setupIpcHandlers();
   await createWindow();
   await refreshSidePopups(sidePopupHosts());
+  setInterval(() => {
+    void runScheduledAdoSync();
+  }, ADO_SYNC_CHECK_MS);
 
   app.on('activate', function() {
     if (BrowserWindow.getAllWindows().length === 0)
@@ -260,15 +275,38 @@ app.on('before-quit', async (event) => {
   }
 });
 
-function sidePopupHosts() {
+function sidePopupHosts(): {
+  getDataSource: () => DataSource | undefined;
+  showMainWindow: () => void;
+  loadRenderer: (win: BrowserWindow, query?: Record<string, string>) => void;
+} {
   return {
-    getDataSource: () => applicationDataSource,
+    getDataSource: (): DataSource | undefined => applicationDataSource,
     showMainWindow,
     loadRenderer
   };
 }
 
-function enableDebuggingFeatures() {
+const ADO_SYNC_CHECK_MS = 60_000;
+
+async function runScheduledAdoSync(): Promise<void> {
+  if (!applicationDataSource?.isInitialized)
+    return;
+
+  const result = await syncAzureDevOps(applicationDataSource, false);
+
+  if (result.ran)
+    notifyAdoSynced();
+}
+
+function notifyAdoSynced(): void {
+  if (!mainWindow || mainWindow.isDestroyed())
+    return;
+
+  mainWindow.webContents.send('ado:synced');
+}
+
+function enableDebuggingFeatures(): void {
   app.commandLine.appendSwitch('remote-debugging-port', '9222');
   // Mitigate some GPU / vsync issues on headless / VM setups
   app.commandLine.appendSwitch('disable-gpu');

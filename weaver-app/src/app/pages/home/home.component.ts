@@ -1,17 +1,18 @@
+import { CommonModule } from '@angular/common';
 import {
   Component,
-  OnInit,
+  inject,
   OnDestroy,
-  inject
+  OnInit
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { PreviousDaysComponent } from './components/previous-days/previous-days.component';
-import { TodaysWorkComponent } from './components/todays-work/todays-work.component';
 import { Store } from '@ngrx/store';
-import { TasksActions } from '../../store';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+
 import { DateChangeDetectionService, HolidayService } from '../../shared/services';
+import { TasksActions } from '../../store';
+import { PreviousDaysComponent } from './components/previous-days/previous-days.component';
+import { TodaysWorkComponent } from './components/todays-work/todays-work.component';
 
 @Component({
   selector: 'app-home',
@@ -26,8 +27,11 @@ import { DateChangeDetectionService, HolidayService } from '../../shared/service
 })
 export class HomeComponent implements OnInit, OnDestroy {
   currentDate = new Date();
+
   holidayName: string | null = null;
+
   private destroy$ = new Subject<void>();
+
   private _store = inject(Store);
   private dateChangeService = inject(DateChangeDetectionService);
   private holidayService = inject(HolidayService);
@@ -36,11 +40,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.currentDate = this.dateChangeService.currentDate;
     this.loadCurrentDateData();
     this.subscribeToDayChanges();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private loadCurrentDateData(): void {
@@ -71,5 +70,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.currentDate = this.dateChangeService.currentDate;
         this.loadCurrentDateData();
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

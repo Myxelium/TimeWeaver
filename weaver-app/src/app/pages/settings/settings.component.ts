@@ -11,11 +11,17 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import {
+  ArrowDownUp,
+  Bell,
+  CalendarDays,
+  Cloud,
   Eye,
   EyeOff,
-  LucideAngularModule
+  LucideAngularModule,
+  SlidersHorizontal
 } from 'lucide-angular';
 import {
   debounceTime,
@@ -30,7 +36,7 @@ import {
   PopupRuleType,
   Settings
 } from '../../shared/models';
-import { HolidayService } from '../../shared/services';
+import { DatabaseService, HolidayService } from '../../shared/services';
 import { loadSettings, SettingsActions } from '../../store/settings/settings.actions';
 import { selectLastImportResult, selectSettings } from '../../store/settings/settings.selectors';
 import { TasksActions } from '../../store/tasks/tasks.actions';
@@ -48,10 +54,16 @@ interface SettingsFormValue {
   firstDayOfWeek: number | null;
   overtimeRate: number | null;
   launchAtLogin: boolean | null;
+  adoSyncEnabled: boolean | null;
   popupRules: PopupRule[] | null;
   overwrite?: boolean | null;
 }
 
+const defaultMaxHoursPerDay = 8;
+const minimumHoursPerDay = 0.1;
+const hoursInADay = 24;
+const saturdayIndex = 6;
+const settingsSaveDelayMs = 200;
 const DEFAULT_REMINDER_SECONDS = 30;
 const MAX_REMINDER_SECONDS = 86400;
 const MAX_POPUP_MESSAGE_LENGTH = 500;
@@ -68,13 +80,16 @@ const DEFAULT_WEEKDAYS = [
   FRIDAY
 ];
 
+type SettingsSection = 'general' | 'holidays' | 'popups' | 'azure' | 'data';
+
 @Component({
   selector: 'app-settings',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    LucideAngularModule
+    LucideAngularModule,
+    RouterLink
   ],
   templateUrl: './settings.component.html'
 })
@@ -82,9 +97,51 @@ export class SettingsComponent implements OnInit {
   private formBuilder = inject(FormBuilder);
   private store = inject(Store);
   private holidayService = inject(HolidayService);
+  private database = inject(DatabaseService);
+  private route = inject(ActivatedRoute);
 
   eye = Eye;
   eyeOff = EyeOff;
+
+  sections: {
+    id: SettingsSection;
+    label: string;
+    description: string;
+    icon: typeof SlidersHorizontal;
+  }[] = [
+    {
+      id: 'general',
+      label: 'General',
+      description: 'Income, overtime, and how days are counted.',
+      icon: SlidersHorizontal
+    },
+    {
+      id: 'holidays',
+      label: 'Holidays',
+      description: 'Country and which holiday types appear on the calendar.',
+      icon: CalendarDays
+    },
+    {
+      id: 'popups',
+      label: 'Side popups',
+      description: 'Reminders and time-log prompts above the taskbar.',
+      icon: Bell
+    },
+    {
+      id: 'azure',
+      label: 'Azure DevOps',
+      description: 'Work items assigned to you, kept on this computer.',
+      icon: Cloud
+    },
+    {
+      id: 'data',
+      label: 'Import & export',
+      description: 'Bring in a task CSV or download every task.',
+      icon: ArrowDownUp
+    }
+  ];
+
+  activeSection: SettingsSection = 'general';
 
   settings$ = this.store.select(selectSettings);
   lastImportResult$ = this.store.select(selectLastImportResult);
@@ -113,13 +170,14 @@ export class SettingsComponent implements OnInit {
     monthlyCost: [0, [Validators.min(0)]],
     darkMode: [false],
     ignoreWeekends: [true],
-    maxHoursPerDay: [8, [Validators.min(0.1), Validators.max(24)]],
+    maxHoursPerDay: [defaultMaxHoursPerDay, [Validators.min(minimumHoursPerDay), Validators.max(hoursInADay)]],
     maxHoursEnabled: [true],
     holidayCountry: [''],
     holidayTypes: [DEFAULT_HOLIDAY_TYPES as HolidayType[]],
-    firstDayOfWeek: [1, [Validators.min(0), Validators.max(6)]],
+    firstDayOfWeek: [1, [Validators.min(0), Validators.max(saturdayIndex)]],
     overtimeRate: [0, [Validators.min(0)]],
     launchAtLogin: [false],
+    adoSyncEnabled: [false],
     popupRules: this.formBuilder.array<FormGroup>([]),
     overwrite: [false]
   });
@@ -131,8 +189,25 @@ export class SettingsComponent implements OnInit {
   showIncome = false;
   showCost = false;
   showOvertime = false;
+  adoOrganization = '';
+  adoToken = '';
+  showAdoToken = false;
+  adoPatConfigured = false;
+  adoAuthMethod: 'pat' | 'azure-cli' = 'pat';
+  adoLastSyncOn = '';
+  adoLastSyncError = '';
+  adoSyncing = false;
+  adoFormError = '';
+  private adoOrgDirty = false;
+  private adoAuthDirty = false;
+  private savedAdoAuthMethod: 'pat' | 'azure-cli' = 'pat';
+  private savedAdoOrganization = '';
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      this.activeSection = this.sectionFromParam(params.get('section'));
+    });
+
     this.store.dispatch(loadSettings());
     this.settings$.subscribe(settings => {
       if (settings)
@@ -145,7 +220,7 @@ export class SettingsComponent implements OnInit {
 
     this.form.valueChanges
       .pipe(
-        debounceTime(200),
+        debounceTime(settingsSaveDelayMs),
         map(() => this.extractSettings()),
         distinctUntilChanged((previous, current) => JSON.stringify(previous) === JSON.stringify(current))
       )
@@ -165,6 +240,10 @@ export class SettingsComponent implements OnInit {
 
   get popupRules(): FormArray<FormGroup> {
     return this.form.controls.popupRules;
+  }
+
+  get activeSectionItem(): (typeof this.sections)[number] {
+    return this.sections.find(section => section.id === this.activeSection) ?? this.sections[0];
   }
 
   onFileSelected(event: Event): void {
@@ -206,6 +285,89 @@ export class SettingsComponent implements OnInit {
   toggleCostVisibility(): void { this.showCost = !this.showCost; }
 
   toggleOvertimeVisibility(): void { this.showOvertime = !this.showOvertime; }
+
+  toggleAdoTokenVisibility(): void { this.showAdoToken = !this.showAdoToken; }
+
+  onAdoOrganizationInput(event: Event): void {
+    this.adoOrganization = (event.target as HTMLInputElement).value;
+    this.adoOrgDirty = true;
+    this.adoFormError = '';
+  }
+
+  onAdoTokenInput(event: Event): void {
+    this.adoToken = (event.target as HTMLInputElement).value;
+  }
+
+  onAdoAuthMethodChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+
+    this.adoAuthMethod = value === 'azure-cli' ? 'azure-cli' : 'pat';
+    this.adoAuthDirty = true;
+    this.adoFormError = '';
+  }
+
+  get adoSyncReady(): boolean {
+    if (!this.form.get('adoSyncEnabled')?.value)
+      return false;
+
+    if (this.savedAdoAuthMethod === 'azure-cli')
+      return this.savedAdoOrganization.trim().length > 0;
+
+    return this.adoPatConfigured;
+  }
+
+  saveAdoConnection(): void {
+    const organization = this.readOrganization(this.adoOrganization);
+
+    if (organization === null) {
+      this.adoFormError = 'Enter an Azure DevOps organization name.';
+      return;
+    }
+
+    const settings: Settings = {
+      ...this.extractSettings(),
+      adoOrganization: organization,
+      adoAuthMethod: this.adoAuthMethod
+    };
+    const token = this.adoToken.trim();
+
+    if (token)
+      settings.adoPat = token;
+
+    this.adoFormError = '';
+    this.adoOrgDirty = false;
+    this.adoAuthDirty = false;
+    this.adoToken = '';
+    this.store.dispatch(SettingsActions.save({ settings }));
+  }
+
+  clearAdoToken(): void {
+    this.adoToken = '';
+    this.store.dispatch(SettingsActions.save({
+      settings: { ...this.extractSettings(), clearAdoPat: true }
+    }));
+  }
+
+  syncAdo(): void {
+    if (!this.adoSyncReady)
+      return;
+
+    this.adoSyncing = true;
+    this.adoFormError = '';
+    this.database.syncAdo().subscribe({
+      next: result => {
+        this.adoSyncing = false;
+        this.adoFormError = result.error ?? '';
+        this.store.dispatch(loadSettings());
+        this.store.dispatch(TasksActions.loadAdoSuggestions());
+      },
+      error: () => {
+        this.adoSyncing = false;
+        this.adoFormError = 'Azure DevOps could not be read.';
+        this.store.dispatch(loadSettings());
+      }
+    });
+  }
 
   exportAllCsv(): void {
     this.store.dispatch(TasksActions.exportCsvAll());
@@ -269,8 +431,40 @@ export class SettingsComponent implements OnInit {
     this.form.patchValue({ holidayTypes: updated });
   }
 
+  private sectionFromParam(value: string | null): SettingsSection {
+    if (this.sections.some(section => section.id === value))
+      return value as SettingsSection;
+
+    return 'general';
+  }
+
   private syncFromSettings(settings: Settings): void {
-    const { popupRules, ...rest } = settings;
+    const {
+      popupRules,
+      adoOrganization,
+      adoPatConfigured,
+      adoLastSyncOn,
+      adoLastSyncError,
+      adoAuthMethod,
+      adoPat,
+      clearAdoPat,
+      ...rest
+    } = settings;
+
+    void adoPat;
+    void clearAdoPat;
+
+    this.adoPatConfigured = !!adoPatConfigured;
+    this.adoLastSyncOn = adoLastSyncOn ?? '';
+    this.adoLastSyncError = adoLastSyncError ?? '';
+    this.savedAdoAuthMethod = adoAuthMethod === 'azure-cli' ? 'azure-cli' : 'pat';
+    this.savedAdoOrganization = adoOrganization ?? '';
+
+    if (!this.adoOrgDirty)
+      this.adoOrganization = adoOrganization ?? '';
+
+    if (!this.adoAuthDirty)
+      this.adoAuthMethod = this.savedAdoAuthMethod;
 
     this.form.patchValue(rest, { emitEvent: false });
     this.syncPopupRules(popupRules ?? []);
@@ -391,6 +585,7 @@ export class SettingsComponent implements OnInit {
       firstDayOfWeek,
       overtimeRate,
       launchAtLogin,
+      adoSyncEnabled,
       popupRules
     } = formValue;
     const canEnablePopups = !!launchAtLogin;
@@ -407,6 +602,7 @@ export class SettingsComponent implements OnInit {
       firstDayOfWeek: (firstDayOfWeek ?? undefined) as number | undefined,
       overtimeRate: overtimeRate as number,
       launchAtLogin: canEnablePopups,
+      adoSyncEnabled: !!adoSyncEnabled,
       popupRules: (popupRules ?? []).map(rule => ({
         id: rule.id,
         enabled: canEnablePopups && !!rule.enabled,
@@ -421,5 +617,20 @@ export class SettingsComponent implements OnInit {
         lastTriggeredAt: rule.lastTriggeredAt ?? null
       }))
     };
+  }
+
+  private readOrganization(input: string): string | null {
+    const trimmed = input.trim().replace(/\/+$/, '');
+
+    if (!trimmed)
+      return '';
+
+    const fromUrl = /^https:\/\/dev\.azure\.com\/([A-Za-z0-9][A-Za-z0-9-]{0,62})$/i.exec(trimmed);
+    const name = fromUrl ? fromUrl[1] : trimmed;
+
+    if (!/^[A-Za-z0-9][A-Za-z0-9-]{0,62}$/.test(name))
+      return null;
+
+    return name;
   }
 }

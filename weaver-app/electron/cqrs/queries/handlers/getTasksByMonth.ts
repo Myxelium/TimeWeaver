@@ -1,11 +1,12 @@
-import { DataSource, Between } from 'typeorm';
-import { Task } from '../../../entities/Task';
-import { GetTasksByMonthQuery, DaySummaryDTO } from '../../types';
 import {
+  endOfMonth,
   format,
-  startOfMonth,
-  endOfMonth
+  startOfMonth
 } from 'date-fns';
+import { Between, DataSource } from 'typeorm';
+
+import { Task } from '../../../entities/Task';
+import { DaySummaryDTO, GetTasksByMonthQuery } from '../../types';
 
 export async function handleGetTasksByMonth(query: GetTasksByMonthQuery, dataSource: DataSource): Promise<DaySummaryDTO[]> {
   const { year, month } = query.payload;

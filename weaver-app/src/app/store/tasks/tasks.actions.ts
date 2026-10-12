@@ -1,13 +1,15 @@
 import {
+  createAction,
   createActionGroup,
-  props,
   emptyProps,
-  createAction
+  props
 } from '@ngrx/store';
+
 import {
-  Task,
-  DaySummary,
+  AdoSuggestion,
   CreateTaskRequest,
+  DaySummary,
+  Task,
   UpdateTaskRequest
 } from '../../shared/models';
 
@@ -28,9 +30,16 @@ export const TasksActions = createActionGroup({
     'Load All Tasks Success': props<{ tasks: Task[] }>(),
     'Load All Tasks Failure': props<{ error: string }>(),
 
+    'Load Ado Suggestions': emptyProps(),
+    'Load Ado Suggestions Success': props<{ suggestions: AdoSuggestion[] }>(),
+
     'Save Task': props<{ task: CreateTaskRequest | UpdateTaskRequest }>(),
     'Save Task Success': props<{ taskId: number }>(),
     'Save Task Failure': props<{ error: string }>(),
+
+    'Save Tasks': props<{ tasks: CreateTaskRequest[] }>(),
+    'Save Tasks Success': emptyProps(),
+    'Save Tasks Failure': props<{ error: string }>(),
 
     'Delete Task': props<{ taskId: number }>(),
     'Delete Task Success': props<{ taskId: number }>(),

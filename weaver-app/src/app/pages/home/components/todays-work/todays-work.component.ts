@@ -1,45 +1,54 @@
+import { CommonModule } from '@angular/common';
 import {
   Component,
   inject,
   OnDestroy,
   OnInit
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
-  ReactiveFormsModule,
   FormBuilder,
-  Validators,
-  FormGroup
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import {
-  selectTodayTasks,
-  selectIsLoading,
-  selectAllTasks
-} from '../../../../store/tasks/tasks.selectors';
-import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
-import { Task } from '../../../../shared/models';
 import { format, subDays } from 'date-fns';
 import {
   combineLatest,
+  Observable,
   of,
-  Subject,
-  Observable
+  Subject
 } from 'rxjs';
-import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import {
   map,
-  take,
   startWith,
+  take,
   takeUntil
 } from 'rxjs/operators';
+
+import { titlesForLogging } from '../../../../shared/ado-titles.model';
+import { ConfirmService } from '../../../../shared/confirm/confirm.service';
+import { AdoSuggestion, Task } from '../../../../shared/models';
+import { DateChangeDetectionService } from '../../../../shared/services';
 import {
   selectIgnoreWeekends,
-  selectMaxHoursPerDay,
-  selectMaxHoursEnabled
+  selectMaxHoursEnabled,
+  selectMaxHoursPerDay
 } from '../../../../store/settings/settings.selectors';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { DateChangeDetectionService } from '../../../../shared/services';
+import { loadAllTasks, TasksActions } from '../../../../store/tasks/tasks.actions';
+import {
+  selectAdoSuggestions,
+  selectAllTasks,
+  selectIsLoading,
+  selectTodayTasks
+} from '../../../../store/tasks/tasks.selectors';
+
+const saturdayIndex = 6;
+const titleBlurDelayMs = 200;
+const expandedTitleCount = 15;
+const recentTitleWindowDays = 30;
+const collapsedTitleCount = 5;
 
 @Component({
   selector: 'app-todays-work',
@@ -49,15 +58,21 @@ import { DateChangeDetectionService } from '../../../../shared/services';
 })
 export class TodaysWorkComponent implements OnInit, OnDestroy {
   private _store = inject(Store);
+
   maxHoursPerDay$ = this._store.select(selectMaxHoursPerDay);
   maxHoursEnabled$ = this._store.select(selectMaxHoursEnabled);
+
   currentDate = new Date();
+
   tasks: Task[] = [];
+
   todayTasks$: Observable<Task[]> = this._store.select(selectTodayTasks);
   isLoading$: Observable<boolean> = this._store.select(selectIsLoading);
+
   editingTask: Task | null = null;
   showSuggestions = false;
   showAllSuggestions = false;
+
   allTaskTitles: string[] = [];
   filteredSuggestions: string[] = [];
   recentSuggestions: string[] = [];
@@ -75,19 +90,19 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   remainingHours$: Observable<number> = this.getRemainingHours();
 
   private destroy$ = new Subject<void>();
+
   private confirm = inject(ConfirmService);
   private dateChangeService = inject(DateChangeDetectionService);
+
   private ignoreWeekendsSignal = toSignal(inject(Store).select(selectIgnoreWeekends), { initialValue: true });
+
+  private knownTasks: Task[] = [];
+  private knownSuggestions: AdoSuggestion[] = [];
 
   ngOnInit(): void {
     this.initializeDate();
     this.setupSubscriptions();
     this.subscribeToDayChanges();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   get weekendBlocked(): boolean {
@@ -96,7 +111,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
 
     const dow = this.currentDate.getDay();
 
-    return dow === 0 || dow === 6;
+    return dow === 0 || dow === saturdayIndex;
   }
 
   onSubmit(): void {
@@ -245,7 +260,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.showSuggestions = false;
       this.showAllSuggestions = false;
-    }, 200);
+    }, titleBlurDelayMs);
   }
 
   selectSuggestion(title: string): void {
@@ -256,11 +271,11 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
 
   toggleAllSuggestions(): void {
     this.showAllSuggestions = !this.showAllSuggestions;
-    this.filteredSuggestions = this.showAllSuggestions ? this.allTaskTitles.slice(0, 15) : this.recentSuggestions;
+    this.filteredSuggestions = this.showAllSuggestions ? this.allTaskTitles.slice(0, expandedTitleCount) : this.recentSuggestions;
     this.showSuggestions = true;
   }
 
-  trackTask(_index: number, task: Task) { return task.id ?? task.title; }
+  trackTask(_index: number, task: Task): number | string { return task.id ?? task.title; }
 
   getAddHoursLabel(remaining: number): Observable<string> {
     return this.maxHoursPerDay$.pipe(
@@ -350,7 +365,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
         this._store.dispatch(loadAllTasks());
 
         this.resetForm();
-        this.loadTaskTitlesFromLast30Days();
+        this.rebuildTitles();
         this.applyWeekendBlockState();
       });
   }
@@ -364,21 +379,26 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   }
 
   private loadTaskTitlesFromLast30Days(): void {
-    this._store
-      .select(selectAllTasks)
+    combineLatest([this._store.select(selectAllTasks), this._store.select(selectAdoSuggestions)])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(tasks => {
-        const thirtyDaysAgo = subDays(this.currentDate, 30);
-        const recentTasks = tasks.filter(task => {
-          const taskDate = new Date(task.date);
-
-          return taskDate >= thirtyDaysAgo && taskDate <= this.currentDate;
-        });
-        const uniqueTitles = [...new Set(recentTasks.map(task => task.title))];
-
-        this.allTaskTitles = uniqueTitles.reverse();
-        this.recentSuggestions = this.allTaskTitles.slice(0, 5);
+      .subscribe(([tasks, suggestions]) => {
+        this.knownTasks = tasks;
+        this.knownSuggestions = suggestions;
+        this.rebuildTitles();
       });
+  }
+
+  private rebuildTitles(): void {
+    const thirtyDaysAgo = subDays(this.currentDate, recentTitleWindowDays);
+    const recentTasks = this.knownTasks.filter(task => {
+      const taskDate = new Date(task.date);
+
+      return taskDate >= thirtyDaysAgo && taskDate <= this.currentDate;
+    });
+    const taskTitles = [...new Set(recentTasks.map(task => task.title))].reverse();
+
+    this.allTaskTitles = titlesForLogging(taskTitles, this.knownSuggestions);
+    this.recentSuggestions = this.allTaskTitles.slice(0, collapsedTitleCount);
   }
 
   private filterSuggestions(value: string): void {
@@ -405,5 +425,10 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
       if (this.taskForm.disabled)
         this.taskForm.enable({ emitEvent: false });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -1,11 +1,12 @@
-import { DataSource, Between } from 'typeorm';
+import {
+  endOfMonth,
+  format,
+  startOfMonth
+} from 'date-fns';
+import { Between, DataSource } from 'typeorm';
+
 import { Task } from '../../../entities/Task';
 import { ExportMonthCsvQuery } from '../../types';
-import {
-  format,
-  startOfMonth,
-  endOfMonth
-} from 'date-fns';
 
 export async function handleExportCsv(
   query: ExportMonthCsvQuery,

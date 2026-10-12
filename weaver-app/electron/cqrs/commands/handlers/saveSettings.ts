@@ -1,7 +1,9 @@
 import { DataSource } from 'typeorm';
-import { SaveSettingsCommand } from '../../types';
+
+import { organizationName } from '../../../ado/parse';
 import { Setting } from '../../../entities/Setting';
 import { mergePopupRules } from '../../../popup-rules';
+import { SaveSettingsCommand } from '../../types';
 
 export async function handleSaveSettings(command: SaveSettingsCommand, dataSource: DataSource): Promise<boolean> {
   const repo = dataSource.getRepository(Setting);
@@ -37,6 +39,23 @@ export async function handleSaveSettings(command: SaveSettingsCommand, dataSourc
 
     settings.popupRules = JSON.stringify(merged);
   }
+
+  if (typeof command.payload.adoOrganization === 'string') {
+    const organization = command.payload.adoOrganization.trim();
+
+    settings.adoOrganization = organization ? organizationName(organization) : null;
+  }
+
+  if (command.payload.clearAdoPat)
+    settings.adoPat = null;
+  else if (typeof command.payload.adoPat === 'string' && command.payload.adoPat.trim())
+    settings.adoPat = command.payload.adoPat.trim();
+
+  if (command.payload.adoAuthMethod === 'azure-cli' || command.payload.adoAuthMethod === 'pat')
+    settings.adoAuthMethod = command.payload.adoAuthMethod;
+
+  if (typeof command.payload.adoSyncEnabled === 'boolean')
+    settings.adoSyncEnabled = command.payload.adoSyncEnabled;
 
   await repo.save(settings);
   return true;

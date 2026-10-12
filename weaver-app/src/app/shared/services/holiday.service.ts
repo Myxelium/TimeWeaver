@@ -1,9 +1,10 @@
-import { Injectable, inject } from '@angular/core';
-import Holidays from 'date-holidays';
-import { Store } from '@ngrx/store';
+import { inject, Injectable } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import Holidays from 'date-holidays';
+
 import { selectSettings } from '../../store/settings/settings.selectors';
-import { HolidayType, DEFAULT_HOLIDAY_TYPES } from '../models';
+import { DEFAULT_HOLIDAY_TYPES, HolidayType } from '../models';
 
 export interface HolidayInfo {
   isHoliday: boolean;
@@ -18,6 +19,7 @@ export class HolidayService {
   private countryCode: string | null = null; // ISO-3166-1 alpha-2
 
   private store = inject(Store);
+
   private settingsSignal = toSignal(this.store.select(selectSettings), { initialValue: null });
 
   detectCountryCode(): string {

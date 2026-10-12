@@ -1,7 +1,4 @@
-<div
-    #root
-    class="p-4"
->
+<div #root class="p-4">
     @if (loadError) {
         <div class="bg-card text-card-foreground border border-border rounded-lg shadow-lg p-4">
             <p class="text-sm">{{ loadError }}</p>
@@ -80,7 +77,7 @@
                                 @if (hoursFor(row) !== null) {
                                     {{ hoursFor(row) | number: '1.2-2' }}
                                 } @else {
-                                    —
+                                    -
                                 }
                             </span>
                         </div>

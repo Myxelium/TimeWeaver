@@ -10,6 +10,9 @@ import {
 import * as path from 'path';
 import { DataSource } from 'typeorm';
 
+import { adoWorkItemIdForTitle } from './ado/match-task';
+import { loggingTitle } from './ado/parse';
+import { AdoWorkItem } from './entities/AdoWorkItem';
 import { Setting } from './entities/Setting';
 import { Task } from './entities/Task';
 import {
@@ -421,13 +424,15 @@ async function savePopupEntries(entries: PopupEntry[]): Promise<void> {
 
     if (existing) {
       existing.hours = roundHours((Number(existing.hours) || 0) + hours);
+      existing.adoWorkItemId = await adoWorkItemIdForTitle(dataSource, title) ?? existing.adoWorkItemId ?? null;
       await repo.save(existing);
     } else {
       await repo.save(repo.create({
         title,
         description: '',
         date: today,
-        hours
+        hours,
+        adoWorkItemId: await adoWorkItemIdForTitle(dataSource, title)
       }));
     }
   }
@@ -568,6 +573,11 @@ async function buildTimeSnapshot(dataSource: DataSource, settings: Setting): Pro
     .orderBy('task.date', 'DESC')
     .addOrderBy('task.created_at', 'DESC')
     .getMany();
+  const adoItems = await dataSource.getRepository(AdoWorkItem).find();
+  const adoTitles = adoItems
+    .filter(item => !!item.activeOn && !!item.title?.trim())
+    .map(item => loggingTitle(item.adoId, item.title))
+    .slice(0, 10);
 
   return {
     today,
@@ -576,16 +586,18 @@ async function buildTimeSnapshot(dataSource: DataSource, settings: Setting): Pro
     todayHours,
     remainingHours: roundHours(Math.max(0, targetHours - todayHours)),
     previousTitles,
-    recentTitles: uniqueTitles(recentTasks)
+    recentTitles: uniqueStrings([...adoTitles, ...uniqueTitles(recentTasks)])
   };
 }
 
 function uniqueTitles(tasks: Task[]): string[] {
+  return uniqueStrings(tasks.map(task => task.title?.trim() ?? ''));
+}
+
+function uniqueStrings(values: string[]): string[] {
   const titles: string[] = [];
 
-  for (const task of tasks) {
-    const title = task.title?.trim();
-
+  for (const title of values) {
     if (title && !titles.includes(title))
       titles.push(title);
   }

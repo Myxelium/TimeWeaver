@@ -1,20 +1,21 @@
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   Actions,
   createEffect,
   ofType
 } from '@ngrx/effects';
-import { DatabaseService } from '../../shared/services/database.service';
-import { SettingsActions, loadSettings } from './settings.actions';
 import {
-  EMPTY,
   catchError,
+  EMPTY,
   map,
   mergeMap,
   of,
   tap
 } from 'rxjs';
+
 import { HolidayService } from '../../shared/services';
+import { DatabaseService } from '../../shared/services/database.service';
+import { loadSettings, SettingsActions } from './settings.actions';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsEffects {

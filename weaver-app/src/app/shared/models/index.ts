@@ -4,6 +4,7 @@ export interface Task {
   description?: string;
   date: string; // YYYY-MM-DD format
   hours: number;
+  adoWorkItemId?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -120,9 +121,25 @@ export interface Settings {
   overtimeRate?: number; // Overtime income rate (default 0)
   launchAtLogin?: boolean;
   popupRules?: PopupRule[];
+  adoOrganization?: string;
+  adoPatConfigured?: boolean;
+  adoAuthMethod?: 'pat' | 'azure-cli';
+  adoSyncEnabled?: boolean;
+  adoLastSyncOn?: string;
+  adoLastSyncError?: string;
+  adoPat?: string;
+  clearAdoPat?: boolean;
 }
 
 export const DAILY_WORK_HOURS = 8;
+
+export interface AdoSuggestion {
+  adoId: number;
+  title: string;
+  activeOn: string | null;
+  rangeEnd: string | null;
+  spentTimeIsZero: boolean;
+}
 
 export const NAV_ITEMS: NavItem[] = [
   {

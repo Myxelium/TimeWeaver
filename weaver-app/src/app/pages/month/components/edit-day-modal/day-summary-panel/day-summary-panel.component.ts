@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -12,6 +12,7 @@ export class DaySummaryPanelComponent {
   @Input() show = true;
   @Input() totalHours = 0;
   @Input() taskCount = 0;
+
   @Input() maxHoursPerDay$!: Observable<number>;
 
   getBaseProgressWidth(maxHours: number): number {

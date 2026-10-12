@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <p class="text-sm text-muted-foreground">Track your daily progress throughout the month</p>
+        <p class="text-sm text-muted-foreground">Track your daily progress throughout the month. Drag to select days, then right-click to register time.</p>
     </div>
 
     <div class="card-body">
@@ -58,7 +58,7 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div (scroll)="onCalendarScroll()" class="overflow-x-auto">
             <div class="min-w-full">
                 <div class="grid grid-cols-7 gap-1 mb-2">
                     @for (day of dayHeaders; track day) {
@@ -69,13 +69,17 @@
                 <div class="grid grid-cols-7 gap-1">
                     @for (day of calendarDays(); track day.date) {
                         <div
-                            (click)="onDayClick(day)"
+                            (contextmenu)="onDayContextMenu(day, $event)"
                             (keydown.enter)="onDayClick(day)"
                             (keydown.space)="onDayClick(day)"
+                            (pointerdown)="onDayPointerDown(day, $event)"
+                            (pointerenter)="onDayPointerEnter(day)"
+                            [attr.aria-selected]="isSelected(day)"
                             [class.bg-muted]="!day.isCurrentMonth"
                             [class.bg-primary]="day.isToday"
                             [class.bg-holiday]="day.isCurrentMonth && !day.isToday && day.isHoliday"
                             [class.border-primary]="day.isToday"
+                            [class.calendar-day-selected]="isSelected(day)"
                             [class.opacity-40]="ignoreWeekends && day.isWeekend"
                             [class.cursor-not-allowed]="!day.isCurrentMonth"
                             [class.hover:bg-accent]="!day.isToday && day.isCurrentMonth && !day.isHoliday"
@@ -84,6 +88,18 @@
                             role="button"
                             tabindex="0"
                         >
+                            @if (day.suggestions.length) {
+                                <div class="ado-suggest">
+                                    <span
+                                        (mouseenter)="showSuggestionTip($event, day.suggestions)"
+                                        (mouseleave)="queueHideSuggestionTip()"
+                                        [attr.aria-label]="suggestionText(day.suggestions)"
+                                        class="ado-dot"
+                                    >
+                                    </span>
+                                </div>
+                            }
+
                             <div
                                 [class.text-muted-foreground]="!day.isCurrentMonth && !day.isToday"
                                 [class.text-primary-foreground]="day.isToday"
@@ -152,4 +168,46 @@
             </div>
         </div>
     </div>
+
+    @if (suggestionTip(); as tip) {
+        <div
+            (mouseenter)="holdSuggestionTip()"
+            (mouseleave)="hideSuggestionTip()"
+            [style.left.px]="tip.x"
+            [style.top.px]="tip.y"
+            class="ado-tip-panel"
+            role="tooltip"
+        >
+            <app-ado-suggestion-table [suggestions]="tip.suggestions" />
+        </div>
+    }
+
+    @if (contextMenu(); as menu) {
+        <div
+            [style.left.px]="menu.x"
+            [style.top.px]="menu.y"
+            class="calendar-menu"
+            role="menu"
+        >
+            <button
+                (click)="registerTime()"
+                type="button"
+                class="calendar-menu-item"
+                role="menuitem"
+            >
+                Register time
+            </button>
+
+            @if (selectedDaysHaveSuggestions()) {
+                <button
+                    (click)="addSuggested()"
+                    type="button"
+                    class="calendar-menu-item"
+                    role="menuitem"
+                >
+                    Add suggested
+                </button>
+            }
+        </div>
+    }
 </div>

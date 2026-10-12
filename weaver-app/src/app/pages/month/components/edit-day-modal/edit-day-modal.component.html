@@ -10,63 +10,171 @@
         </div>
 
         <div class="relative bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
-                <div>
-                    <h2 class="section-heading mb-0">Edit Day - {{ selectedDate | date: 'EEEE, MMMM d, y' }}</h2>
+            <div class="flex items-center justify-between gap-3 p-6 border-b border-border flex-shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    @if (showDayNavigation) {
+                        <button
+                            (click)="previousDay()"
+                            type="button"
+                            class="btn-icon flex-shrink-0"
+                            aria-label="Previous day"
+                            title="Previous day"
+                        >
+                            <lucide-icon [img]="ChevronLeft" class="w-4 h-4" />
+                        </button>
+                    }
 
-                    @if (holidayName) {
-                        <p class="text-sm text-red-600 mt-1">{{ holidayName }}</p>
+                    <div class="min-w-0">
+                        @if (isRangeMode) {
+                            <h2 class="section-heading mb-0">Edit Day - Date range</h2>
+
+                            <p class="text-sm text-muted-foreground mt-1">
+                                {{ rangeStartDate | date: 'MMM d, y' }} - {{ rangeEndDate | date: 'MMM d, y' }}
+                                · {{ rangeDates!.length }} days
+                            </p>
+                        } @else {
+                            <h2 class="section-heading mb-0">Edit Day - {{ selectedDate | date: 'EEEE, MMMM d, y' }}</h2>
+
+                            @if (holidayName) {
+                                <p class="text-sm text-red-600 mt-1">{{ holidayName }}</p>
+                            }
+                        }
+                    </div>
+
+                    @if (showDayNavigation) {
+                        <button
+                            (click)="nextDay()"
+                            type="button"
+                            class="btn-icon flex-shrink-0"
+                            aria-label="Next day"
+                            title="Next day"
+                        >
+                            <lucide-icon [img]="ChevronRight" class="w-4 h-4" />
+                        </button>
                     }
                 </div>
 
-                <button
-                    (click)="close()"
-                    type="button"
-                    class="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <svg
-                        class="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <button
+                        (click)="openTaskDetails()"
+                        type="button"
+                        class="text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Task details"
+                        title="Task details"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
+                        <lucide-icon [img]="List" class="w-6 h-6" />
+                    </button>
+
+                    <button
+                        (click)="close()"
+                        type="button"
+                        class="text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Close"
+                    >
+                        <svg
+                            class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="p-6 overflow-y-auto flex-1">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="space-y-6">
-                        <app-day-summary-panel
-                            [show]="!singleTaskMode"
-                            [totalHours]="getDayTotalHours()"
-                            [taskCount]="getDayTaskCount()"
-                            [maxHoursPerDay$]="maxHoursPerDay$"
-                        />
+                        @if (isRangeMode) {
+                            <div>
+                                <h3 class="panel-heading">Selected days</h3>
+                                <p class="text-sm text-muted-foreground mb-3">Existing time stays on each day. New tasks are added on top.</p>
 
-                        <app-day-tasks-list
-                            (edit)="editTask($event)"
-                            (delete)="deleteTask($event)"
-                            [show]="!singleTaskMode"
-                            [tasks]="getDayTasks()"
-                        />
+                                <div class="space-y-2 max-h-96 overflow-y-auto">
+                                    @for (row of rangeDayRows; track row.dateKey) {
+                                        <div class="border border-border rounded-md px-3 py-2">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="text-sm font-medium">{{ row.date | date: 'EEE, MMM d' }}</span>
+                                                <span class="text-sm text-muted-foreground">{{ row.totalHours | number: '1.1-1' }}h</span>
+                                            </div>
+
+                                            @if (row.holidayName) {
+                                                <p class="text-xs text-red-600">{{ row.holidayName }}</p>
+                                            }
+
+                                            @if (suggestionsForDate(row.date).length) {
+                                                <div class="mt-2">
+                                                    <p class="text-xs font-medium mb-1">Suggested</p>
+
+                                                    <app-ado-suggestion-table
+                                                        (add)="addSuggestion(row.date, $event)"
+                                                        [loggedIds]="loggedSuggestionIds(row.date)"
+                                                        [showAdd]="true"
+                                                        [suggestions]="suggestionsForDate(row.date)"
+                                                    />
+                                                </div>
+                                            }
+
+                                            @if (row.tasks.length) {
+                                                @for (task of row.tasks; track task.id) {
+                                                    <p class="text-xs text-muted-foreground truncate">{{ task.title }} · {{ task.hours | number: '1.1-1' }}h</p>
+                                                }
+                                            } @else {
+                                                <p class="text-xs text-muted-foreground italic">No time yet</p>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        } @else {
+                            <app-day-summary-panel
+                                [show]="!singleTaskMode"
+                                [totalHours]="getDayTotalHours()"
+                                [taskCount]="getDayTaskCount()"
+                                [maxHoursPerDay$]="maxHoursPerDay$"
+                            />
+
+                            <app-day-tasks-list
+                                (edit)="editTask($event)"
+                                (delete)="deleteTask($event)"
+                                [show]="!singleTaskMode"
+                                [tasks]="getDayTasks()"
+                            />
+
+                            @if (!singleTaskMode && suggestionsForDate(selectedDate).length) {
+                                <div>
+                                    <h3 class="panel-heading">Suggested</h3>
+
+                                    <app-ado-suggestion-table
+                                        (add)="addSuggestion(selectedDate, $event)"
+                                        [loggedIds]="loggedSuggestionIds(selectedDate)"
+                                        [showAdd]="true"
+                                        [suggestions]="suggestionsForDate(selectedDate)"
+                                    />
+                                </div>
+                            }
+                        }
                     </div>
 
                     <div class="space-y-6">
                         <div class="card-panel">
-                            <h3 class="panel-heading">{{ editingTask ? 'Edit Task' : 'Add New Task' }}</h3>
+                            <h3 class="panel-heading">{{ isRangeMode ? 'Add time' : (editingTask ? 'Edit Task' : 'Add New Task') }}</h3>
 
                             <form
                                 (ngSubmit)="onSubmit()"
                                 [formGroup]="taskForm"
                                 class="space-y-4"
                             >
+                                @if (isRangeMode) {
+                                    <p class="text-sm text-muted-foreground">This task is added to every selected day. Days that already have time keep those entries.</p>
+                                }
+
                                 @if (allowDateChange) {
                                     <div>
                                         <label for="modalTaskDate" class="form-label">Date</label
@@ -146,6 +254,7 @@
                                         <app-remaining-hours-button
                                             (addRemaining)="addRemainingHours()"
                                             [show]="
+                                                !isRangeMode &&
                                                 !singleTaskMode &&
                                                 !!(maxHoursEnabled$ | async) &&
                                                 ((maxHoursPerDay$ | async) ?? 0) - getDayTotalHours() > 0
@@ -162,7 +271,7 @@
                                         type="submit"
                                         class="flex-1 btn-primary py-2 px-4"
                                     >
-                                        {{ editingTask ? 'Update Task' : 'Add Task' }}
+                                        {{ isRangeMode ? 'Add to all days' : (editingTask ? 'Update Task' : 'Add Task') }}
                                     </button>
 
                                     @if (editingTask) {
@@ -192,4 +301,14 @@
             </div>
         </div>
     </div>
+
+    <app-task-details-modal
+        (back)="closeTaskDetails()"
+        (closed)="closeTaskDetails()"
+        (saveTask)="saveDetailedTask($event)"
+        [isOpen]="taskDetailsOpen"
+        [showBack]="true"
+        [tasks]="taskDetailsTasks"
+        [title]="taskDetailsTitle"
+    />
 }

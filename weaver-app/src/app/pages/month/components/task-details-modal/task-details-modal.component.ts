@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
@@ -5,18 +6,22 @@ import {
   Input,
   Output
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import {
+  BarChart3,
+  Calendar,
+  ChevronLeft,
+  Clock,
+  LucideAngularModule,
+  TrendingUp
+} from 'lucide-angular';
+
 import { Task } from '../../../../shared/models';
 import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
-import {
-  LucideAngularModule,
-  Clock,
-  Calendar,
-  TrendingUp,
-  BarChart3
-} from 'lucide-angular';
+
+const defaultStatisticHours = 8;
+const yearMonthKeyLength = 7;
 
 type EditableTask = Task & { editing?: boolean };
 
@@ -40,24 +45,22 @@ interface TaskStatistics {
 })
 export class TaskDetailsModalComponent {
   @Input() isOpen = false;
-
+  @Input() showBack = false;
   @Input() title: string | null = null;
 
   @Output() closed = new EventEmitter<void>();
-
+  @Output() back = new EventEmitter<void>();
   @Output() saveTask = new EventEmitter<{ id: number; title: string; description?: string; date: string; hours: number }>();
 
   readonly Clock = Clock;
-
   readonly Calendar = Calendar;
-
   readonly TrendingUp = TrendingUp;
-
   readonly BarChart3 = BarChart3;
+  readonly ChevronLeft = ChevronLeft;
 
   localTasks: EditableTask[] = [];
 
-  statistics: TaskStatistics = this._calculateStatistics([], 8);
+  statistics: TaskStatistics = this._calculateStatistics([], defaultStatisticHours);
 
   private _store = inject(Store);
 
@@ -82,6 +85,10 @@ export class TaskDetailsModalComponent {
 
   onClose(): void {
     this.closed.emit();
+  }
+
+  onBack(): void {
+    this.back.emit();
   }
 
   enableEdit(index: number): void {
@@ -116,7 +123,7 @@ export class TaskDetailsModalComponent {
   }
 
   getMonthKey(date: string): string {
-    return date.substring(0, 7); // YYYY-MM
+    return date.substring(0, yearMonthKeyLength);
   }
 
   formatMonthLabel(date: string): string {

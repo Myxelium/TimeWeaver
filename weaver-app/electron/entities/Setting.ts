@@ -1,7 +1,7 @@
 import {
+  Column,
   Entity,
   PrimaryColumn,
-  Column,
   UpdateDateColumn
 } from 'typeorm';
 
@@ -45,6 +45,24 @@ export class Setting {
 
   @Column({ type: 'text', default: '[]' })
   popupRules!: string;
+
+  @Column({ type: 'text', nullable: true })
+  adoOrganization?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  adoPat?: string | null;
+
+  @Column({ type: 'text', default: 'pat' })
+  adoAuthMethod!: string;
+
+  @Column({ type: 'boolean', default: false })
+  adoSyncEnabled!: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  adoLastSyncOn?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  adoLastSyncError?: string | null;
 
   @UpdateDateColumn({ type: 'datetime', nullable: true })
   updated_at?: string;

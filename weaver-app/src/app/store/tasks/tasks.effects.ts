@@ -7,10 +7,13 @@ import {
 import { Store } from '@ngrx/store';
 import {
   catchError,
+  concatMap,
+  from,
   map,
   mergeMap,
   of,
   switchMap,
+  toArray,
   withLatestFrom
 } from 'rxjs';
 
@@ -50,6 +53,14 @@ export class TasksEffects {
     ))
   ));
 
+  readonly loadAdoSuggestions$ = createEffect(() => this.actions$.pipe(
+    ofType(TasksActions.loadAdoSuggestions),
+    switchMap(() => this.databaseService.getAdoSuggestions().pipe(
+      map(suggestions => TasksActions.loadAdoSuggestionsSuccess({ suggestions })),
+      catchError(() => of(TasksActions.loadAdoSuggestionsSuccess({ suggestions: [] })))
+    ))
+  ));
+
   readonly saveTask$ = createEffect(() => this.actions$.pipe(
     ofType(TasksActions.saveTask),
     mergeMap(({ task }) => this.databaseService.saveTask(task).pipe(
@@ -58,8 +69,18 @@ export class TasksEffects {
     ))
   ));
 
+  readonly saveTasks$ = createEffect(() => this.actions$.pipe(
+    ofType(TasksActions.saveTasks),
+    mergeMap(({ tasks }) => from(tasks).pipe(
+      concatMap(task => this.databaseService.saveTask(task)),
+      toArray(),
+      map(() => TasksActions.saveTasksSuccess()),
+      catchError(err => of(TasksActions.saveTasksFailure({ error: err.message || 'Save tasks failed' })))
+    ))
+  ));
+
   readonly afterMutationRefresh$ = createEffect(() => this.actions$.pipe(
-    ofType(TasksActions.saveTaskSuccess, TasksActions.deleteTaskSuccess),
+    ofType(TasksActions.saveTaskSuccess, TasksActions.saveTasksSuccess, TasksActions.deleteTaskSuccess),
     withLatestFrom(
       this.store.select(selectCurrentDate),
       this.store.select(selectSelectedMonth)
@@ -71,6 +92,7 @@ export class TasksEffects {
     ]) => [
       TasksActions.loadTodayTasks({ date: currentDate }),
       TasksActions.loadMonthlyData({ year: selectedMonth.year, month: selectedMonth.month }),
+      TasksActions.loadAdoSuggestions(),
       loadAllTasks()
     ])
   ));

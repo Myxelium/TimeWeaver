@@ -1,20 +1,23 @@
+import { CommonModule } from '@angular/common';
 import {
   Component,
   inject,
-  signal,
+  OnDestroy,
   OnInit,
-  OnDestroy
+  signal
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Task } from '../../../../shared/models';
-import { format, subDays } from 'date-fns';
-import { DatabaseService } from '../../../../shared/services/database.service';
-import { Store } from '@ngrx/store';
-import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { format, subDays } from 'date-fns';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+
+import { Task } from '../../../../shared/models';
 import { DateChangeDetectionService } from '../../../../shared/services';
+import { DatabaseService } from '../../../../shared/services/database.service';
+import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+
+const daysInTheWindow = 7;
 
 @Component({
   selector: 'app-previous-days',
@@ -32,7 +35,6 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
   }[]>([]);
 
   private databaseService = inject(DatabaseService);
-
   private dateChangeService = inject(DateChangeDetectionService);
 
   private destroy$ = new Subject<void>();
@@ -40,11 +42,6 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadLastSevenDays();
     this.subscribeToDayChanges();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   getBaseProgressWidth(totalHours: number): number {
@@ -84,7 +81,7 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
     const tasksPromises: Promise<void>[] = [];
     const collected: { date: Date; tasks: Task[]; totalHours: number }[] = [];
 
-    for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
+    for (let dayOffset = 1; dayOffset <= daysInTheWindow; dayOffset++) {
       const date = subDays(now, dayOffset);
       const dateStr = format(date, 'yyyy-MM-dd');
       const taskPromise = this.databaseService.getTasksByDate(dateStr)
@@ -103,5 +100,10 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
       collected.sort((left, right) => right.date.getTime() - left.date.getTime());
       this.previousDays.set(collected);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

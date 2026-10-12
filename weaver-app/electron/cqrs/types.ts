@@ -6,7 +6,8 @@ export const CommandType = {
   SaveTask: 'save-task',
   DeleteTask: 'delete-task',
   SaveSettings: 'save-settings',
-  ImportCsv: 'import-csv'
+  ImportCsv: 'import-csv',
+  SyncAdo: 'sync-ado'
 } as const;
 
 export const QueryType = {
@@ -16,7 +17,8 @@ export const QueryType = {
   GetAllTasks: 'get-all-tasks',
   ExportCsv: 'export-csv',
   ExportCsvAll: 'export-csv-all',
-  GetSettings: 'get-settings'
+  GetSettings: 'get-settings',
+  GetAdoSuggestions: 'get-ado-suggestions'
 } as const;
 
 export type CommandTypeKey = typeof CommandType[keyof typeof CommandType];
@@ -54,6 +56,11 @@ export interface SaveSettingsCommand {
     overtimeRate?: number;
     launchAtLogin?: boolean;
     popupRules?: PopupRule[];
+    adoOrganization?: string;
+    adoPat?: string;
+    clearAdoPat?: boolean;
+    adoAuthMethod?: 'pat' | 'azure-cli';
+    adoSyncEnabled?: boolean;
   };
 }
 
@@ -97,7 +104,17 @@ export interface GetSettingsQuery {
   payload: Record<string, never>;
 }
 
-export type Command = SaveTaskCommand | DeleteTaskCommand | SaveSettingsCommand | ImportCsvCommand;
+export interface SyncAdoCommand {
+  type: typeof CommandType.SyncAdo;
+  payload: Record<string, never>;
+}
+
+export interface GetAdoSuggestionsQuery {
+  type: typeof QueryType.GetAdoSuggestions;
+  payload: Record<string, never>;
+}
+
+export type Command = SaveTaskCommand | DeleteTaskCommand | SaveSettingsCommand | ImportCsvCommand | SyncAdoCommand;
 export type Query =
   | GetTasksByDateQuery
   | GetTasksByMonthQuery
@@ -105,7 +122,8 @@ export type Query =
   | GetAllTasksQuery
   | ExportMonthCsvQuery
   | ExportAllCsvQuery
-  | GetSettingsQuery;
+  | GetSettingsQuery
+  | GetAdoSuggestionsQuery;
 
 export interface DaySummaryDTO {
   date: string;
@@ -127,4 +145,18 @@ export interface SettingsDTO {
   overtimeRate?: number;
   launchAtLogin: boolean;
   popupRules: PopupRule[];
+  adoOrganization?: string;
+  adoPatConfigured: boolean;
+  adoAuthMethod: 'pat' | 'azure-cli';
+  adoSyncEnabled: boolean;
+  adoLastSyncOn?: string;
+  adoLastSyncError?: string;
+}
+
+export interface AdoSuggestionDTO {
+  adoId: number;
+  title: string;
+  activeOn: string | null;
+  rangeEnd: string | null;
+  spentTimeIsZero: boolean;
 }

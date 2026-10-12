@@ -1,4 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
+
 import { Settings } from '../../shared/models';
 import { SettingsActions } from './settings.actions';
 import { loadSettings } from './settings.actions';

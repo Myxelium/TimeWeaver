@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, signal } from '@angular/core';
 
 export interface ConfirmOptions {
   title?: string;
@@ -45,7 +45,7 @@ export class ConfirmDialogHostComponent {
     this.finish(false);
   }
 
-  private finish(val: boolean) {
+  private finish(val: boolean): void {
     this.open.set(false);
     this._resolver?.(val);
     this._resolver = null;

@@ -1,10 +1,10 @@
+import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
   Input,
   Output
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-suggestions-dropdown',
@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
 export class SuggestionsDropdownComponent {
   @Input() showSuggestions = false;
   @Input() showAllSuggestions = false;
+
   @Input() recentSuggestions: string[] = [];
   @Input() filteredSuggestions: string[] = [];
   @Input() allTaskTitles: string[] = [];

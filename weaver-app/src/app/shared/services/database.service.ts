@@ -1,17 +1,30 @@
 import { Injectable } from '@angular/core';
+import { format, subDays } from 'date-fns';
 import {
-  Observable,
   from,
+  Observable,
   of
 } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import {
-  Task,
-  DaySummary,
+  AdoSuggestion,
   CreateTaskRequest,
-  UpdateTaskRequest,
-  Settings
+  DaySummary,
+  Settings,
+  Task,
+  UpdateTaskRequest
 } from '../models';
+
+const browserPreviewMonthlyHours = 120;
+const previewRandomTaskSpread = 5;
+const previewRandomHourSpread = 3;
+const previewMinimumHours = 0.5;
+const previewTaskCount = 20;
+const hoursPerDay = 24;
+const minutesPerHour = 60;
+const secondsPerMinute = 60;
+const previewMaximumHours = 8;
 
 interface ElectronAPI {
   query(request: { type: string; payload: unknown }): Promise<unknown>;
@@ -84,7 +97,7 @@ export class DatabaseService {
 
   getMonthlySummary(year: number, month: number): Observable<number> {
     if (!this.isElectron()) {
-      return of(120);
+      return of(browserPreviewMonthlyHours);
     } else {
       const api = this.electronAPI;
 
@@ -167,7 +180,9 @@ export class DatabaseService {
         firstDayOfWeek: 1,
         overtimeRate: 0,
         launchAtLogin: false,
-        popupRules: []
+        popupRules: [],
+        adoPatConfigured: false,
+        adoSyncEnabled: false
       });
     }
 
@@ -186,7 +201,9 @@ export class DatabaseService {
         firstDayOfWeek: 1,
         overtimeRate: 0,
         launchAtLogin: false,
-        popupRules: []
+        popupRules: [],
+        adoPatConfigured: false,
+        adoSyncEnabled: false
       });
     }
 
@@ -205,6 +222,54 @@ export class DatabaseService {
       return of(false);
 
     return from(api.command({ type: 'save-settings', payload: settings })).pipe(map(() => true));
+  }
+
+  getAdoSuggestions(): Observable<AdoSuggestion[]> {
+    if (!this.isElectron())
+      return of(this.mockAdoSuggestions());
+
+    const api = this.electronAPI;
+
+    if (!api)
+      return of([]);
+
+    return from(api.query({ type: 'get-ado-suggestions', payload: {} })).pipe(map(result => result as AdoSuggestion[]));
+  }
+
+  syncAdo(): Observable<{ ran: boolean; itemCount: number; error: string | null }> {
+    if (!this.isElectron())
+      return of({ ran: false, itemCount: 0, error: 'Azure DevOps sync runs in the Weaver app.' });
+
+    const api = this.electronAPI;
+
+    if (!api)
+      return of({ ran: false, itemCount: 0, error: 'Azure DevOps sync is unavailable.' });
+
+    return from(api.command({ type: 'sync-ado', payload: {} })).pipe(
+      map(result => result as { ran: boolean; itemCount: number; error: string | null })
+    );
+  }
+
+  private mockAdoSuggestions(): AdoSuggestion[] {
+    const today = new Date();
+    const start = subDays(today, 2);
+
+    return [
+      {
+        adoId: 1001,
+        title: '#1001 Sample user story',
+        activeOn: format(start, 'yyyy-MM-dd'),
+        rangeEnd: format(today, 'yyyy-MM-dd'),
+        spentTimeIsZero: true
+      },
+      {
+        adoId: 1002,
+        title: '#1002 Another sample story',
+        activeOn: format(today, 'yyyy-MM-dd'),
+        rangeEnd: format(today, 'yyyy-MM-dd'),
+        spentTimeIsZero: false
+      }
+    ];
   }
 
   private get electronAPI(): ElectronAPI | undefined {
@@ -249,13 +314,13 @@ export class DatabaseService {
     const daysInMonth = new Date(year, month, 0).getDate();
 
     for (let dayNum = 1; dayNum <= Math.min(daysInMonth, 10); dayNum++) {
-      const taskCount = Math.floor(Math.random() * 5) + 1;
+      const taskCount = Math.floor(Math.random() * previewRandomTaskSpread) + 1;
       const tasks: Task[] = [];
 
       let totalHours = 0;
 
       for (let taskIndex = 1; taskIndex <= taskCount; taskIndex++) {
-        const hours = Math.random() * 3 + 0.5;
+        const hours = Math.random() * previewRandomHourSpread + previewMinimumHours;
 
         totalHours += hours;
 
@@ -284,15 +349,15 @@ export class DatabaseService {
     const tasks: Task[] = [];
     const today = new Date();
 
-    for (let index = 0; index < 20; index++) {
-      const date = new Date(today.getTime() - (index * 24 * 60 * 60 * 1000));
+    for (let index = 0; index < previewTaskCount; index++) {
+      const date = new Date(today.getTime() - (index * hoursPerDay * minutesPerHour * secondsPerMinute * 1000));
 
       tasks.push({
         id: index + 1,
         title: `Task ${index + 1}`,
         description: `Description for task ${index + 1}`,
         date: date.toISOString().split('T')[0],
-        hours: Math.random() * 8,
+        hours: Math.random() * previewMaximumHours,
         created_at: date.toISOString()
       });
     }

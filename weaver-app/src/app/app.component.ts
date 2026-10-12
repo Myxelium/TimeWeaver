@@ -6,6 +6,7 @@ import { HeaderComponent } from './layout/header/header.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { PopupOverlayComponent } from './pages/overlay/popup-overlay.component';
 import { loadSettings } from './store/settings/settings.actions';
+import { TasksActions } from './store/tasks/tasks.actions';
 
 function overlayLaunchActive(): boolean {
   const overlay = new URLSearchParams(window.location.search).get('overlay');
@@ -43,5 +44,12 @@ export class AppComponent {
     }
 
     this.store.dispatch(loadSettings());
+    this.store.dispatch(TasksActions.loadAdoSuggestions());
+    const api = (window as unknown as { electronAPI?: { onAdoSynced?: (listener: () => void) => void } }).electronAPI;
+
+    api?.onAdoSynced?.(() => {
+      this.store.dispatch(loadSettings());
+      this.store.dispatch(TasksActions.loadAdoSuggestions());
+    });
   }
 }

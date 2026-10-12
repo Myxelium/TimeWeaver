@@ -10,8 +10,22 @@
         </div>
 
         <div class="relative bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
-            <div class="sticky top-0 z-10 bg-background flex items-center justify-between p-6 border-b border-border flex-shrink-0">
-                <h2 class="section-heading mb-0">Task Details - {{ title || 'Tasks' }}</h2>
+            <div class="sticky top-0 z-10 bg-background flex items-center justify-between gap-3 p-6 border-b border-border flex-shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    @if (showBack) {
+                        <button
+                            (click)="onBack()"
+                            type="button"
+                            class="btn-icon flex-shrink-0"
+                            aria-label="Back to edit day"
+                            title="Back"
+                        >
+                            <lucide-icon [img]="ChevronLeft" class="w-4 h-4" />
+                        </button>
+                    }
+
+                    <h2 class="section-heading mb-0">Task Details - {{ title || 'Tasks' }}</h2>
+                </div>
 
                 <button
                     (click)="onClose()"
