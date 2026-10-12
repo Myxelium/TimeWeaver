@@ -15,6 +15,10 @@ export const routes: Routes = [
     loadComponent: (): Promise<Type<unknown>> => import('./pages/records/records.component').then(module => module.RecordsComponent)
   },
   {
+    path: 'stories',
+    loadComponent: (): Promise<Type<unknown>> => import('./pages/stories/stories.component').then(module => module.StoriesComponent)
+  },
+  {
     path: 'settings',
     loadComponent: (): Promise<Type<unknown>> => import('./pages/settings/settings.component').then(module => module.SettingsComponent)
   },

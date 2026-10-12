@@ -1,17 +1,17 @@
 import {
-  ActiveWindow,
-  activeWindow,
-  AdoStateChange,
+  activityRanges,
   AdoUser,
-  laterDay,
   ParsedWorkItem,
   PullRequestRef,
-  readActiveOn,
   readConnectionUser,
-  readPullRequestCommits,
+  readPullRequestCommitDays,
   readPullRequestsById,
+  readRevisions,
   readWorkItemIds,
-  readWorkItems
+  readWorkItems,
+  SuggestionSpan,
+  withAccountsFromUpdates,
+  WorkItemRevision
 } from './parse';
 
 const API_VERSION = '7.1';
@@ -87,48 +87,49 @@ export class AdoClient {
     return items;
   }
 
-  async activeOn(workItemId: number, user: AdoUser): Promise<ActiveWindow & { user: AdoUser }> {
+  async workItemRanges(workItemId: number, pullRequests: PullRequestRef[], user: AdoUser, syncDate: string): Promise<SuggestionSpan[]> {
     let skip = 0;
     let currentUser = user;
 
-    const changes: AdoStateChange[] = [];
+    const revisions: WorkItemRevision[] = [];
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const body = await this.sendAdoRequest(
         'GET',
         `/_apis/wit/workItems/${workItemId}/updates?$top=${PAGE_SIZE}&$skip=${skip}`
       );
-      const read = readActiveOn(body, currentUser);
-      const count = updateCount(body);
 
-      currentUser = read.user;
-      changes.push(...read.changes);
+      currentUser = withAccountsFromUpdates(body, currentUser);
+      revisions.push(...readRevisions(body, currentUser));
 
-      if (count < PAGE_SIZE)
+      if (updateCount(body) < PAGE_SIZE)
         break;
 
       skip += PAGE_SIZE;
     }
 
-    return { ...activeWindow(changes), user: currentUser };
+    const commitDays = await this.commitDays(pullRequests, currentUser);
+
+    return activityRanges(revisions, syncDate, commitDays);
   }
 
-  async lastCommitOn(pullRequests: PullRequestRef[], user: AdoUser): Promise<string | null> {
-    let lastCommitOn: string | null = null;
+  private async commitDays(pullRequests: PullRequestRef[], user: AdoUser): Promise<string[]> {
+    const days: string[] = [];
 
     for (const pullRequest of pullRequests) {
-      const commitOn = await this.lastCommitOnPullRequest(pullRequest, user);
-
-      lastCommitOn = laterDay(lastCommitOn, commitOn);
+      for (const day of await this.commitDaysOnPullRequest(pullRequest, user)) {
+        if (!days.includes(day))
+          days.push(day);
+      }
     }
 
-    return lastCommitOn;
+    return days;
   }
 
-  private async lastCommitOnPullRequest(pullRequest: PullRequestRef, user: AdoUser): Promise<string | null> {
+  private async commitDaysOnPullRequest(pullRequest: PullRequestRef, user: AdoUser): Promise<string[]> {
     let continuation = '';
-    let lastCommitOn: string | null = null;
 
+    const days: string[] = [];
     const projectId = encodeURIComponent(pullRequest.projectId);
     const repositoryId = encodeURIComponent(pullRequest.repositoryId);
     const path = `/${projectId}/_apis/git/repositories/${repositoryId}/pullRequests/${pullRequest.pullRequestId}/commits`;
@@ -141,7 +142,7 @@ export class AdoClient {
 
       if (response.status === HTTP_NOT_FOUND) {
         await discardResponseBody(response);
-        return lastCommitOn;
+        return days;
       }
 
       if (!response.ok) {
@@ -151,14 +152,18 @@ export class AdoClient {
 
       const body: unknown = await response.json();
 
-      lastCommitOn = laterDay(lastCommitOn, readPullRequestCommits(body, user));
+      for (const day of readPullRequestCommitDays(body, user)) {
+        if (!days.includes(day))
+          days.push(day);
+      }
+
       continuation = response.headers.get('x-ms-continuationtoken') ?? '';
 
       if (!continuation)
         break;
     }
 
-    return lastCommitOn;
+    return days;
   }
 
   private async sendAdoRequest(method: 'GET' | 'POST', path: string, payload?: unknown, apiVersion = API_VERSION): Promise<unknown> {

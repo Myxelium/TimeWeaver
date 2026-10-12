@@ -1,0 +1,33 @@
+<div class="max-w-7xl mx-auto p-4 space-y-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-foreground">Stories</h1>
+            <p class="text-muted-foreground mt-2">Synced user stories, when they started, and the time logged against them</p>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button
+                (click)="previousYear()"
+                type="button"
+                class="btn-icon"
+                aria-label="Previous year"
+            >
+                <lucide-icon [img]="ChevronLeft" class="w-4 h-4" />
+            </button>
+
+            <span class="text-lg font-medium min-w-16 text-center">{{ year() }}</span>
+
+            <button
+                (click)="nextYear()"
+                type="button"
+                class="btn-icon"
+                aria-label="Next year"
+            >
+                <lucide-icon [img]="ChevronRight" class="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+
+    <app-story-timeline [rows]="filteredRows()" />
+    <app-stories-table [(searchTerm)]="searchTerm" [rows]="filteredRows()" />
+</div>

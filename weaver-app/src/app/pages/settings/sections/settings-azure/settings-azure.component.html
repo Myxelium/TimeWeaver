@@ -1,7 +1,8 @@
 <div [formGroup]="form" class="bg-card border border-border rounded-lg p-4 space-y-3">
     <p class="text-xs text-muted-foreground">
-        Reads user stories and features assigned to you that you have set to Active at least once. Done or Closed does not remove
-        them. A sync keeps the work item id, title, that Active day, and the day of your last commit on its pull request.
+        Reads user stories and features assigned to you. A stretch runs from the day it becomes Active until your last commit on a linked pull
+        request, so days spent waiting to merge are skipped. With no commit yet, it runs through today while it stays Active. Closed, Resolved, or New
+        also ends it, and Active again starts another.
     </p>
 
     <div class="flex items-center space-x-2">
@@ -73,8 +74,7 @@
             </div>
 
             <p class="text-xs text-muted-foreground">
-                Create an organization-scoped token with only those two read scopes. It stays on this computer and is not shown
-                again.
+                Create an organization-scoped token with only Work Items (Read) and Code (Read). It stays on this computer and is not shown again.
                 @if (adoPatConfigured) {
                     A token is saved.
                 }
@@ -82,9 +82,8 @@
         </div>
     } @else {
         <p class="text-xs text-muted-foreground">
-            Uses the Azure CLI session on this computer. Run az login in a terminal first. At sync, Weaver asks Azure CLI for a
-            one-hour token and does not save it. The same work item id, title, Active day, and last commit day are the only data
-            kept.
+            Uses the Azure CLI session on this computer. Run az login in a terminal first. At sync, Weaver asks Azure CLI for a one-hour token and
+            does not save it. The work item id, title, and Active stretches are the only data kept.
         </p>
     }
 

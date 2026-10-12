@@ -1,0 +1,31 @@
+<div class="card-panel">
+    <h2 class="section-heading">When stories were active</h2>
+
+    @if (rows().length > 0) {
+        <div class="overflow-x-auto">
+            <div class="min-w-[720px]">
+                <div class="grid grid-cols-[12rem_1fr] gap-x-3 mb-2">
+                    <div></div>
+
+                    <div class="grid grid-cols-12 text-xs text-muted-foreground">
+                        @for (month of months; track month) {
+                            <div class="text-center">{{ month }}</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="max-h-[32rem] overflow-y-auto">
+                    @for (row of rows(); track row.adoId) {
+                        <app-story-timeline-row [row]="row" [months]="months" />
+                    }
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-4 text-sm text-muted-foreground">
+            Rows stay compact until you rest on one. Solid bars have logged hours this year. Faded bars were active, with no time logged yet.
+        </p>
+    } @else {
+        <div class="text-center py-12 text-muted-foreground">No synced user stories overlap this year.</div>
+    }
+</div>

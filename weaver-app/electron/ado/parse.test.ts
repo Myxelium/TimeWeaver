@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 
 import {
+  activityRanges,
   laterDay,
   localDay,
   organizationName,
-  readActiveOn,
   readConnectionUser,
   readPullRequestCommits,
+  readRevisions,
   readWorkItemIds,
   readWorkItems,
-  suggestionRange
+  SuggestionSpan
 } from './parse';
 
 const user = {
@@ -93,54 +94,123 @@ function testWorkItemKeepsTitleIdAndPullRequests(): void {
   });
 }
 
-function testActiveDateUsesOnlyThisUsersChange(): void {
-  const read = readActiveOn({
-    value: [
-      {
-        revisedBy: { id: 'someone-else', uniqueName: 'other@example.com', displayName: 'Other' },
-        revisedDate: '2026-10-01T08:00:00.000Z',
-        fields: { 'System.State': { newValue: 'Active' }, 'System.History': { newValue: 'do not keep' } }
-      },
-      {
-        revisedBy: { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' },
-        revisedDate: '2026-10-02T08:00:00.000Z',
-        fields: { 'System.State': { newValue: 'Active' } }
-      },
-      {
-        revisedBy: { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' },
-        revisedDate: '2026-10-05T08:00:00.000Z',
-        fields: { 'System.State': { newValue: 'Resolved' } }
-      },
-      {
-        revisedBy: { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' },
-        revisedDate: '2026-10-08T08:00:00.000Z',
-        fields: { 'System.State': { newValue: 'Active' } }
-      }
-    ]
-  }, user);
+const me = { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' };
+const other = { id: 'other', uniqueName: 'other@example.com', displayName: 'Other' };
 
-  assert.equal(read.activeOn, localDay('2026-10-08T08:00:00.000Z'));
-  assert.equal(read.inactiveOn, null);
+function workItemUpdate(revisedDate: string, fields: Record<string, unknown>, changedOn?: string): Record<string, unknown> {
+  return {
+    revisedBy: { id: 'someone-else', uniqueName: 'other@example.com', displayName: 'Other' },
+    revisedDate,
+    fields: changedOn ? { ...fields, 'System.ChangedDate': { newValue: changedOn } } : fields
+  };
 }
 
-function testClosedStateEndsTheActiveWindow(): void {
-  const read = readActiveOn({
-    value: [
-      {
-        revisedBy: { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' },
-        revisedDate: '2026-07-15T08:00:00.000Z',
-        fields: { 'System.State': { newValue: 'Active' } }
-      },
-      {
-        revisedBy: { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' },
-        revisedDate: '2026-07-16T08:00:00.000Z',
-        fields: { 'System.State': { newValue: 'Closed' } }
-      }
-    ]
-  }, user);
+function state(value: string): Record<string, unknown> {
+  return { 'System.State': { newValue: value } };
+}
 
-  assert.equal(read.activeOn, localDay('2026-07-15T08:00:00.000Z'));
-  assert.equal(read.inactiveOn, localDay('2026-07-16T08:00:00.000Z'));
+function assignedIdentity(person: { id: string; uniqueName: string; displayName: string }): Record<string, unknown> {
+  return { 'System.AssignedTo': { newValue: person } };
+}
+
+function rangesFromUpdates(updates: Record<string, unknown>[], syncDate: string): SuggestionSpan[] {
+  return activityRanges(readRevisions({ value: updates }, user), syncDate);
+}
+
+function testAnyoneCanActivateWhileAssignedToMe(): void {
+  const opened = '2026-10-02T12:00:00.000Z';
+  const assigned = workItemUpdate('2026-10-01T12:00:00.000Z', assignedIdentity(me));
+  const activated = workItemUpdate(opened, state('Active'));
+  const ranges = rangesFromUpdates([assigned, activated], '2026-10-12');
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(opened), rangeEnd: '2026-10-12' }]);
+}
+
+function testOpenWorkCoversEveryDayUntilSync(): void {
+  const opened = '2026-10-01T12:00:00.000Z';
+  const ranges = rangesFromUpdates([workItemUpdate(opened, { ...state('Active'), ...assignedIdentity(me) })], '2026-10-03');
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(opened), rangeEnd: '2026-10-03' }]);
+}
+
+function testCloseByAnyoneEndsTheRange(): void {
+  const opened = '2026-07-15T08:00:00.000Z';
+  const closed = '2026-07-16T08:00:00.000Z';
+  const activated = workItemUpdate(opened, { ...state('Active'), ...assignedIdentity(me) });
+  const finished = workItemUpdate('9999-01-01T00:00:00Z', state('Closed'), closed);
+  const ranges = rangesFromUpdates([activated, finished], '2026-10-12');
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(opened), rangeEnd: localDay(closed) }]);
+}
+
+function testResolvedEndsTheRange(): void {
+  const opened = '2026-10-02T12:00:00.000Z';
+  const resolved = '2026-10-05T12:00:00.000Z';
+  const activated = workItemUpdate(opened, { ...state('Active'), ...assignedIdentity(me) });
+  const finished = workItemUpdate(resolved, state('Resolved'));
+  const ranges = rangesFromUpdates([activated, finished], '2026-10-12');
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(opened), rangeEnd: localDay(resolved) }]);
+}
+
+function testNewPausesAndLaterActiveStartsAnotherRange(): void {
+  const opened = '2026-06-01T12:00:00.000Z';
+  const paused = '2026-06-03T12:00:00.000Z';
+  const resumed = '2026-08-01T12:00:00.000Z';
+  const ranges = rangesFromUpdates([
+    workItemUpdate(opened, { ...state('Active'), ...assignedIdentity(me) }),
+    workItemUpdate(paused, state('New')),
+    workItemUpdate(resumed, state('Active'))
+  ], '2026-10-12');
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(opened), rangeEnd: localDay(paused) }, { activeOn: localDay(resumed), rangeEnd: '2026-10-12' }]);
+
+  assert.ok(ranges[0].rangeEnd < ranges[1].activeOn);
+}
+
+function testRangeWaitsUntilAssignedToMe(): void {
+  const opened = '2026-10-01T12:00:00.000Z';
+  const mine = '2026-10-04T12:00:00.000Z';
+  const activated = workItemUpdate(opened, { ...state('Active'), ...assignedIdentity(other) });
+  const claimed = workItemUpdate(mine, assignedIdentity(me));
+  const ranges = rangesFromUpdates([activated, claimed], '2026-10-12');
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(mine), rangeEnd: '2026-10-12' }]);
+}
+
+function testActivatedTodayUsesTheRealChangeDate(): void {
+  const changed = '2026-10-12T08:00:00.000Z';
+  const ranges = rangesFromUpdates([workItemUpdate('9999-01-01T00:00:00Z', { ...state('Active'), ...assignedIdentity(me) }, changed)], '2026-10-12');
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(changed), rangeEnd: '2026-10-12' }]);
+}
+
+function testCommitEndsTheStretchBeforeMerge(): void {
+  const opened = '2026-10-01T12:00:00.000Z';
+  const merged = '2026-10-21T12:00:00.000Z';
+  const activated = workItemUpdate(opened, { ...state('Active'), ...assignedIdentity(me) });
+  const resolved = workItemUpdate(merged, state('Resolved'));
+  const commitDay = localDay('2026-10-03T12:00:00.000Z');
+  const ranges = activityRanges(readRevisions({ value: [activated, resolved] }, user), '2026-10-21', [commitDay]);
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(opened), rangeEnd: commitDay }]);
+}
+
+function testEarlierCommitDoesNotEndTheNextStretch(): void {
+  const opened = '2026-06-01T12:00:00.000Z';
+  const paused = '2026-06-03T12:00:00.000Z';
+  const resumed = '2026-08-01T12:00:00.000Z';
+  const commitDay = localDay('2026-06-02T12:00:00.000Z');
+  const activated = workItemUpdate(opened, { ...state('Active'), ...assignedIdentity(me) });
+  const held = workItemUpdate(paused, state('New'));
+  const continued = workItemUpdate(resumed, state('Active'));
+  const ranges = activityRanges(readRevisions({ value: [
+    activated,
+    held,
+    continued
+  ] }, user), '2026-10-12', [commitDay]);
+
+  assert.deepEqual(ranges, [{ activeOn: localDay(opened), rangeEnd: commitDay }, { activeOn: localDay(resumed), rangeEnd: '2026-10-12' }]);
 }
 
 function testCommitDateUsesOnlyThisUser(): void {
@@ -154,14 +224,7 @@ function testCommitDateUsesOnlyThisUser(): void {
   assert.equal(day, localDay('2026-10-10T15:00:00.000Z'));
 }
 
-function testSuggestionRange(): void {
-  assert.deepEqual(suggestionRange(null, null, '2026-10-12'), { activeOn: null, rangeEnd: null });
-  assert.deepEqual(suggestionRange('2026-10-02', null, '2026-10-12'), { activeOn: '2026-10-02', rangeEnd: '2026-10-12' });
-  assert.deepEqual(suggestionRange('2026-10-02', '2026-10-10', '2026-10-12'), { activeOn: '2026-10-02', rangeEnd: '2026-10-10' });
-  assert.deepEqual(suggestionRange('2026-10-08', '2026-10-04', '2026-10-12'), { activeOn: '2026-10-08', rangeEnd: '2026-10-12' });
-  assert.deepEqual(suggestionRange('2026-07-15', null, '2026-10-12', '2026-07-16'), { activeOn: '2026-07-15', rangeEnd: '2026-07-16' });
-  assert.deepEqual(suggestionRange('2026-10-02', '2026-10-10', '2026-10-12', '2026-10-08'), { activeOn: '2026-10-02', rangeEnd: '2026-10-08' });
-  assert.deepEqual(suggestionRange('2026-10-02', '2026-10-06', '2026-10-12', '2026-10-10'), { activeOn: '2026-10-02', rangeEnd: '2026-10-06' });
+function testLaterDay(): void {
   assert.equal(laterDay('2026-10-04', '2026-10-10'), '2026-10-10');
   assert.equal(laterDay('2026-10-10', null), '2026-10-10');
 }
@@ -170,9 +233,16 @@ testOrganizationName();
 testConnectionUserDropsExtraFields();
 testQueryKeepsIdsOnly();
 testWorkItemKeepsTitleIdAndPullRequests();
-testActiveDateUsesOnlyThisUsersChange();
-testClosedStateEndsTheActiveWindow();
+testAnyoneCanActivateWhileAssignedToMe();
+testOpenWorkCoversEveryDayUntilSync();
+testCloseByAnyoneEndsTheRange();
+testResolvedEndsTheRange();
+testNewPausesAndLaterActiveStartsAnotherRange();
+testRangeWaitsUntilAssignedToMe();
+testActivatedTodayUsesTheRealChangeDate();
+testCommitEndsTheStretchBeforeMerge();
+testEarlierCommitDoesNotEndTheNextStretch();
 testCommitDateUsesOnlyThisUser();
-testSuggestionRange();
+testLaterDay();
 
 console.log('ado parse tests passed');

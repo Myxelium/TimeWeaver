@@ -1,0 +1,125 @@
+<div class="card-panel overflow-x-auto">
+    <div class="mb-6">
+        <h2 class="section-heading mb-4">All stories</h2>
+
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <lucide-icon
+                    [img]="Search"
+                    [size]="20"
+                    class="text-muted-foreground"
+                />
+            </div>
+
+            <input
+                (input)="searchTerm.set($any($event.target).value)"
+                [value]="searchTerm()"
+                type="text"
+                placeholder="Search stories by title or date..."
+                class="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+        </div>
+    </div>
+
+    @if (sortedRows().length > 0) {
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-border">
+                    <th class="text-left py-3 px-4">
+                        <button
+                            (click)="toggleSort('started')"
+                            type="button"
+                            class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
+                        >
+                            <lucide-icon [img]="Calendar" [size]="16" />
+                                Started
+                                <lucide-icon [img]="sortIcon('started')" [size]="16" />
+                        </button>
+                    </th>
+
+                    <th class="text-left py-3 px-4">
+                        <button
+                            (click)="toggleSort('title')"
+                            type="button"
+                            class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
+                        >
+                            <lucide-icon [img]="FileText" [size]="16" />
+                                Title
+                                <lucide-icon [img]="sortIcon('title')" [size]="16" />
+                        </button>
+                    </th>
+
+                    <th class="text-left py-3 px-4 hidden md:table-cell">
+                        <button
+                            (click)="toggleSort('ended')"
+                            type="button"
+                            class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
+                        >
+                            <lucide-icon [img]="Calendar" [size]="16" />
+                                Ended
+                                <lucide-icon [img]="sortIcon('ended')" [size]="16" />
+                        </button>
+                    </th>
+
+                    <th class="text-right py-3 px-4 hidden sm:table-cell">
+                        <button
+                            (click)="toggleSort('days')"
+                            type="button"
+                            class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors ml-auto"
+                        >
+                                Days
+                                <lucide-icon [img]="sortIcon('days')" [size]="16" />
+                        </button>
+                    </th>
+
+                    <th class="text-right py-3 px-4">
+                        <button
+                            (click)="toggleSort('hours')"
+                            type="button"
+                            class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors ml-auto"
+                        >
+                            <lucide-icon [img]="Clock" [size]="16" />
+                                Hours
+                                <lucide-icon [img]="sortIcon('hours')" [size]="16" />
+                        </button>
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (row of sortedRows(); track row.adoId) {
+                    <tr class="border-b border-border">
+                        <td class="py-3 px-4 text-foreground">{{ row.started }}</td>
+
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-foreground">{{ row.title }}</div>
+                            <div class="text-sm text-muted-foreground mt-1 md:hidden">Ended {{ row.ended }}</div>
+                        </td>
+
+                        <td class="py-3 px-4 text-muted-foreground hidden md:table-cell">{{ row.ended }}</td>
+                        <td class="py-3 px-4 text-right text-foreground hidden sm:table-cell">{{ row.days }}</td>
+                        <td class="py-3 px-4 text-right font-semibold text-foreground">{{ row.hours | number: '1.0-1' }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mt-4 text-sm text-muted-foreground">Showing {{ sortedRows().length }} story(s)</div>
+    } @else {
+        <div class="text-center py-12">
+            <lucide-icon
+                [img]="FileText"
+                [size]="48"
+                class="text-muted-foreground mx-auto mb-4"
+            />
+
+            <p class="text-muted-foreground">
+                @if (searchTerm()) {
+                        No stories found matching "{{ searchTerm() }}"
+                    } @else {
+                        No synced user stories overlap this year
+                    }
+            </p>
+        </div>
+    }
+</div>

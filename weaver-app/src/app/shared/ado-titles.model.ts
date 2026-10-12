@@ -1,9 +1,19 @@
-import { AdoSuggestion } from './models';
+import { AdoSuggestion, AdoSuggestionRange } from './models';
+
+export function suggestionRanges(item: AdoSuggestion): AdoSuggestionRange[] {
+  if (item.ranges?.length)
+    return item.ranges;
+
+  if (item.activeOn && item.rangeEnd)
+    return [{ activeOn: item.activeOn, rangeEnd: item.rangeEnd }];
+
+  return [];
+}
 
 export function suggestionsOnDay(suggestions: AdoSuggestion[], dayKey: string): AdoSuggestion[] {
-  return suggestions.filter(item =>
-    !!item.activeOn && !!item.rangeEnd && item.activeOn <= dayKey && dayKey <= item.rangeEnd
-  );
+  return suggestions.filter(item => suggestionRanges(item).some(range =>
+    range.activeOn <= dayKey && dayKey <= range.rangeEnd
+  ));
 }
 
 export function titlesForLogging(taskTitles: string[], suggestions: AdoSuggestion[]): string[] {

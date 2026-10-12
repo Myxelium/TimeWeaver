@@ -153,10 +153,16 @@ export interface SettingsDTO {
   adoLastSyncError?: string;
 }
 
+export interface AdoSuggestionRangeDTO {
+  activeOn: string;
+  rangeEnd: string;
+}
+
 export interface AdoSuggestionDTO {
   adoId: number;
   title: string;
   activeOn: string | null;
   rangeEnd: string | null;
+  ranges: AdoSuggestionRangeDTO[];
   spentTimeIsZero: boolean;
 }

@@ -4,12 +4,7 @@ import { AdoWorkItem } from '../entities/AdoWorkItem';
 import { Setting } from '../entities/Setting';
 import { azureCliAccessToken } from './azure-cli';
 import { AdoClient } from './client';
-import {
-  AdoUser,
-  organizationName,
-  suggestionRange,
-  todayLocal
-} from './parse';
+import { organizationName, todayLocal } from './parse';
 
 export interface AdoSyncResult {
   ran: boolean;
@@ -157,47 +152,28 @@ async function collectWorkItems(
   syncDate: string
 ): Promise<AdoWorkItem[]> {
   const client = new AdoClient(organization, credential.authorization, credential.rejectedMessage);
-
-  let user = await client.currentUser();
-
+  const user = await client.currentUser();
   const assigned = await client.assignedWorkItems();
   const rows: AdoWorkItem[] = [];
 
   for (const item of assigned) {
-    const active = await client.activeOn(item.adoId, user);
+    const ranges = await client.workItemRanges(item.adoId, item.pullRequests, user, syncDate);
 
-    user = mergeUser(user, active.user);
-
-    if (!active.activeOn)
+    if (!ranges.length)
       continue;
 
-    const lastCommitOn = await client.lastCommitOn(item.pullRequests, user);
-    const range = suggestionRange(active.activeOn, lastCommitOn, syncDate, active.inactiveOn);
+    const latest = ranges[ranges.length - 1];
 
     rows.push({
       adoId: item.adoId,
       title: item.title,
-      activeOn: range.activeOn,
-      rangeEnd: range.rangeEnd
+      activeOn: latest.activeOn,
+      rangeEnd: latest.rangeEnd,
+      ranges: JSON.stringify(ranges)
     });
   }
 
   return rows;
-}
-
-function mergeUser(current: AdoUser, next: AdoUser): AdoUser {
-  const accounts = [...current.accounts];
-
-  for (const account of next.accounts) {
-    if (!accounts.some(existing => existing.toLowerCase() === account.toLowerCase()))
-      accounts.push(account);
-  }
-
-  return {
-    id: current.id,
-    displayName: current.displayName || next.displayName,
-    accounts
-  };
 }
 
 async function rememberError(settingsRepo: Repository<Setting>, settings: Setting, error: string): Promise<AdoSyncResult> {

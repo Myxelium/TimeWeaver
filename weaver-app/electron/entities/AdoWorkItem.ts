@@ -17,4 +17,7 @@ export class AdoWorkItem {
 
   @Column({ type: 'text', nullable: true })
   rangeEnd!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  ranges!: string | null;
 }

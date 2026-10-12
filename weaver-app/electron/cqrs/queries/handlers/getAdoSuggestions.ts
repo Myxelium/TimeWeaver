@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 import { loggingTitle } from '../../../ado/parse';
 import { AdoWorkItem } from '../../../entities/AdoWorkItem';
 import { Task } from '../../../entities/Task';
-import { AdoSuggestionDTO } from '../../types';
+import { AdoSuggestionDTO, AdoSuggestionRangeDTO } from '../../types';
 
 export async function handleGetAdoSuggestions(dataSource: DataSource): Promise<AdoSuggestionDTO[]> {
   const items = await dataSource.getRepository(AdoWorkItem).find({ order: { adoId: 'ASC' } });
@@ -42,13 +42,54 @@ export async function handleGetAdoSuggestions(dataSource: DataSource): Promise<A
     const linkedHours = hoursById.get(item.adoId) ?? 0;
     const titleHours = (titleCount.get(title) ?? 0) === 1 ? (hoursByTitle.get(title) ?? 0) : 0;
     const formattedHours = hoursByTitle.get(shownTitle) ?? 0;
+    const ranges = readStoredRanges(item);
+    const latest = ranges[ranges.length - 1];
 
     return {
       adoId: item.adoId,
       title: shownTitle,
-      activeOn: item.activeOn,
-      rangeEnd: item.rangeEnd,
+      activeOn: latest?.activeOn ?? item.activeOn,
+      rangeEnd: latest?.rangeEnd ?? item.rangeEnd,
+      ranges,
       spentTimeIsZero: linkedHours <= 0 && titleHours <= 0 && formattedHours <= 0
     };
   });
+}
+
+function readStoredRanges(item: AdoWorkItem): AdoSuggestionRangeDTO[] {
+  const parsed = parseRanges(item.ranges);
+
+  if (parsed.length)
+    return parsed;
+
+  if (item.activeOn && item.rangeEnd)
+    return [{ activeOn: item.activeOn, rangeEnd: item.rangeEnd }];
+
+  return [];
+}
+
+function parseRanges(raw: string | null): AdoSuggestionRangeDTO[] {
+  if (!raw)
+    return [];
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+
+    if (!Array.isArray(parsed))
+      return [];
+
+    return parsed.flatMap(entry => {
+      if (!entry || typeof entry !== 'object')
+        return [];
+
+      const range = entry as { activeOn?: unknown; rangeEnd?: unknown };
+
+      if (typeof range.activeOn !== 'string' || typeof range.rangeEnd !== 'string')
+        return [];
+
+      return [{ activeOn: range.activeOn, rangeEnd: range.rangeEnd }];
+    });
+  } catch {
+    return [];
+  }
 }

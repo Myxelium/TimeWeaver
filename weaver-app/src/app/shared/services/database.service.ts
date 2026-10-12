@@ -260,6 +260,7 @@ export class DatabaseService {
         title: '#1001 Sample user story',
         activeOn: format(start, 'yyyy-MM-dd'),
         rangeEnd: format(today, 'yyyy-MM-dd'),
+        ranges: [{ activeOn: format(start, 'yyyy-MM-dd'), rangeEnd: format(today, 'yyyy-MM-dd') }],
         spentTimeIsZero: true
       },
       {
@@ -267,6 +268,7 @@ export class DatabaseService {
         title: '#1002 Another sample story',
         activeOn: format(today, 'yyyy-MM-dd'),
         rangeEnd: format(today, 'yyyy-MM-dd'),
+        ranges: [{ activeOn: format(today, 'yyyy-MM-dd'), rangeEnd: format(today, 'yyyy-MM-dd') }],
         spentTimeIsZero: false
       }
     ];

@@ -21,14 +21,15 @@ export interface ParsedWorkItem {
   pullRequests: PullRequestRef[];
 }
 
-export interface AdoStateChange {
-  revisedDate: string;
-  active: boolean;
+export interface SuggestionSpan {
+  activeOn: string;
+  rangeEnd: string;
 }
 
-export interface ActiveWindow {
-  activeOn: string | null;
-  inactiveOn: string | null;
+export interface WorkItemRevision {
+  at: string;
+  state: string | null;
+  assignedToMe: boolean | null;
 }
 
 export function loggingTitle(adoId: number, title: string): string {
@@ -129,70 +130,124 @@ export function readWorkItems(body: unknown): ParsedWorkItem[] {
   return parsed;
 }
 
-export function readActiveOn(body: unknown, user: AdoUser): ActiveWindow & { changes: AdoStateChange[]; user: AdoUser } {
+export function readRevisions(body: unknown, user: AdoUser): WorkItemRevision[] {
   const updates = Array.isArray(body) ? body : asRecord(body).value;
-  const changes: AdoStateChange[] = [];
-
-  let displayName = user.displayName;
-
-  const accounts = [...user.accounts];
+  const revisions: WorkItemRevision[] = [];
 
   if (!Array.isArray(updates))
-    return { activeOn: null, inactiveOn: null, changes, user: { ...user, accounts } };
+    return revisions;
 
   for (const update of updates) {
     const entry = asRecord(update);
-    const revisedBy = asRecord(entry.revisedBy);
+    const at = revisionInstant(entry);
+    const stateChange = readNewValue(entry, 'System.State');
+    const assignmentChange = readNewValue(entry, 'System.AssignedTo');
+    const state = stateChange.changed ? readText(stateChange.value) : null;
+    const assignedToMe = assignmentChange.changed ? identityIsUser(assignmentChange.value, user) : null;
 
-    if (!sameIdentity(revisedBy, user))
+    if (!at || (!state && assignedToMe === null))
       continue;
 
-    const uniqueName = readText(revisedBy.uniqueName);
-
-    if (uniqueName && !accounts.some(account => sameText(account, uniqueName)))
-      accounts.push(uniqueName);
-
-    if (!displayName)
-      displayName = readText(revisedBy.displayName);
-
-    const change = readStateChange(entry);
-
-    if (change)
-      changes.push(change);
+    revisions.push({ at, state, assignedToMe });
   }
 
-  return {
-    ...activeWindow(changes),
-    changes,
-    user: { id: user.id, displayName, accounts }
-  };
+  return revisions;
 }
 
-export function activeWindow(changes: AdoStateChange[]): ActiveWindow {
-  let activeIso = '';
+export function activityRanges(revisions: WorkItemRevision[], syncDate: string, commitDays: string[] = []): SuggestionSpan[] {
+  const ordered = [...revisions].sort((left, right) => left.at.localeCompare(right.at));
+  const spans: SuggestionSpan[] = [];
 
-  for (const change of changes) {
-    if (change.active && change.revisedDate > activeIso)
-      activeIso = change.revisedDate;
+  let state = '';
+  let assignedToMe = true;
+  let startedAt = '';
+
+  for (const revision of ordered) {
+    if (revision.state !== null)
+      state = revision.state;
+
+    if (revision.assignedToMe !== null)
+      assignedToMe = revision.assignedToMe;
+
+    const suggesting = state.toLowerCase() === ACTIVE_STATE && assignedToMe;
+
+    if (suggesting && !startedAt)
+      startedAt = revision.at;
+
+    if (!suggesting && startedAt) {
+      pushSpan(spans, startedAt, localDay(revision.at));
+      startedAt = '';
+    }
   }
 
-  if (!activeIso)
-    return { activeOn: null, inactiveOn: null };
+  if (startedAt)
+    pushSpan(spans, startedAt, syncDate);
 
-  let inactiveIso = '';
+  return clipSpansToCommits(spans, commitDays);
+}
 
-  for (const change of changes) {
-    const leftActive = !change.active && change.revisedDate > activeIso;
-    const earlier = !inactiveIso || change.revisedDate < inactiveIso;
+function clipSpansToCommits(spans: SuggestionSpan[], commitDays: string[]): SuggestionSpan[] {
+  if (!commitDays.length)
+    return spans;
 
-    if (leftActive && earlier)
-      inactiveIso = change.revisedDate;
+  return spans.map(span => {
+    let lastCommit = '';
+
+    for (const day of commitDays) {
+      if (day >= span.activeOn && day <= span.rangeEnd && day > lastCommit)
+        lastCommit = day;
+    }
+
+    if (!lastCommit)
+      return span;
+
+    return { activeOn: span.activeOn, rangeEnd: lastCommit };
+  });
+}
+
+export function withAccountsFromUpdates(body: unknown, user: AdoUser): AdoUser {
+  const updates = Array.isArray(body) ? body : asRecord(body).value;
+  const accounts = [...user.accounts];
+
+  if (!Array.isArray(updates))
+    return user;
+
+  for (const update of updates) {
+    const revisedBy = asRecord(asRecord(update).revisedBy);
+    const uniqueName = readText(revisedBy['uniqueName']);
+
+    if (readText(revisedBy['id']) !== user.id || !uniqueName)
+      continue;
+
+    if (!accounts.some(account => sameText(account, uniqueName)))
+      accounts.push(uniqueName);
   }
 
-  return {
-    activeOn: localDay(activeIso),
-    inactiveOn: inactiveIso ? localDay(inactiveIso) : null
-  };
+  if (accounts.length === user.accounts.length)
+    return user;
+
+  return { id: user.id, displayName: user.displayName, accounts };
+}
+
+export function readPullRequestCommitDays(body: unknown, user: AdoUser): string[] {
+  const commits = Array.isArray(body) ? body : asRecord(body).value;
+  const days: string[] = [];
+
+  if (!Array.isArray(commits))
+    return days;
+
+  for (const commit of commits) {
+    const entry = asRecord(commit);
+    const author = asRecord(entry['author']);
+    const committer = asRecord(entry['committer']);
+    const matched = matchesUser(author, user) ? author : matchesUser(committer, user) ? committer : null;
+    const day = matched ? localDay(readText(matched['date'])) : null;
+
+    if (day && !days.includes(day))
+      days.push(day);
+  }
+
+  return days;
 }
 
 export function readPullRequestCommits(body: unknown, user: AdoUser): string | null {
@@ -221,26 +276,6 @@ export function readPullRequestCommits(body: unknown, user: AdoUser): string | n
   return latestIso ? localDay(latestIso) : null;
 }
 
-export function suggestionRange(
-  activeOn: string | null,
-  lastCommitOn: string | null,
-  syncDate: string,
-  inactiveOn: string | null = null
-): { activeOn: string | null; rangeEnd: string | null } {
-  if (!activeOn)
-    return { activeOn: null, rangeEnd: null };
-
-  let rangeEnd = syncDate;
-
-  if (lastCommitOn && lastCommitOn >= activeOn)
-    rangeEnd = lastCommitOn;
-
-  if (inactiveOn && inactiveOn >= activeOn && inactiveOn < rangeEnd)
-    rangeEnd = inactiveOn;
-
-  return { activeOn, rangeEnd };
-}
-
 export function laterDay(current: string | null, next: string | null): string | null {
   if (!next)
     return current;
@@ -251,18 +286,87 @@ export function laterDay(current: string | null, next: string | null): string | 
   return current;
 }
 
-function readStateChange(entry: Record<string, unknown>): AdoStateChange | null {
-  const state = asRecord(asRecord(entry.fields)['System.State']);
-  const newState = readText(state.newValue);
-  const revisedDate = readText(entry.revisedDate);
+function pushSpan(spans: SuggestionSpan[], startedAt: string, rangeEnd: string | null): void {
+  const activeOn = localDay(startedAt);
 
-  if (!newState || !revisedDate)
-    return null;
+  if (!activeOn || !rangeEnd || rangeEnd < activeOn)
+    return;
 
-  return {
-    revisedDate,
-    active: newState.toLowerCase() === ACTIVE_STATE
-  };
+  const previous = spans[spans.length - 1];
+
+  if (previous && activeOn <= previous.rangeEnd) {
+    if (rangeEnd > previous.rangeEnd)
+      previous.rangeEnd = rangeEnd;
+
+    return;
+  }
+
+  spans.push({ activeOn, rangeEnd });
+}
+
+function revisionInstant(entry: Record<string, unknown>): string {
+  const revised = readText(entry.revisedDate);
+
+  if (revised && !isCurrentRevision(revised))
+    return revised;
+
+  const fields = asRecord(entry.fields);
+  const changedDate = asRecord(fields['System.ChangedDate']);
+  const changedOn = readText(changedDate.newValue);
+
+  if (changedOn && !isCurrentRevision(changedOn))
+    return changedOn;
+
+  return '';
+}
+
+function isCurrentRevision(value: string): boolean {
+  return value.startsWith('9999-');
+}
+
+function readNewValue(entry: Record<string, unknown>, fieldName: string): { changed: boolean; value: unknown } {
+  const fields = asRecord(entry.fields);
+
+  if (!Object.prototype.hasOwnProperty.call(fields, fieldName))
+    return { changed: false, value: undefined };
+
+  const change = fields[fieldName];
+
+  if (!change || typeof change !== 'object' || !Object.prototype.hasOwnProperty.call(change, 'newValue'))
+    return { changed: false, value: undefined };
+
+  return { changed: true, value: (change as { newValue: unknown }).newValue };
+}
+
+function identityIsUser(value: unknown, user: AdoUser): boolean {
+  if (typeof value === 'string')
+    return textNamesUser(value, user);
+
+  if (!value || typeof value !== 'object')
+    return false;
+
+  const identity = value as Record<string, unknown>;
+  const uniqueName = readText(identity.uniqueName);
+  const knownAccount = user.accounts.some(account => sameText(account, uniqueName));
+
+  if (uniqueName && knownAccount)
+    return true;
+
+  const id = readText(identity.id);
+
+  if (user.id && id)
+    return id === user.id;
+
+  return sameText(readText(identity.displayName), user.displayName);
+}
+
+function textNamesUser(value: string, user: AdoUser): boolean {
+  const namesAccount = user.accounts.some(account => value.toLowerCase().includes(account.trim().toLowerCase()));
+
+  if (namesAccount)
+    return true;
+
+  return sameText(value, user.displayName);
 }
 
 function readWorkItem(item: unknown): ParsedWorkItem | null {
@@ -330,10 +434,6 @@ function accountsFrom(properties: unknown): string[] {
   const value = readText(asRecord(account).$value).trim();
 
   return value ? [value] : [];
-}
-
-function sameIdentity(revisedBy: Record<string, unknown>, user: AdoUser): boolean {
-  return readText(revisedBy['id']) === user.id && user.id.length > 0;
 }
 
 function matchesUser(person: Record<string, unknown>, user: AdoUser): boolean {

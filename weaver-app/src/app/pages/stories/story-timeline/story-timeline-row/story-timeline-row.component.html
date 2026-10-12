@@ -1,0 +1,24 @@
+<div class="group grid grid-cols-[12rem_1fr] gap-x-3 items-center h-2 overflow-hidden transition-[height] duration-300 ease-out hover:h-10">
+    <div [title]="row().title" class="truncate text-sm leading-none text-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        {{ row().title }}
+    </div>
+
+    <div class="relative h-full">
+        <div class="absolute inset-0 grid grid-cols-12 pointer-events-none">
+            @for (month of months(); track month) {
+                <div class="border-l border-border/70 first:border-l-0"></div>
+            }
+        </div>
+
+        @for (bar of row().bars; track bar.activeOn + bar.rangeEnd) {
+            <div
+                [title]="barTitle(bar.activeOn, bar.rangeEnd)"
+                [style.left.%]="bar.left"
+                [style.width.%]="bar.width"
+                [class.opacity-40]="row().hours <= 0"
+                class="absolute top-px bottom-px rounded-sm min-w-1 bg-primary transition-[top,bottom] duration-300 ease-out group-hover:top-1.5 group-hover:bottom-1.5"
+            >
+            </div>
+        }
+    </div>
+</div>

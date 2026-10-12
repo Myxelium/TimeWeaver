@@ -133,11 +133,17 @@ export interface Settings {
 
 export const DAILY_WORK_HOURS = 8;
 
+export interface AdoSuggestionRange {
+  activeOn: string;
+  rangeEnd: string;
+}
+
 export interface AdoSuggestion {
   adoId: number;
   title: string;
   activeOn: string | null;
   rangeEnd: string | null;
+  ranges?: AdoSuggestionRange[];
   spentTimeIsZero: boolean;
 }
 
@@ -159,5 +165,11 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'archive',
     label: 'Records',
     title: 'All Records'
+  },
+  {
+    path: '/stories',
+    icon: 'stories',
+    label: 'Stories',
+    title: 'User stories'
   }
 ];
