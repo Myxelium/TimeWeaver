@@ -169,6 +169,7 @@ function showMainWindow(): void {
   if (mainWindow.isMinimized())
     mainWindow.restore();
 
+  mainWindow.setSkipTaskbar(false);
   mainWindow.show();
   mainWindow.focus();
 }
@@ -233,7 +234,20 @@ function setupIpcHandlers(): void {
   });
 }
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    showMainWindow();
+  });
+}
+
 app.whenReady().then(async () => {
+  if (!hasSingleInstanceLock)
+    return;
+
   await initializeDatabase();
   setupIpcHandlers();
   await createWindow();

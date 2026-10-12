@@ -1,6 +1,6 @@
 {
   "name": "weaver-app",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A time tracking application for productivity management",
   "author": {
     "name": "Weaver Team",
@@ -118,6 +118,12 @@
     "asarUnpack": [
       "dist/main.js",
       "dist/entities/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "build/tray.png",
+        "to": "tray.png"
+      }
     ],
     "nodeGypRebuild": false,
     "buildDependenciesFromSource": false,

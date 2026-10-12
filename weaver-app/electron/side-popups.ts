@@ -3,6 +3,7 @@ import {
   BrowserWindow,
   ipcMain,
   Menu,
+  NativeImage,
   nativeImage,
   screen,
   Tray
@@ -86,7 +87,7 @@ export function shouldKeepSidePopupsAlive(): boolean {
 
 export function attachMainWindow(win: BrowserWindow): void {
   win.on('close', event => {
-    if (quitting || !launchAtLoginEnabled)
+    if (quitting || !launchAtLoginEnabled || !tray)
       return;
 
     event.preventDefault();
@@ -132,7 +133,7 @@ function ensureTray(): void {
   if (tray)
     return;
 
-  const icon = nativeImage.createFromPath(path.join(__dirname, '../build/tray.png'));
+  const icon = trayIcon();
 
   if (icon.isEmpty()) {
     console.error('Weaver tray icon is missing');
@@ -160,6 +161,19 @@ function ensureTray(): void {
   tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open', click: openMainWindow }, { label: 'Quit', click: quitApplication }]));
 
   tray.on('click', () => hosts?.showMainWindow());
+}
+
+function trayIcon(): NativeImage {
+  const candidates = [path.join(__dirname, '../build/tray.png'), path.join(process.resourcesPath, 'tray.png')];
+
+  for (const candidate of candidates) {
+    const icon = nativeImage.createFromPath(candidate);
+
+    if (!icon.isEmpty())
+      return process.platform === 'win32' ? icon.resize({ width: 32, height: 32 }) : icon;
+  }
+
+  return nativeImage.createEmpty();
 }
 
 function destroyTray(): void {
