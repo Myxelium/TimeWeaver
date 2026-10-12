@@ -1,11 +1,28 @@
-import { Injectable } from '@angular/core';
-import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { inject, Injectable } from '@angular/core';
+import {
+  Actions,
+  createEffect,
+  ofType
+} from '@ngrx/effects';
+import {
+  catchError,
+  EMPTY,
+  map,
+  mergeMap,
+  of,
+  tap
+} from 'rxjs';
+
+import { HolidayService } from '../../shared/services';
 import { DatabaseService } from '../../shared/services/database.service';
-import { SettingsActions, loadSettings } from './settings.actions';
-import { catchError, map, mergeMap, of, tap } from 'rxjs';
+import { loadSettings, SettingsActions } from './settings.actions';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsEffects {
+  private actions$ = inject(Actions);
+  private db = inject(DatabaseService);
+  private holidayService = inject(HolidayService);
+
   load$ = createEffect(() => this.actions$.pipe(
     ofType(loadSettings),
     mergeMap(() => this.db.getSettings().pipe(
@@ -46,5 +63,18 @@ export class SettingsEffects {
       root.classList.toggle('dark', !!darkMode);
     })
   ), { dispatch: false });
-  constructor(private actions$: Actions, private db: DatabaseService) {}
+
+  // Auto-detect holiday country if missing on first load
+  ensureHolidayCountry$ = createEffect(() => this.actions$.pipe(
+    ofType(SettingsActions.loadSuccess),
+    mergeMap(({ settings }) => {
+      if (!settings.holidayCountry || settings.holidayCountry.length !== 2) {
+        const cc = this.holidayService.detectCountryCode();
+
+        return of(SettingsActions.save({ settings: { ...settings, holidayCountry: cc } }));
+      }
+
+      return EMPTY;
+    })
+  ));
 }

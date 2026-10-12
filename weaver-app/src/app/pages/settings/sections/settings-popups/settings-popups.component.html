@@ -1,0 +1,181 @@
+<div [formGroup]="form" class="bg-card border border-border rounded-lg p-4 space-y-4">
+    <p class="text-xs text-muted-foreground">
+        Popups sit at the bottom-right of the screen, just above the taskbar. They only run when Weaver launches with the system.
+        Closing the window leaves Weaver in the tray so they can still appear.
+    </p>
+
+    <div class="flex items-center space-x-2">
+        <input
+            id="launchAtLogin"
+            type="checkbox"
+            formControlName="launchAtLogin"
+            class="h-4 w-4"
+        />
+
+        <label for="launchAtLogin" class="text-sm">Launch with system</label
+        >
+    </div>
+
+    <div class="space-y-4" formArrayName="popupRules">
+        @for (rule of popupRules.controls; track rule.get('id')?.value; let index = $index) {
+            <div [formGroupName]="index" class="border border-border rounded-lg p-4 space-y-3">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2">
+                        <input
+                            [id]="'popupEnabled_' + index"
+                            type="checkbox"
+                            formControlName="enabled"
+                            class="h-4 w-4"
+                        />
+
+                        <label [for]="'popupEnabled_' + index" class="text-sm">Enabled</label
+                        >
+                    </div>
+
+                    <button
+                        (click)="removeRule.emit(index)"
+                        type="button"
+                        class="btn-secondary px-3 py-1"
+                    >
+                        Remove
+                    </button>
+                </div>
+
+                @if (!form.get('launchAtLogin')?.value) {
+                    <p class="text-xs text-muted-foreground">Turn on launch with system before this popup can be enabled.</p>
+                }
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label [for]="'popupType_' + index" class="form-label">Type</label
+                        >
+
+                        <select
+                            [id]="'popupType_' + index"
+                            class="input-base"
+                            formControlName="type"
+                        >
+                            <option value="time-log">Time logging</option>
+                            <option value="reminder">Reminder</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label [for]="'popupTime_' + index" class="form-label">Time</label
+                        >
+
+                        <input
+                            [id]="'popupTime_' + index"
+                            type="time"
+                            class="input-base"
+                            formControlName="time"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <span class="form-label">Days</span>
+
+                    <div class="flex flex-wrap gap-2">
+                        @for (day of weekdayOptions; track day.value) {
+                            <button
+                                (click)="toggleDay.emit({ index, day: day.value })"
+                                [class.bg-primary]="weekdaySelected(index, day.value)"
+                                [class.text-primary-foreground]="weekdaySelected(index, day.value)"
+                                type="button"
+                                class="px-2 py-1 text-xs rounded-md border border-border"
+                            >
+                                {{ day.label }}
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <label [for]="'popupInterval_' + index" class="form-label">Repeat every (minutes)</label
+                    >
+
+                    <input
+                        [id]="'popupInterval_' + index"
+                        type="number"
+                        min="0"
+                        max="1440"
+                        class="input-base"
+                        formControlName="intervalMinutes"
+                    />
+
+                    <p class="text-xs text-muted-foreground">
+                        0 shows this popup once at the time above. Any other number shows it again that many minutes after it is
+                        closed.
+                    </p>
+                </div>
+
+                @if (rule.get('type')?.value === 'reminder') {
+                    <div>
+                        <label [for]="'popupMessage_' + index" class="form-label">Message</label
+                        >
+
+                        <textarea
+                            [id]="'popupMessage_' + index"
+                            rows="3"
+                            class="textarea-base"
+                            formControlName="message"
+                            placeholder="Reminder text"
+                        >
+                        </textarea>
+                    </div>
+
+                    <div>
+                        <label [for]="'popupDuration_' + index" class="form-label">Show for (seconds)</label
+                        >
+
+                        <input
+                            [id]="'popupDuration_' + index"
+                            type="number"
+                            min="1"
+                            max="86400"
+                            class="input-base"
+                            formControlName="durationSeconds"
+                        />
+                    </div>
+                }
+
+                @if (rule.get('type')?.value === 'time-log') {
+                    <div class="flex items-start space-x-2">
+                        <input
+                            [id]="'popupOnlyIfEmpty_' + index"
+                            type="checkbox"
+                            formControlName="onlyIfNothingReported"
+                            class="h-4 w-4 mt-0.5"
+                        />
+
+                        <label [for]="'popupOnlyIfEmpty_' + index" class="text-sm">Only show if nothing has been reported today</label
+                        >
+                    </div>
+
+                    <p class="text-xs text-muted-foreground">
+                        Use this on a later popup so it still appears when an earlier one was closed and today still has no logged
+                        time.
+                    </p>
+
+                    <p class="text-xs text-muted-foreground">
+                        Asks which user stories to log, starting from the previous filled-in day. Selected stories split the hours
+                        still needed to reach the daily target.
+                    </p>
+                }
+            </div>
+        }
+    </div>
+
+    @if (popupRules.length === 0) {
+        <p class="text-sm text-muted-foreground">No popups yet.</p>
+    }
+
+    <button
+        (click)="addRule.emit()"
+        type="button"
+        class="btn-secondary px-3 py-1"
+    >
+        Add popup
+    </button>
+</div>

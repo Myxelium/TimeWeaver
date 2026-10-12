@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, signal } from '@angular/core';
 
 export interface ConfirmOptions {
   title?: string;
@@ -22,7 +22,7 @@ export class ConfirmDialogHostComponent {
   private _resolver: ((result: boolean) => void) | null = null;
   private lastFocused: HTMLElement | null = null;
 
-  show(opts: ConfirmOptions): Promise<boolean> {
+  openDialog(opts: ConfirmOptions): Promise<boolean> {
     this.options.set(opts || {});
     this.lastFocused = document.activeElement as HTMLElement;
     this.open.set(true);
@@ -37,15 +37,15 @@ export class ConfirmDialogHostComponent {
     });
   }
 
-  confirm(): void {
-    this.finish(true);
+  acceptDialog(): void {
+    this.resolveDialog(true);
   }
 
-  cancel(): void {
-    this.finish(false);
+  dismissDialog(): void {
+    this.resolveDialog(false);
   }
 
-  private finish(val: boolean) {
+  private resolveDialog(val: boolean): void {
     this.open.set(false);
     this._resolver?.(val);
     this._resolver = null;

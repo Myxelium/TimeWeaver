@@ -1,0 +1,114 @@
+<div class="card-panel">
+    <h3 class="panel-heading">{{ isRangeMode ? 'Add time' : (editingTask ? 'Edit Task' : 'Add New Task') }}</h3>
+
+    <form
+        (ngSubmit)="submitForm.emit()"
+        [formGroup]="taskForm"
+        class="space-y-4"
+    >
+        @if (isRangeMode) {
+            <p class="text-sm text-muted-foreground">This task is added to every selected day. Days that already have time keep those entries.</p>
+        }
+
+        @if (allowDateChange) {
+            <div>
+                <label for="modalTaskDate" class="form-label">Date</label>
+
+                <input
+                    type="date"
+                    id="modalTaskDate"
+                    formControlName="date"
+                    class="input-base"
+                />
+            </div>
+        }
+
+        <div>
+            <label for="modalTaskTitle" class="form-label">Task Title</label>
+
+            <div class="relative">
+                <input
+                    (focus)="titleFocus.emit()"
+                    (blur)="titleBlur.emit()"
+                    type="text"
+                    id="modalTaskTitle"
+                    formControlName="title"
+                    class="input-base"
+                    placeholder="What are you working on?"
+                    autocomplete="off"
+                />
+
+                <app-suggestions-dropdown
+                    (toggleAll)="toggleAll.emit()"
+                    (selectSuggestion)="selectSuggestion.emit($event)"
+                    [showSuggestions]="showSuggestions"
+                    [showAllSuggestions]="showAllSuggestions"
+                    [recentSuggestions]="recentSuggestions"
+                    [filteredSuggestions]="filteredSuggestions"
+                    [allTaskTitles]="allTaskTitles"
+                />
+            </div>
+
+            @if (taskForm.get('title')?.invalid && taskForm.get('title')?.touched) {
+                <p class="text-destructive text-sm mt-1">Task title is required</p>
+            }
+        </div>
+
+        <div>
+            <label for="modalTaskDescription" class="form-label">Description (Optional)</label>
+
+            <textarea
+                formControlName="description"
+                rows="3"
+                id="modalTaskDescription"
+                class="textarea-base"
+                placeholder="Add details about the task..."
+            >
+            </textarea>
+        </div>
+
+        <div>
+            <label for="modalTaskHours" class="form-label">Hours</label>
+
+            <div class="flex gap-2">
+                <input
+                    type="number"
+                    formControlName="hours"
+                    min="0"
+                    max="24"
+                    step="0.1"
+                    id="modalTaskHours"
+                    class="flex-1 input-base"
+                    placeholder="0.0"
+                />
+
+                <app-remaining-hours-button
+                    (addRemaining)="addRemaining.emit()"
+                    [show]="(maxHoursEnabled$ | async) === true && remainingHoursVisible((maxHoursPerDay$ | async) ?? 0)"
+                    [maxHoursPerDay]="(maxHoursPerDay$ | async) ?? 0"
+                    [dayTotalHours]="dayTotalHours"
+                />
+            </div>
+        </div>
+
+        <div class="flex space-x-3">
+            <button
+                [disabled]="taskForm.invalid || (isLoading$ | async)"
+                type="submit"
+                class="flex-1 btn-primary py-2 px-4"
+            >
+                {{ isRangeMode ? 'Add to all days' : (editingTask ? 'Update Task' : 'Add Task') }}
+            </button>
+
+            @if (editingTask) {
+                <button
+                    (click)="cancelEdit.emit()"
+                    type="button"
+                    class="btn-outline px-4 py-2"
+                >
+                    Cancel
+                </button>
+            }
+        </div>
+    </form>
+</div>

@@ -1,21 +1,26 @@
+import { Type } from '@angular/core';
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./pages/home/home.component').then(module => module.HomeComponent)
+    loadComponent: (): Promise<Type<unknown>> => import('./pages/home/home.component').then(module => module.HomeComponent)
   },
   {
     path: 'month',
-    loadComponent: () => import('./pages/month/month.component').then(module => module.MonthComponent)
+    loadComponent: (): Promise<Type<unknown>> => import('./pages/month/month.component').then(module => module.MonthComponent)
   },
   {
     path: 'records',
-    loadComponent: () => import('./pages/records/records.component').then(module => module.RecordsComponent)
+    loadComponent: (): Promise<Type<unknown>> => import('./pages/records/records.component').then(module => module.RecordsComponent)
   },
   {
     path: 'settings',
-    loadComponent: () => import('./pages/settings/settings.component').then(module => module.SettingsComponent)
+    loadComponent: (): Promise<Type<unknown>> => import('./pages/settings/settings.component').then(module => module.SettingsComponent)
+  },
+  {
+    path: 'overlay/:type/:ruleId',
+    loadComponent: (): Promise<Type<unknown>> => import('./pages/overlay/popup-overlay.component').then(module => module.PopupOverlayComponent)
   },
   {
     path: '**',

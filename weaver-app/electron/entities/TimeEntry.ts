@@ -1,18 +1,26 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn
+} from 'typeorm';
+
 import { Task } from './Task';
 
 @Entity('time_entries')
 export class TimeEntry {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'id' })
   id!: number;
 
   @Column({ nullable: true })
   task_id!: number;
 
-  @Column()
+  @Column({ name: 'date' })
   date!: string;
 
-  @Column('real')
+  @Column('real', { name: 'hours' })
   hours!: number;
 
   @CreateDateColumn()

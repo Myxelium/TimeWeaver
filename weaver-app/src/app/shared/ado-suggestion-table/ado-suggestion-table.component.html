@@ -1,0 +1,40 @@
+<table class="w-full text-left text-xs">
+    <thead>
+        <tr class="text-muted-foreground">
+            <th class="font-medium pb-1 pr-3">Story</th>
+            <th class="font-medium pb-1 whitespace-nowrap">Spent time</th>
+
+            @if (showAdd) {
+                <th class="pb-1 w-8"></th>
+            }
+        </tr>
+    </thead>
+
+    <tbody>
+        @for (item of suggestions; track item.adoId) {
+            <tr class="border-t border-border">
+                <td class="py-1 pr-3 align-top">{{ item.title }}</td>
+
+                <td class="py-1 align-top whitespace-nowrap">
+                    {{ item.spentTimeIsZero ? 'Spent time is 0' : 'Time logged' }}
+                </td>
+
+                @if (showAdd) {
+                    <td class="py-0.5 align-top text-right">
+                        @if (!isLogged(item.adoId)) {
+                            <button
+                                (click)="add.emit(item)"
+                                [attr.aria-label]="'Add ' + item.title"
+                                type="button"
+                                class="icon-btn"
+                                title="Add with time"
+                            >
+                                <lucide-icon [img]="Plus" class="w-3.5 h-3.5" />
+                            </button>
+                        }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

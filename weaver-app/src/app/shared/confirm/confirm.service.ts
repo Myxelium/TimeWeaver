@@ -1,14 +1,23 @@
-import { Injectable, ApplicationRef, ComponentRef, createComponent, EnvironmentInjector, inject } from '@angular/core';
+import {
+  ApplicationRef,
+  ComponentRef,
+  createComponent,
+  EnvironmentInjector,
+  inject,
+  Injectable
+} from '@angular/core';
+
 import { ConfirmDialogHostComponent, ConfirmOptions } from './confirm-dialog.component';
 
 @Injectable({ providedIn: 'root' })
 export class ConfirmService {
   private appRef = inject(ApplicationRef);
   private injector = inject(EnvironmentInjector);
+
   private hostRef: ComponentRef<ConfirmDialogHostComponent> | null = null;
 
-  confirm(options: ConfirmOptions): Promise<boolean> {
-    return this.ensureHost().show(options || {});
+  requestConfirmation(options: ConfirmOptions): Promise<boolean> {
+    return this.ensureHost().openDialog(options || {});
   }
 
   private ensureHost(): ConfirmDialogHostComponent {

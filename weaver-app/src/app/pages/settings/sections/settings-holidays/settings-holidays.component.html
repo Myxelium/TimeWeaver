@@ -1,0 +1,57 @@
+<div [formGroup]="form" class="bg-card border border-border rounded-lg p-4">
+    <div class="space-y-4">
+        <div class="space-y-3">
+            <label class="form-label" for="holidayCountry">Holiday Country</label
+            >
+
+            <div class="flex gap-2">
+                <input
+                    id="holidayCountry"
+                    type="text"
+                    maxlength="2"
+                    placeholder="e.g., SE"
+                    class="input-base"
+                    formControlName="holidayCountry"
+                />
+
+                <button
+                    (click)="detectCountry.emit()"
+                    type="button"
+                    class="btn-secondary px-3 py-1"
+                >
+                    Auto-detect
+                </button>
+            </div>
+
+            <p class="text-xs text-muted-foreground">
+                Two-letter country code (ISO 3166-1 alpha-2). Used to highlight public holidays and show the holiday name.
+            </p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-border">
+            <span class="form-label">Holiday Types to Display</span>
+            <p class="text-xs text-muted-foreground mb-2">Select which types of holidays should be shown in the calendar.</p>
+
+            <div class="space-y-2">
+                @for (option of holidayTypeOptions; track option.type) {
+                    <div class="flex items-start space-x-2">
+                        <input
+                            (change)="toggleType.emit(option.type)"
+                            [id]="'holidayType_' + option.type"
+                            [checked]="holidayTypeEnabled(option.type)"
+                            type="checkbox"
+                            class="h-4 w-4 mt-0.5"
+                        />
+
+                        <div class="flex flex-col">
+                            <label [for]="'holidayType_' + option.type" class="text-sm font-medium cursor-pointer">{{ option.label }}</label
+                            >
+
+                            <span class="text-xs text-muted-foreground">{{ option.description }}</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

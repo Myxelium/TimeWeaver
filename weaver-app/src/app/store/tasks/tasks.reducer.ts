@@ -1,9 +1,11 @@
 import { createReducer, on } from '@ngrx/store';
+
+import { loadAllTasks, TasksActions } from './tasks.actions';
 import { initialTasksState } from './tasks.state';
-import { TasksActions, loadAllTasks } from './tasks.actions';
 
 export const tasksFeatureKey = 'tasks';
 
+/* eslint-disable junolint/decompose-complex-expressions */
 export const tasksReducer = createReducer(
   initialTasksState,
   on(TasksActions.setCurrentDate, (state, { date }) => ({ ...state, currentDate: date })),
@@ -30,9 +32,15 @@ export const tasksReducer = createReducer(
   on(TasksActions.loadAllTasksSuccess, (state, { tasks }) => ({ ...state, allTasks: tasks, isLoading: false, error: null })),
   on(TasksActions.loadAllTasksFailure, (state, { error }) => ({ ...state, isLoading: false, error })),
 
+  on(TasksActions.loadAdoSuggestionsSuccess, (state, { suggestions }) => ({ ...state, adoSuggestions: suggestions })),
+
   on(TasksActions.saveTask, (state) => ({ ...state, isLoading: true })),
   on(TasksActions.saveTaskSuccess, (state) => ({ ...state, isLoading: false })),
   on(TasksActions.saveTaskFailure, (state, { error }) => ({ ...state, isLoading: false, error })),
+
+  on(TasksActions.saveTasks, (state) => ({ ...state, isLoading: true })),
+  on(TasksActions.saveTasksSuccess, (state) => ({ ...state, isLoading: false })),
+  on(TasksActions.saveTasksFailure, (state, { error }) => ({ ...state, isLoading: false, error })),
 
   on(TasksActions.deleteTask, (state) => ({ ...state, isLoading: true })),
   on(TasksActions.deleteTaskSuccess, (state) => ({ ...state, isLoading: false })),
@@ -46,3 +54,4 @@ export const tasksReducer = createReducer(
   on(TasksActions.exportCsvAllSuccess, (state) => ({ ...state, isLoading: false })),
   on(TasksActions.exportCsvAllFailure, (state, { error }) => ({ ...state, isLoading: false, error }))
 );
+/* eslint-enable junolint/decompose-complex-expressions */

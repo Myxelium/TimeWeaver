@@ -4,6 +4,7 @@ export interface Task {
   description?: string;
   date: string; // YYYY-MM-DD format
   hours: number;
+  adoWorkItemId?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -60,6 +61,53 @@ export interface UpdateTaskRequest extends CreateTaskRequest {
   id: number;
 }
 
+// Holiday types supported by date-holidays library
+export type HolidayType = 'public' | 'bank' | 'school' | 'optional' | 'observance';
+export const ALL_HOLIDAY_TYPES: HolidayType[] = [
+  'public',
+  'bank',
+  'school',
+  'optional',
+  'observance'
+];
+export const DEFAULT_HOLIDAY_TYPES: HolidayType[] = ['public', 'bank'];
+
+export type PopupRuleType = 'time-log' | 'reminder';
+
+export interface PopupRule {
+  id: string;
+  enabled: boolean;
+  type: PopupRuleType;
+  time: string; // HH:mm
+  weekdays: number[]; // 0=Sunday ... 6=Saturday
+  message: string;
+  durationSeconds: number;
+  intervalMinutes?: number; // 0 shows once at `time`; otherwise minutes after the popup is closed
+  onlyIfNothingReported?: boolean;
+  lastResolvedDate?: string | null;
+  lastTriggeredAt?: string | null;
+}
+
+export interface PopupEntry {
+  title: string;
+  hours: number;
+}
+
+export interface PopupContext {
+  ruleId: string;
+  type: PopupRuleType;
+  message: string;
+  durationSeconds: number;
+  darkMode: boolean;
+  today: string;
+  previousDate: string | null;
+  targetHours: number;
+  todayHours: number;
+  remainingHours: number;
+  previousTitles: string[];
+  recentTitles: string[];
+}
+
 export interface Settings {
   monthlyIncome: number;
   monthlyCost: number;
@@ -67,9 +115,31 @@ export interface Settings {
   ignoreWeekends: boolean;
   maxHoursPerDay: number;
   maxHoursEnabled: boolean;
+  holidayCountry?: string; // ISO-3166-1 alpha-2, e.g., SE
+  holidayTypes?: HolidayType[]; // Which holiday types to show in calendar
+  firstDayOfWeek?: number; // 0=Sunday ... 6=Saturday; default 1 (Monday)
+  overtimeRate?: number; // Overtime income rate (default 0)
+  launchAtLogin?: boolean;
+  popupRules?: PopupRule[];
+  adoOrganization?: string;
+  adoPatConfigured?: boolean;
+  adoAuthMethod?: 'pat' | 'azure-cli';
+  adoSyncEnabled?: boolean;
+  adoLastSyncOn?: string;
+  adoLastSyncError?: string;
+  adoPat?: string;
+  clearAdoPat?: boolean;
 }
 
 export const DAILY_WORK_HOURS = 8;
+
+export interface AdoSuggestion {
+  adoId: number;
+  title: string;
+  activeOn: string | null;
+  rangeEnd: string | null;
+  spentTimeIsZero: boolean;
+}
 
 export const NAV_ITEMS: NavItem[] = [
   {

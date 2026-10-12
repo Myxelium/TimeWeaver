@@ -5,17 +5,70 @@ on:
     tags:
       - "*.*.*"
   workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    name: Bump version
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.tag.outputs.ref }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bump package version
+        id: bump
+        working-directory: weaver-app
+        run: |
+          set -euo pipefail
+          npm version "${{ inputs.bump }}" --no-git-tag-version
+          version="$(node -p "require('./package.json').version")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Bumped to ${version}"
+
+      - name: Commit and tag
+        id: tag
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add weaver-app/package.json weaver-app/package-lock.json
+          git commit -m "Bump version to ${VERSION}"
+          git tag "${VERSION}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "refs/tags/${VERSION}"
+          echo "ref=${VERSION}" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build ${{ matrix.label }}
+    needs: prepare
+    if: always() && (needs.prepare.result == 'success' || needs.prepare.result == 'skipped')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -34,6 +87,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.ref || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -59,14 +114,15 @@ jobs:
         shell: bash
         env:
           BUILDER_ARGS: ${{ matrix.args }}
+          RELEASE_REF: ${{ needs.prepare.outputs.ref || github.ref_name }}
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
           set -euo pipefail
           read -r -a args <<< "$BUILDER_ARGS"
           args+=(--publish never)
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_REF#v}"
+          if [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             args+=("-c.extraMetadata.version=${version}")
             echo "Packaging version ${version}"
           fi
@@ -95,8 +151,8 @@ jobs:
 
   release:
     name: Publish GitHub release
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: [prepare, build]
+    if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Download installers
@@ -109,7 +165,8 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare.outputs.ref || github.ref_name }}
           files: installers/*
           generate_release_notes: true
           fail_on_unmatched_files: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(needs.prepare.outputs.ref || github.ref_name, '-') }}

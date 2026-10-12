@@ -1,0 +1,40 @@
+<div>
+    <h3 class="panel-heading">Selected days</h3>
+    <p class="text-sm text-muted-foreground mb-3">Existing time stays on each day. New tasks are added on top.</p>
+
+    <div class="space-y-2 max-h-96 overflow-y-auto">
+        @for (row of rows; track row.dateKey) {
+            <div class="border border-border rounded-md px-3 py-2">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-medium">{{ row.date | date: 'EEE, MMM d' }}</span>
+                    <span class="text-sm text-muted-foreground">{{ row.totalHours | number: '1.1-1' }}h</span>
+                </div>
+
+                @if (row.holidayName) {
+                    <p class="text-xs text-red-600">{{ row.holidayName }}</p>
+                }
+
+                @if (row.suggestions.length) {
+                    <div class="mt-2">
+                        <p class="text-xs font-medium mb-1">Suggested</p>
+
+                        <app-ado-suggestion-table
+                            (add)="addSuggestion.emit({ date: row.date, item: $event })"
+                            [loggedIds]="row.loggedIds"
+                            [showAdd]="true"
+                            [suggestions]="row.suggestions"
+                        />
+                    </div>
+                }
+
+                @if (row.tasks.length) {
+                    @for (task of row.tasks; track task.id) {
+                        <p class="text-xs text-muted-foreground truncate">{{ task.title }} · {{ task.hours | number: '1.1-1' }}h</p>
+                    }
+                } @else {
+                    <p class="text-xs text-muted-foreground italic">No time yet</p>
+                }
+            </div>
+        }
+    </div>
+</div>

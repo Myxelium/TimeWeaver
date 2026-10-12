@@ -1,6 +1,10 @@
 import { DataSource } from 'typeorm';
-import { ImportCsvCommand } from '../../types';
+
+import { adoWorkItemIdForTitle } from '../../../ado/match-task';
 import { Task } from '../../../entities/Task';
+import { ImportCsvCommand } from '../../types';
+
+const minimumCsvColumnCount = 4;
 
 interface ParsedRow {
   date: string; // yyyy-MM-dd
@@ -48,10 +52,16 @@ function parseCsv(content: string): ParsedRow[] {
 
     cells.push(current);
 
-    if (cells.length < 4)
+    if (cells.length < minimumCsvColumnCount)
       continue; // need at least date,title,desc,hours
 
-    const [dateRaw, titleRaw, descriptionRaw, hoursRaw, createdRaw] = cells;
+    const [
+      dateRaw,
+      titleRaw,
+      descriptionRaw,
+      hoursRaw,
+      createdRaw
+    ] = cells;
     const date = dateRaw.replace(/"/g, '').trim();
     const title = titleRaw.replace(/"/g, '').trim();
 
@@ -89,6 +99,7 @@ export async function handleImportCsv(
       if (overwrite) {
         existing.description = row.description || '';
         existing.hours = row.hours;
+        existing.adoWorkItemId = await adoWorkItemIdForTitle(dataSource, row.title) ?? existing.adoWorkItemId ?? null;
         await taskRepo.save(existing);
         updated++;
       } else {
@@ -99,7 +110,8 @@ export async function handleImportCsv(
         title: row.title,
         description: row.description,
         date: row.date,
-        hours: row.hours
+        hours: row.hours,
+        adoWorkItemId: await adoWorkItemIdForTitle(dataSource, row.title)
       });
 
       await taskRepo.save(entity);

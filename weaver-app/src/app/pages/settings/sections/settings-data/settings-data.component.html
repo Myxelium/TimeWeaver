@@ -1,0 +1,70 @@
+<div [formGroup]="form" class="space-y-6">
+    <div class="bg-card border border-border rounded-lg p-4 space-y-3">
+        <h3 class="text-base font-semibold">Import tasks CSV</h3>
+
+        <p class="text-xs text-muted-foreground">
+            Import a CSV previously exported (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can
+            be overwritten.
+        </p>
+
+        <input
+            (change)="fileSelected.emit($event)"
+            type="file"
+            accept=".csv,text/csv"
+            class="block"
+        />
+
+        @if (selectedFile) {
+            <p class="text-xs text-muted-foreground">{{ selectedFile.name }}</p>
+        }
+
+        <div class="flex items-center space-x-2">
+            <input
+                id="overwrite"
+                type="checkbox"
+                formControlName="overwrite"
+                class="h-4 w-4"
+            />
+
+            <label for="overwrite" class="text-sm">Overwrite existing tasks (match by Date + Title)</label
+            >
+        </div>
+
+        <button
+            (click)="importTasks.emit()"
+            [disabled]="!selectedFile || importing"
+            type="button"
+            class="btn-secondary px-3 py-1"
+        >
+            Import
+        </button>
+
+        @if (importResult) {
+            <div class="text-sm text-muted-foreground">
+                Imported {{ importResult.imported }} new, Updated {{ importResult.updated }}, Skipped
+                {{ importResult.skipped }} (Total lines: {{ importResult.total }})
+            </div>
+        }
+
+        @if (importError) {
+            <div class="text-sm text-red-600">
+                {{ importError }}
+            </div>
+        }
+    </div>
+
+    <div class="bg-card border border-border rounded-lg p-4 space-y-3">
+        <h3 class="text-base font-semibold">Export</h3>
+
+        <button
+            (click)="exportTasks.emit()"
+            [disabled]="(isLoading$ | async) ?? false"
+            type="button"
+            class="btn-primary px-3 py-1"
+        >
+            Export all tasks (CSV)
+        </button>
+
+        <p class="text-xs text-muted-foreground">Exports all existing tasks in the same CSV format as the monthly export.</p>
+    </div>
+</div>

@@ -1,21 +1,40 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import { format, subDays } from 'date-fns';
+import {
+  from,
+  Observable,
+  of
+} from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Task, DaySummary, CreateTaskRequest, UpdateTaskRequest, Settings } from '../models';
+
+import {
+  AdoSuggestion,
+  CreateTaskRequest,
+  DaySummary,
+  Settings,
+  Task,
+  UpdateTaskRequest
+} from '../models';
+
+const browserPreviewMonthlyHours = 120;
+const previewRandomTaskSpread = 5;
+const previewRandomHourSpread = 3;
+const previewMinimumHours = 0.5;
+const previewTaskCount = 20;
+const hoursPerDay = 24;
+const minutesPerHour = 60;
+const secondsPerMinute = 60;
+const previewMaximumHours = 8;
 
 interface ElectronAPI {
-  query(request: { type: string; payload: unknown }): Promise<unknown>;
-  command(request: { type: string; payload: unknown }): Promise<unknown>;
+  runQuery(request: { type: string; payload: unknown }): Promise<unknown>;
+  runCommand(request: { type: string; payload: unknown }): Promise<unknown>;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class DatabaseService {
-  private get electronAPI(): ElectronAPI | undefined {
-    return (window as unknown as { electronAPI?: ElectronAPI }).electronAPI;
-  }
-
   constructor() {
     if (!this.electronAPI) {
       console.warn('Electron API not available. Running in development mode?');
@@ -31,7 +50,7 @@ export class DatabaseService {
       if (!api)
         return of([]);
 
-      return from(api.query({ type: 'get-tasks-by-date', payload: { date } })).pipe(map(result => result as Task[]));
+      return from(api.runQuery({ type: 'get-tasks-by-date', payload: { date } })).pipe(map(result => result as Task[]));
     }
   }
 
@@ -45,7 +64,7 @@ export class DatabaseService {
       if (!api)
         return of(0);
 
-      return from(api.command({ type: 'save-task', payload: { ...task, hours: task.hours || 0 } })).pipe(map(result => result as number));
+      return from(api.runCommand({ type: 'save-task', payload: { ...task, hours: task.hours || 0 } })).pipe(map(result => result as number));
     }
   }
 
@@ -59,7 +78,7 @@ export class DatabaseService {
       if (!api)
         return of({ success: true });
 
-      return from(api.command({ type: 'delete-task', payload: { id: taskId } }));
+      return from(api.runCommand({ type: 'delete-task', payload: { id: taskId } }));
     }
   }
 
@@ -72,20 +91,20 @@ export class DatabaseService {
       if (!api)
         return of([]);
 
-      return from(api.query({ type: 'get-tasks-by-month', payload: { year, month } })).pipe(map(result => result as DaySummary[]));
+      return from(api.runQuery({ type: 'get-tasks-by-month', payload: { year, month } })).pipe(map(result => result as DaySummary[]));
     }
   }
 
   getMonthlySummary(year: number, month: number): Observable<number> {
     if (!this.isElectron()) {
-      return of(120);
+      return of(browserPreviewMonthlyHours);
     } else {
       const api = this.electronAPI;
 
       if (!api)
         return of(0);
 
-      return from(api.query({ type: 'get-monthly-summary', payload: { year, month } })).pipe(map(result => result as number));
+      return from(api.runQuery({ type: 'get-monthly-summary', payload: { year, month } })).pipe(map(result => result as number));
     }
   }
 
@@ -98,7 +117,7 @@ export class DatabaseService {
       if (!api)
         return of([]);
 
-      return from(api.query({ type: 'get-all-tasks', payload: {} })).pipe(map(result => result as Task[]));
+      return from(api.runQuery({ type: 'get-all-tasks', payload: {} })).pipe(map(result => result as Task[]));
     }
   }
 
@@ -112,7 +131,7 @@ export class DatabaseService {
       if (!api)
         return of(false);
 
-      return from(api.query({ type: 'export-csv', payload: { year, month } })).pipe(map(result => result as boolean));
+      return from(api.runQuery({ type: 'export-csv', payload: { year, month } })).pipe(map(result => result as boolean));
     }
   }
 
@@ -126,7 +145,7 @@ export class DatabaseService {
       if (!api)
         return of(false);
 
-      return from(api.query({ type: 'export-csv-all', payload: {} })).pipe(map(result => result as boolean));
+      return from(api.runQuery({ type: 'export-csv-all', payload: {} })).pipe(map(result => result as boolean));
     }
   }
 
@@ -143,7 +162,7 @@ export class DatabaseService {
 
     const contentBase64 = btoa(content);
 
-    return from(api.command({ type: 'import-csv', payload: { contentBase64, overwrite } }))
+    return from(api.runCommand({ type: 'import-csv', payload: { contentBase64, overwrite } }))
       .pipe(map(result => result as { imported: number; updated: number; skipped: number; total: number }));
   }
 
@@ -155,7 +174,15 @@ export class DatabaseService {
         darkMode: false,
         ignoreWeekends: true,
         maxHoursPerDay: 8,
-        maxHoursEnabled: true
+        maxHoursEnabled: true,
+        holidayCountry: undefined,
+        holidayTypes: ['public', 'bank'],
+        firstDayOfWeek: 1,
+        overtimeRate: 0,
+        launchAtLogin: false,
+        popupRules: [],
+        adoPatConfigured: false,
+        adoSyncEnabled: false
       });
     }
 
@@ -168,11 +195,19 @@ export class DatabaseService {
         darkMode: false,
         ignoreWeekends: true,
         maxHoursPerDay: 8,
-        maxHoursEnabled: true
+        maxHoursEnabled: true,
+        holidayCountry: undefined,
+        holidayTypes: ['public', 'bank'],
+        firstDayOfWeek: 1,
+        overtimeRate: 0,
+        launchAtLogin: false,
+        popupRules: [],
+        adoPatConfigured: false,
+        adoSyncEnabled: false
       });
     }
 
-    return from(api.query({ type: 'get-settings', payload: {} })).pipe(map(result => result as Settings));
+    return from(api.runQuery({ type: 'get-settings', payload: {} })).pipe(map(result => result as Settings));
   }
 
   saveSettings(settings: Settings): Observable<boolean> {
@@ -186,7 +221,59 @@ export class DatabaseService {
     if (!api)
       return of(false);
 
-    return from(api.command({ type: 'save-settings', payload: settings })).pipe(map(() => true));
+    return from(api.runCommand({ type: 'save-settings', payload: settings })).pipe(map(() => true));
+  }
+
+  getAdoSuggestions(): Observable<AdoSuggestion[]> {
+    if (!this.isElectron())
+      return of(this.mockAdoSuggestions());
+
+    const api = this.electronAPI;
+
+    if (!api)
+      return of([]);
+
+    return from(api.runQuery({ type: 'get-ado-suggestions', payload: {} })).pipe(map(result => result as AdoSuggestion[]));
+  }
+
+  syncAdo(): Observable<{ ran: boolean; itemCount: number; error: string | null }> {
+    if (!this.isElectron())
+      return of({ ran: false, itemCount: 0, error: 'Azure DevOps sync runs in the Weaver app.' });
+
+    const api = this.electronAPI;
+
+    if (!api)
+      return of({ ran: false, itemCount: 0, error: 'Azure DevOps sync is unavailable.' });
+
+    return from(api.runCommand({ type: 'sync-ado', payload: {} })).pipe(
+      map(result => result as { ran: boolean; itemCount: number; error: string | null })
+    );
+  }
+
+  private mockAdoSuggestions(): AdoSuggestion[] {
+    const today = new Date();
+    const start = subDays(today, 2);
+
+    return [
+      {
+        adoId: 1001,
+        title: '#1001 Sample user story',
+        activeOn: format(start, 'yyyy-MM-dd'),
+        rangeEnd: format(today, 'yyyy-MM-dd'),
+        spentTimeIsZero: true
+      },
+      {
+        adoId: 1002,
+        title: '#1002 Another sample story',
+        activeOn: format(today, 'yyyy-MM-dd'),
+        rangeEnd: format(today, 'yyyy-MM-dd'),
+        spentTimeIsZero: false
+      }
+    ];
+  }
+
+  private get electronAPI(): ElectronAPI | undefined {
+    return (window as unknown as { electronAPI?: ElectronAPI }).electronAPI;
   }
 
   private isElectron(): boolean {
@@ -227,13 +314,13 @@ export class DatabaseService {
     const daysInMonth = new Date(year, month, 0).getDate();
 
     for (let dayNum = 1; dayNum <= Math.min(daysInMonth, 10); dayNum++) {
-      const taskCount = Math.floor(Math.random() * 5) + 1;
+      const taskCount = Math.floor(Math.random() * previewRandomTaskSpread) + 1;
       const tasks: Task[] = [];
 
       let totalHours = 0;
 
       for (let taskIndex = 1; taskIndex <= taskCount; taskIndex++) {
-        const hours = Math.random() * 3 + 0.5;
+        const hours = Math.random() * previewRandomHourSpread + previewMinimumHours;
 
         totalHours += hours;
 
@@ -262,15 +349,15 @@ export class DatabaseService {
     const tasks: Task[] = [];
     const today = new Date();
 
-    for (let index = 0; index < 20; index++) {
-      const date = new Date(today.getTime() - (index * 24 * 60 * 60 * 1000));
+    for (let index = 0; index < previewTaskCount; index++) {
+      const date = new Date(today.getTime() - (index * hoursPerDay * minutesPerHour * secondsPerMinute * 1000));
 
       tasks.push({
         id: index + 1,
         title: `Task ${index + 1}`,
         description: `Description for task ${index + 1}`,
         date: date.toISOString().split('T')[0],
-        hours: Math.random() * 8,
+        hours: Math.random() * previewMaximumHours,
         created_at: date.toISOString()
       });
     }

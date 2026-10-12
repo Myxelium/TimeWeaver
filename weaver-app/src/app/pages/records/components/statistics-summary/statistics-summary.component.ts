@@ -1,8 +1,19 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Store } from '@ngrx/store';
-import { selectTaskStatistics } from '../../../../store/tasks/tasks.selectors';
-import { LucideAngularModule, Clock, Calendar, TrendingUp, BarChart3 } from 'lucide-angular';
+import {
+  Component,
+  computed,
+  input
+} from '@angular/core';
+import {
+  BarChart3,
+  Calendar,
+  Clock,
+  LucideAngularModule,
+  TrendingUp
+} from 'lucide-angular';
+
+import { Task } from '../../../../shared/models';
+import { calculateTaskStatistics } from '../../../../store/tasks/tasks.selectors';
 
 @Component({
   selector: 'app-statistics-summary',
@@ -11,13 +22,12 @@ import { LucideAngularModule, Clock, Calendar, TrendingUp, BarChart3 } from 'luc
   templateUrl: './statistics-summary.component.html'
 })
 export class StatisticsSummaryComponent {
-  // Lucide icons
   readonly Clock = Clock;
   readonly Calendar = Calendar;
   readonly TrendingUp = TrendingUp;
   readonly BarChart3 = BarChart3;
 
-  statistics$ = this._store.select(selectTaskStatistics);
+  tasks = input<Task[]>([]);
 
-  constructor(private _store: Store) {}
+  statistics = computed(() => calculateTaskStatistics(this.tasks()));
 }

@@ -1,8 +1,15 @@
 import 'reflect-metadata';
-import { DataSource } from 'typeorm';
-import { Task, TimeEntry, Setting } from './entities';
-import * as path from 'path';
+
 import * as fs from 'fs';
+import * as path from 'path';
+import { DataSource } from 'typeorm';
+
+import {
+  AdoWorkItem,
+  Setting,
+  Task,
+  TimeEntry
+} from './entities';
 import { settings } from './settings';
 
 // This DataSource is for CLI migration generation and running.
@@ -20,7 +27,12 @@ if (fs.existsSync(projectRootDatabaseFilePath)) {
 export const AppDataSource = new DataSource({
   type: 'sqljs',
   database: databaseFileBuffer,
-  entities: [Task, TimeEntry, Setting],
+  entities: [
+    Task,
+    TimeEntry,
+    Setting,
+    AdoWorkItem
+  ],
   migrations: [path.join(__dirname, 'migrations', '*.{ts,js}')],
   synchronize: false,
   logging: false,

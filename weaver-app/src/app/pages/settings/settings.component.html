@@ -1,218 +1,102 @@
-<div class="p-6 space-y-6">
-    <h1 class="text-2xl font-semibold">Settings</h1>
+<div class="max-w-7xl mx-auto p-4 space-y-6">
+    <div>
+        <h1 class="text-3xl font-bold text-foreground">Settings</h1>
+        <p class="text-muted-foreground mt-2">Choose a section to change how Weaver works.</p>
+    </div>
 
-    <form
-        (ngSubmit)="save()"
-        [formGroup]="form"
-        class="space-y-6 max-w-md"
-    >
-        <div>
-            <label
-                class="form-label"
-                for="monthlyIncome"
-                >Monthly Income (What I earn)</label
-            >
-
-            <div class="relative">
-                <input
-                    [type]="showIncome ? 'number' : 'password'"
-                    id="monthlyIncome"
-                    step="0.01"
-                    formControlName="monthlyIncome"
-                    class="input-base pr-10"
-                />
-
-                <button
-                    (click)="toggleIncomeVisibility()"
-                    [attr.aria-label]="showIncome ? 'Hide income' : 'Show income'"
-                    type="button"
-                    class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
-                >
-                    <lucide-icon
-                        [img]="showIncome ? eyeOff : eye"
-                        class="w-4 h-4"
-                    />
-                </button>
-            </div>
-        </div>
-
-        <div>
-            <label
-                class="form-label"
-                for="monthlyCost"
-                >Monthly Cost (Business pays)</label
-            >
-
-            <div class="relative">
-                <input
-                    [type]="showCost ? 'number' : 'password'"
-                    id="monthlyCost"
-                    step="0.01"
-                    formControlName="monthlyCost"
-                    class="input-base pr-10"
-                />
-
-                <button
-                    (click)="toggleCostVisibility()"
-                    [attr.aria-label]="showCost ? 'Hide cost' : 'Show cost'"
-                    type="button"
-                    class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
-                >
-                    <lucide-icon
-                        [img]="showCost ? eyeOff : eye"
-                        class="w-4 h-4"
-                    />
-                </button>
-            </div>
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <input
-                id="darkMode"
-                type="checkbox"
-                formControlName="darkMode"
-                class="h-4 w-4"
-            />
-
-            <label
-                for="darkMode"
-                class="text-sm"
-                >Dark Mode</label
-            >
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <input
-                id="ignoreWeekends"
-                type="checkbox"
-                formControlName="ignoreWeekends"
-                class="h-4 w-4"
-            />
-
-            <label
-                for="ignoreWeekends"
-                class="text-sm"
-                >Ignore Weekends (exclude from working day stats)</label
-            >
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <input
-                id="maxHoursEnabled"
-                type="checkbox"
-                formControlName="maxHoursEnabled"
-                class="h-4 w-4"
-            />
-
-            <label
-                for="maxHoursEnabled"
-                class="text-sm"
-                >Enable Maximum Hours Per Day</label
-            >
-        </div>
-
-        @if (form.get('maxHoursEnabled')?.value) {
-        <div>
-            <label
-                class="form-label"
-                for="maxHoursPerDay"
-                >Maximum Hours Per Day</label
-            >
-
-            <input
-                type="number"
-                id="maxHoursPerDay"
-                step="0.5"
-                min="0.1"
-                max="24"
-                formControlName="maxHoursPerDay"
-                class="input-base"
-            />
-        </div>
-        }
-
-        <div class="flex items-center space-x-3">
-            <button
-                [disabled]="saving"
-                type="submit"
-                class="btn-primary px-4 py-2 flex items-center space-x-2"
-            >
-                @if (!justSaved) {
-                <span>Save</span>
-                } @else {
-                <span class="text-green-600 font-semibold">Saved!</span>
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <nav aria-label="Settings sections" class="w-full lg:w-56 lg:sticky lg:top-0 shrink-0 bg-card border border-border rounded-lg p-2">
+            <ul class="flex flex-col gap-1">
+                @for (section of sections; track section.id) {
+                    <li>
+                        <a
+                            [routerLink]="'/settings'"
+                            [queryParams]="{ section: section.id }"
+                            [attr.aria-current]="activeSection === section.id ? 'page' : null"
+                            [class.bg-accent]="activeSection === section.id"
+                            [class.text-foreground]="activeSection === section.id"
+                            [class.text-muted-foreground]="activeSection !== section.id"
+                            class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            <lucide-icon [img]="section.icon" class="w-4 h-4 shrink-0" />
+                            {{ section.label }}
+                        </a>
+                    </li>
                 }
-            </button>
-        </div>
+            </ul>
+        </nav>
 
-        <div class="border-t pt-4 space-y-3">
-            <h2 class="text-lg font-semibold">Import Tasks CSV</h2>
-
-            <p class="text-xs text-muted-foreground">
-                Import a CSV previously exported (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can be overwritten.
-            </p>
-            <input
-                (change)="onFileSelected($event)"
-                type="file"
-                accept=".csv,text/csv"
-                class="block"
-            />
-
-            <div class="flex items-center space-x-2">
-                <input
-                    id="overwrite"
-                    type="checkbox"
-                    formControlName="overwrite"
-                    class="h-4 w-4"
-                />
-
-                <label
-                    for="overwrite"
-                    class="text-sm"
-                    >Overwrite existing tasks (match by Date + Title)</label
-                >
+        <form [formGroup]="form" class="min-w-0 w-full max-w-3xl flex-1 space-y-4">
+            <div>
+                <h2 class="text-lg font-semibold">{{ activeSectionItem.label }}</h2>
+                <p class="text-sm text-muted-foreground mt-1">{{ activeSectionItem.description }}</p>
             </div>
 
-            <button
-                (click)="importCsv()"
-                [disabled]="!selectedFile || importing"
-                type="button"
-                class="btn-secondary px-3 py-1"
-            >
-                Import
-            </button>
-
-            @if (importResult) {
-            <div
-                class="text-sm text-muted-foreground"
-            >
-                Imported {{ importResult.imported }} new, Updated {{ importResult.updated }}, Skipped {{ importResult.skipped }} (Total lines:
-                {{ importResult.total }})
-            </div>
+            @switch (activeSection) {
+                @case ('general') {
+                    <app-settings-general
+                        (toggleIncome)="toggleIncomeVisibility()"
+                        (toggleCost)="toggleCostVisibility()"
+                        (toggleOvertime)="toggleOvertimeVisibility()"
+                        [form]="form"
+                        [showIncome]="showIncome"
+                        [showCost]="showCost"
+                        [showOvertime]="showOvertime"
+                    />
+                }
+                @case ('holidays') {
+                    <app-settings-holidays
+                        (detectCountry)="setAutoDetectedCountry()"
+                        (toggleType)="toggleHolidayType($event)"
+                        [form]="form"
+                        [holidayTypeOptions]="holidayTypeOptions"
+                    />
+                }
+                @case ('popups') {
+                    <app-settings-popups
+                        (removeRule)="removePopupRule($event)"
+                        (toggleDay)="toggleWeekday($event.index, $event.day)"
+                        (addRule)="addPopupRule()"
+                        [form]="form"
+                        [weekdayOptions]="weekdayOptions"
+                    />
+                }
+                @case ('azure') {
+                    <app-settings-azure
+                        (organizationInput)="onAdoOrganizationInput($event)"
+                        (authMethodChange)="onAdoAuthMethodChange($event)"
+                        (tokenInput)="onAdoTokenInput($event)"
+                        (toggleToken)="toggleAdoTokenVisibility()"
+                        (saveConnection)="saveAdoConnection()"
+                        (syncNow)="syncAdo()"
+                        (clearToken)="clearAdoToken()"
+                        [form]="form"
+                        [adoOrganization]="adoOrganization"
+                        [adoToken]="adoToken"
+                        [showAdoToken]="showAdoToken"
+                        [adoPatConfigured]="adoPatConfigured"
+                        [adoAuthMethod]="adoAuthMethod"
+                        [adoLastSyncOn]="adoLastSyncOn"
+                        [adoLastSyncError]="adoLastSyncError"
+                        [adoSyncing]="adoSyncing"
+                        [adoFormError]="adoFormError"
+                        [adoSyncReady]="adoSyncReady"
+                    />
+                }
+                @case ('data') {
+                    <app-settings-data
+                        (fileSelected)="onFileSelected($event)"
+                        (importTasks)="importCsv()"
+                        (exportTasks)="exportAllCsv()"
+                        [form]="form"
+                        [selectedFile]="selectedFile"
+                        [importing]="importing"
+                        [importResult]="importResult"
+                        [importError]="importError"
+                        [isLoading$]="isLoading$"
+                    />
+                }
             }
-
-            @if (importError) {
-            <div
-                class="text-sm text-red-600"
-            >
-                {{ importError }}
-            </div>
-            }
-        </div>
-
-        <div class="border-t pt-4 space-y-3">
-            <h2 class="text-lg font-semibold">Export</h2>
-
-            <button
-                (click)="exportAllCsv()"
-                [disabled]="(isLoading$ | async) ?? false"
-                type="button"
-                class="btn-primary px-3 py-1"
-            >
-                Export all tasks (CSV)
-            </button>
-
-            <p class="text-xs text-muted-foreground">Exports all existing tasks in the same CSV format as the monthly export.</p>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>

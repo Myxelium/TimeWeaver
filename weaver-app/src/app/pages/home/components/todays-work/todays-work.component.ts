@@ -1,34 +1,85 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { selectTodayTasks, selectIsLoading, selectAllTasks } from '../../../../store/tasks/tasks.selectors';
-import { TasksActions, loadAllTasks } from '../../../../store/tasks/tasks.actions';
-import { Task } from '../../../../shared/models';
-import { format, subDays } from 'date-fns';
-import { combineLatest, of, Subject, Observable } from 'rxjs';
-import { ConfirmService } from '../../../../shared/confirm/confirm.service';
-import { map, take, startWith, takeUntil } from 'rxjs/operators';
-import { selectIgnoreWeekends, selectMaxHoursPerDay, selectMaxHoursEnabled } from '../../../../store/settings/settings.selectors';
+import {
+  Component,
+  inject,
+  OnDestroy,
+  OnInit
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { format, subDays } from 'date-fns';
+import {
+  combineLatest,
+  Observable,
+  of,
+  Subject
+} from 'rxjs';
+import {
+  map,
+  startWith,
+  take,
+  takeUntil
+} from 'rxjs/operators';
+
+import { titlesForLogging } from '../../../../shared/ado-titles.model';
+import { ConfirmService } from '../../../../shared/confirm/confirm.service';
+import { AdoSuggestion, Task } from '../../../../shared/models';
 import { DateChangeDetectionService } from '../../../../shared/services';
+import {
+  selectIgnoreWeekends,
+  selectMaxHoursEnabled,
+  selectMaxHoursPerDay
+} from '../../../../store/settings/settings.selectors';
+import { loadAllTasks, TasksActions } from '../../../../store/tasks/tasks.actions';
+import {
+  selectAdoSuggestions,
+  selectAllTasks,
+  selectIsLoading,
+  selectTodayTasks
+} from '../../../../store/tasks/tasks.selectors';
+import { SuggestionsDropdownComponent } from '../../../month/components/edit-day-modal/suggestions-dropdown/suggestions-dropdown.component';
+import { TodaysTaskListComponent } from './todays-task-list/todays-task-list.component';
+
+const saturdayIndex = 6;
+const titleBlurDelayMs = 200;
+const expandedTitleCount = 15;
+const recentTitleWindowDays = 30;
+const collapsedTitleCount = 5;
 
 @Component({
   selector: 'app-todays-work',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    SuggestionsDropdownComponent,
+    TodaysTaskListComponent
+  ],
   templateUrl: './todays-work.component.html'
 })
 export class TodaysWorkComponent implements OnInit, OnDestroy {
+  private _store = inject(Store);
+
   maxHoursPerDay$ = this._store.select(selectMaxHoursPerDay);
   maxHoursEnabled$ = this._store.select(selectMaxHoursEnabled);
+
   currentDate = new Date();
+
   tasks: Task[] = [];
+
   todayTasks$: Observable<Task[]> = this._store.select(selectTodayTasks);
   isLoading$: Observable<boolean> = this._store.select(selectIsLoading);
+
   editingTask: Task | null = null;
   showSuggestions = false;
   showAllSuggestions = false;
+
   allTaskTitles: string[] = [];
   filteredSuggestions: string[] = [];
   recentSuggestions: string[] = [];
@@ -46,21 +97,19 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   remainingHours$: Observable<number> = this.getRemainingHours();
 
   private destroy$ = new Subject<void>();
+
   private confirm = inject(ConfirmService);
   private dateChangeService = inject(DateChangeDetectionService);
+
   private ignoreWeekendsSignal = toSignal(inject(Store).select(selectIgnoreWeekends), { initialValue: true });
 
-  constructor(private _store: Store) {}
+  private knownTasks: Task[] = [];
+  private knownSuggestions: AdoSuggestion[] = [];
 
   ngOnInit(): void {
     this.initializeDate();
     this.setupSubscriptions();
     this.subscribeToDayChanges();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   get weekendBlocked(): boolean {
@@ -69,7 +118,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
 
     const dow = this.currentDate.getDay();
 
-    return dow === 0 || dow === 6;
+    return dow === 0 || dow === saturdayIndex;
   }
 
   onSubmit(): void {
@@ -114,7 +163,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   }
 
   async deleteTask(taskId: number): Promise<void> {
-    const confirmed = await this.confirm.confirm({
+    const confirmed = await this.confirm.requestConfirmation({
       title: 'Delete Task',
       message: 'Are you sure you want to delete this task?\nThis action cannot be undone.',
       confirmText: 'Delete',
@@ -140,9 +189,17 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
     const currentTasks$ = this.todayTasks$.pipe(take(1));
     const totalHours$ = this.todayTotalHours$.pipe(take(1));
 
-    combineLatest([currentTasks$, totalHours$, this.maxHoursPerDay$.pipe(take(1))])
+    combineLatest([
+      currentTasks$,
+      totalHours$,
+      this.maxHoursPerDay$.pipe(take(1))
+    ])
       .pipe(take(1))
-      .subscribe(([tasks, total, maxHours]) => {
+      .subscribe(([
+        tasks,
+        total,
+        maxHours
+      ]) => {
         if (!tasks.length)
           return;
 
@@ -177,8 +234,16 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
         startWith(this.taskForm.get('hours')?.value || 0)
       ) || of(0);
 
-    return combineLatest([this.todayTotalHours$, hoursValueChanges, this.maxHoursPerDay$]).pipe(
-      map(([totalHours, currentTaskHours, maxHours]) => {
+    return combineLatest([
+      this.todayTotalHours$,
+      hoursValueChanges,
+      this.maxHoursPerDay$
+    ]).pipe(
+      map(([
+        totalHours,
+        currentTaskHours,
+        maxHours
+      ]) => {
         const remainingForDay = maxHours - totalHours;
         const editingTaskHours = this.editingTask ? this.editingTask.hours : 0;
 
@@ -202,7 +267,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.showSuggestions = false;
       this.showAllSuggestions = false;
-    }, 200);
+    }, titleBlurDelayMs);
   }
 
   selectSuggestion(title: string): void {
@@ -213,11 +278,11 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
 
   toggleAllSuggestions(): void {
     this.showAllSuggestions = !this.showAllSuggestions;
-    this.filteredSuggestions = this.showAllSuggestions ? this.allTaskTitles.slice(0, 15) : this.recentSuggestions;
+    this.filteredSuggestions = this.showAllSuggestions ? this.allTaskTitles.slice(0, expandedTitleCount) : this.recentSuggestions;
     this.showSuggestions = true;
   }
 
-  trackTask(_index: number, task: Task) { return task.id ?? task.title; }
+  trackTask(_index: number, task: Task): number | string { return task.id ?? task.title; }
 
   getAddHoursLabel(remaining: number): Observable<string> {
     return this.maxHoursPerDay$.pipe(
@@ -242,7 +307,34 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   progressPercent(total: number | null | undefined): Observable<number> {
     const totalHours = typeof total === 'number' ? total : 0;
 
-    return this.maxHoursPerDay$.pipe(map(maxHours => Math.min(100, (totalHours / maxHours) * 100)));
+    return this.maxHoursPerDay$.pipe(map(maxHours => {
+      if (maxHours === 0)
+        return 0;
+
+      if (totalHours <= maxHours)
+        return (totalHours / maxHours) * 100;
+
+      return (maxHours / totalHours) * 100;
+    }));
+  }
+
+  overtimePercent(total: number | null | undefined): Observable<number> {
+    const totalHours = typeof total === 'number' ? total : 0;
+
+    return this.maxHoursPerDay$.pipe(map(maxHours => {
+      if (maxHours === 0 || totalHours <= maxHours)
+        return 0;
+
+      const overtimeHours = totalHours - maxHours;
+
+      return (overtimeHours / totalHours) * 100;
+    }));
+  }
+
+  hasOvertime(total: number | null | undefined): Observable<boolean> {
+    const totalHours = typeof total === 'number' ? total : 0;
+
+    return this.maxHoursPerDay$.pipe(map(maxHours => totalHours > maxHours));
   }
 
   private initializeDate(): void {
@@ -280,7 +372,7 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
         this._store.dispatch(loadAllTasks());
 
         this.resetForm();
-        this.loadTaskTitlesFromLast30Days();
+        this.rebuildTitles();
         this.applyWeekendBlockState();
       });
   }
@@ -294,21 +386,26 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
   }
 
   private loadTaskTitlesFromLast30Days(): void {
-    this._store
-      .select(selectAllTasks)
+    combineLatest([this._store.select(selectAllTasks), this._store.select(selectAdoSuggestions)])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(tasks => {
-        const thirtyDaysAgo = subDays(this.currentDate, 30);
-        const recentTasks = tasks.filter(task => {
-          const taskDate = new Date(task.date);
-
-          return taskDate >= thirtyDaysAgo && taskDate <= this.currentDate;
-        });
-        const uniqueTitles = [...new Set(recentTasks.map(task => task.title))];
-
-        this.allTaskTitles = uniqueTitles.reverse();
-        this.recentSuggestions = this.allTaskTitles.slice(0, 5);
+      .subscribe(([tasks, suggestions]) => {
+        this.knownTasks = tasks;
+        this.knownSuggestions = suggestions;
+        this.rebuildTitles();
       });
+  }
+
+  private rebuildTitles(): void {
+    const thirtyDaysAgo = subDays(this.currentDate, recentTitleWindowDays);
+    const recentTasks = this.knownTasks.filter(task => {
+      const taskDate = new Date(task.date);
+
+      return taskDate >= thirtyDaysAgo && taskDate <= this.currentDate;
+    });
+    const taskTitles = [...new Set(recentTasks.map(task => task.title))].reverse();
+
+    this.allTaskTitles = titlesForLogging(taskTitles, this.knownSuggestions);
+    this.recentSuggestions = this.allTaskTitles.slice(0, collapsedTitleCount);
   }
 
   private filterSuggestions(value: string): void {
@@ -335,5 +432,10 @@ export class TodaysWorkComponent implements OnInit, OnDestroy {
       if (this.taskForm.disabled)
         this.taskForm.enable({ emitEvent: false });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -1,15 +1,17 @@
 import 'zone.js';
+
 import { bootstrapApplication } from '@angular/platform-browser';
-import { AppComponent } from './app/app.component';
 import { provideRouter } from '@angular/router';
-import { routes } from './app/app.routes';
-import { provideStore } from '@ngrx/store';
-import { tasksReducer, tasksFeatureKey } from './app/store/tasks/tasks.reducer';
-import { settingsReducer, settingsFeatureKey } from './app/store/settings/settings.reducer';
 import { provideEffects } from '@ngrx/effects';
-import { TasksEffects } from './app/store/tasks/tasks.effects';
-import { SettingsEffects } from './app/store/settings/settings.effects';
+import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
+
+import { AppComponent } from './app/app.component';
+import { routes } from './app/app.routes';
+import { SettingsEffects } from './app/store/settings/settings.effects';
+import { settingsFeatureKey, settingsReducer } from './app/store/settings/settings.reducer';
+import { TasksEffects } from './app/store/tasks/tasks.effects';
+import { tasksFeatureKey, tasksReducer } from './app/store/tasks/tasks.reducer';
 
 bootstrapApplication(AppComponent, {
   providers: [

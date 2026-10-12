@@ -1,0 +1,148 @@
+<div [formGroup]="form" class="bg-card border border-border rounded-lg p-4 space-y-4">
+    <div>
+        <label class="form-label" for="monthlyIncome">Monthly Income (What I earn)</label
+        >
+
+        <div class="relative">
+            <input
+                [type]="showIncome ? 'number' : 'text'"
+                [class.text-security-disc]="!showIncome"
+                id="monthlyIncome"
+                step="0.01"
+                formControlName="monthlyIncome"
+                class="input-base pr-10"
+            />
+
+            <button
+                (click)="toggleIncome.emit()"
+                [attr.aria-label]="showIncome ? 'Hide income' : 'Show income'"
+                type="button"
+                class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+            >
+                <lucide-icon [img]="showIncome ? eyeOff : eye" class="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+
+    <div>
+        <label class="form-label" for="monthlyCost">Monthly Cost (Business pays)</label
+        >
+
+        <div class="relative">
+            <input
+                [type]="showCost ? 'number' : 'text'"
+                [class.text-security-disc]="!showCost"
+                id="monthlyCost"
+                step="0.01"
+                formControlName="monthlyCost"
+                class="input-base pr-10"
+            />
+
+            <button
+                (click)="toggleCost.emit()"
+                [attr.aria-label]="showCost ? 'Hide cost' : 'Show cost'"
+                type="button"
+                class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+            >
+                <lucide-icon [img]="showCost ? eyeOff : eye" class="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+
+    <div>
+        <label class="form-label" for="overtimeRate">Overtime Income (per hour)</label
+        >
+
+        <div class="relative">
+            <input
+                [type]="showOvertime ? 'number' : 'text'"
+                [class.text-security-disc]="!showOvertime"
+                id="overtimeRate"
+                step="0.01"
+                formControlName="overtimeRate"
+                class="input-base pr-10"
+            />
+
+            <button
+                (click)="toggleOvertime.emit()"
+                [attr.aria-label]="showOvertime ? 'Hide overtime' : 'Show overtime'"
+                type="button"
+                class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
+            >
+                <lucide-icon [img]="showOvertime ? eyeOff : eye" class="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+
+    <div class="flex items-center space-x-2">
+        <input
+            id="darkMode"
+            type="checkbox"
+            formControlName="darkMode"
+            class="h-4 w-4"
+        />
+
+        <label for="darkMode" class="text-sm">Dark Mode</label
+        >
+    </div>
+
+    <div class="flex items-center space-x-2">
+        <input
+            id="ignoreWeekends"
+            type="checkbox"
+            formControlName="ignoreWeekends"
+            class="h-4 w-4"
+        />
+
+        <label for="ignoreWeekends" class="text-sm">Ignore Weekends (exclude from working day stats)</label
+        >
+    </div>
+
+    <div class="flex items-center space-x-2">
+        <input
+            id="maxHoursEnabled"
+            type="checkbox"
+            formControlName="maxHoursEnabled"
+            class="h-4 w-4"
+        />
+
+        <label for="maxHoursEnabled" class="text-sm">Enable Maximum Hours Per Day</label
+        >
+    </div>
+
+    @if (form.get('maxHoursEnabled')?.value) {
+        <div>
+            <label class="form-label" for="maxHoursPerDay">Maximum Hours Per Day</label
+            >
+
+            <input
+                type="number"
+                id="maxHoursPerDay"
+                step="0.5"
+                min="0.1"
+                max="24"
+                formControlName="maxHoursPerDay"
+                class="input-base"
+            />
+        </div>
+    }
+
+    <div>
+        <label class="form-label" for="firstDayOfWeek">First day of week</label
+        >
+
+        <select
+            id="firstDayOfWeek"
+            class="input-base"
+            formControlName="firstDayOfWeek"
+        >
+            <option [ngValue]="1">Monday</option>
+            <option [ngValue]="2">Tuesday</option>
+            <option [ngValue]="3">Wednesday</option>
+            <option [ngValue]="4">Thursday</option>
+            <option [ngValue]="5">Friday</option>
+            <option [ngValue]="6">Saturday</option>
+            <option [ngValue]="0">Sunday</option>
+        </select>
+    </div>
+</div>

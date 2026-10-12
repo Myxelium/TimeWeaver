@@ -1,14 +1,23 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Task } from '../../../../shared/models';
-import { format, subDays } from 'date-fns';
-import { DatabaseService } from '../../../../shared/services/database.service';
-import { Store } from '@ngrx/store';
-import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+import {
+  Component,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { format, subDays } from 'date-fns';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+
+import { Task } from '../../../../shared/models';
 import { DateChangeDetectionService } from '../../../../shared/services';
+import { DatabaseService } from '../../../../shared/services/database.service';
+import { selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
+
+const daysInTheWindow = 7;
 
 @Component({
   selector: 'app-previous-days',
@@ -18,13 +27,16 @@ import { DateChangeDetectionService } from '../../../../shared/services';
 })
 export class PreviousDaysComponent implements OnInit, OnDestroy {
   maxHoursPerDay = toSignal(inject(Store).select(selectMaxHoursPerDay), { initialValue: 8 });
+
   currentDate = signal(new Date());
+
   previousDays = signal<{
     date: Date; tasks: Task[]; totalHours: number;
   }[]>([]);
 
   private databaseService = inject(DatabaseService);
   private dateChangeService = inject(DateChangeDetectionService);
+
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
@@ -32,9 +44,27 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
     this.subscribeToDayChanges();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  getBaseProgressWidth(totalHours: number): number {
+    const maxHours = this.maxHoursPerDay();
+
+    if (maxHours === 0)
+      return 0;
+
+    if (totalHours <= maxHours)
+      return (totalHours / maxHours) * 100;
+
+    return (maxHours / totalHours) * 100;
+  }
+
+  getOvertimeWidth(totalHours: number): number {
+    const maxHours = this.maxHoursPerDay();
+
+    if (maxHours === 0 || totalHours <= maxHours)
+      return 0;
+
+    const overtimeHours = totalHours - maxHours;
+
+    return (overtimeHours / totalHours) * 100;
   }
 
   private subscribeToDayChanges(): void {
@@ -51,7 +81,7 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
     const tasksPromises: Promise<void>[] = [];
     const collected: { date: Date; tasks: Task[]; totalHours: number }[] = [];
 
-    for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
+    for (let dayOffset = 1; dayOffset <= daysInTheWindow; dayOffset++) {
       const date = subDays(now, dayOffset);
       const dateStr = format(date, 'yyyy-MM-dd');
       const taskPromise = this.databaseService.getTasksByDate(dateStr)
@@ -70,5 +100,10 @@ export class PreviousDaysComponent implements OnInit, OnDestroy {
       collected.sort((left, right) => right.date.getTime() - left.date.getTime());
       this.previousDays.set(collected);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -1,9 +1,19 @@
-<div class="min-h-screen bg-background">
-    <app-header />
-    <div class="flex h-[calc(100vh-64px)]">
-        <app-sidebar />
-        <main class="flex-1 overflow-auto p-6">
-            <router-outlet />
-        </main>
+@if (isOverlay) {
+    @if (overlayFromRoute) {
+        <router-outlet />
+    } @else {
+        <app-popup-overlay />
+    }
+} @else {
+    <div class="min-h-screen bg-background">
+        <app-header />
+
+        <div class="flex h-[calc(100vh-64px)]">
+            <app-sidebar />
+
+            <main class="flex-1 overflow-auto p-6">
+                <router-outlet />
+            </main>
+        </div>
     </div>
-</div>
+}
