@@ -31,7 +31,8 @@ type SortDirection = 'asc' | 'desc';
     LucideAngularModule,
     AdoTitleComponent
   ],
-  templateUrl: './stories-table.component.html'
+  templateUrl: './stories-table.component.html',
+  host: { style: 'display: block' }
 })
 export class StoriesTableComponent {
   readonly Search = Search;

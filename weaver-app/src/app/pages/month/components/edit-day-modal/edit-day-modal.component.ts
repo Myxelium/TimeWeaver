@@ -39,7 +39,8 @@ import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import {
   AdoSuggestion,
   DaySummary,
-  Task
+  Task,
+  UpdateTaskRequest
 } from '../../../../shared/models';
 import { HolidayService } from '../../../../shared/services';
 import { selectMaxHoursEnabled, selectMaxHoursPerDay } from '../../../../store/settings/settings.selectors';
@@ -53,6 +54,7 @@ import { TaskDetailsModalComponent } from '../task-details-modal/task-details-mo
 import { DaySummaryPanelComponent } from './day-summary-panel/day-summary-panel.component';
 import { DayTaskFormComponent } from './day-task-form/day-task-form.component';
 import { DayTasksListComponent } from './day-tasks-list/day-tasks-list.component';
+import { fitHoursToMax } from './fit-hours.model';
 import { RangeDayListComponent } from './range-day-list/range-day-list.component';
 
 const HOUR_HUNDREDTHS = 100;
@@ -152,6 +154,7 @@ export class EditDayModalComponent implements OnChanges {
   private holidayService = inject(HolidayService);
 
   private maxHoursPerDay = 8;
+  private maxHoursEnabled = true;
 
   private allTasks: Task[] = [];
 
@@ -188,6 +191,12 @@ export class EditDayModalComponent implements OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe(hours => {
         this.maxHoursPerDay = hours;
+      });
+
+    this.maxHoursEnabled$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(enabled => {
+        this.maxHoursEnabled = enabled;
       });
   }
 
@@ -306,6 +315,33 @@ export class EditDayModalComponent implements OnChanges {
 
       this.taskForm.patchValue({ hours: current + remaining });
     }).unsubscribe();
+  }
+
+  canFitTasksToMax(): boolean {
+    if (!this.maxHoursEnabled || this.maxHoursPerDay <= 0)
+      return false;
+
+    const tasks = this.tasksToFit();
+
+    if (!tasks.some(task => task.hours > 0))
+      return false;
+
+    const totalHundredths = Math.round(tasks.reduce((sum, task) => sum + task.hours, 0) * HOUR_HUNDREDTHS);
+    const maxHundredths = Math.round(this.maxHoursPerDay * HOUR_HUNDREDTHS);
+
+    return totalHundredths > maxHundredths;
+  }
+
+  fitTasksToMaxHours(): void {
+    const tasks = this.tasksToFit();
+    const fitted = fitHoursToMax(tasks.map(task => task.hours), this.maxHoursPerDay);
+    const updates = this.hourUpdates(tasks, fitted);
+
+    if (updates.length === 0)
+      return;
+
+    this.store.dispatch(TasksActions.saveTasks({ tasks: updates }));
+    this.applyFittedHours(tasks, fitted);
   }
 
   onSubmit(): void {
@@ -609,6 +645,51 @@ export class EditDayModalComponent implements OnChanges {
         && task.title === other.title
         && (task.description || '') === (other.description || '');
     });
+  }
+
+  private tasksToFit(): (Task & { id: number })[] {
+    const tasks: (Task & { id: number })[] = [];
+
+    for (const task of this.getDayTasks()) {
+      if (task.id == null)
+        continue;
+
+      tasks.push({ ...task, id: task.id });
+    }
+
+    return tasks;
+  }
+
+  private hourUpdates(tasks: (Task & { id: number })[], fitted: number[]): UpdateTaskRequest[] {
+    return tasks.flatMap((task, index) => {
+      const hours = fitted[index];
+
+      if (hours == null || hours === task.hours)
+        return [];
+
+      return [
+        {
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          date: task.date,
+          hours
+        }
+      ];
+    });
+  }
+
+  private applyFittedHours(tasks: (Task & { id: number })[], fitted: number[]): void {
+    const editingId = this.editingTask?.id;
+
+    if (editingId == null)
+      return;
+
+    const index = tasks.findIndex(task => task.id === editingId);
+    const hours = fitted[index];
+
+    if (index >= 0 && hours != null)
+      this.taskForm.patchValue({ hours });
   }
 
   private filterSuggestions(value: string): void {

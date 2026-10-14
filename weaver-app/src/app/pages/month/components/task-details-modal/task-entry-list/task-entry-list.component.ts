@@ -6,43 +6,83 @@ import {
   Output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  format,
+  isValid,
+  parseISO
+} from 'date-fns';
+import {
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  LucideAngularModule,
+  Pencil
+} from 'lucide-angular';
 
 import { Task } from '../../../../../shared/models';
 
-const yearMonthKeyLength = 7;
+export type EditableTask = Task & { editing?: boolean };
 
-type EditableTask = Task & { editing?: boolean };
+export interface TaskMonthGroup {
+  key: string;
+  label: string;
+  entryCount: number;
+  totalHours: number;
+  tasks: EditableTask[];
+  expanded: boolean;
+}
 
 @Component({
   selector: 'app-task-entry-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule
+  ],
   templateUrl: './task-entry-list.component.html'
 })
 export class TaskEntryListComponent {
-  @Input() tasks: EditableTask[] = [];
+  @Input() groups: TaskMonthGroup[] = [];
 
-  @Output() enableEdit = new EventEmitter<number>();
-  @Output() saveTask = new EventEmitter<number>();
-  @Output() cancelEdit = new EventEmitter<number>();
+  @Output() enableEdit = new EventEmitter<EditableTask>();
+  @Output() saveTask = new EventEmitter<EditableTask>();
+  @Output() cancelEdit = new EventEmitter<EditableTask>();
+  @Output() toggleMonth = new EventEmitter<string>();
 
-  formatMonthLabel(date: string): string {
-    const dateObj = new Date(date + 'T00:00:00');
+  readonly ChevronDown = ChevronDown;
+  readonly ChevronRight = ChevronRight;
+  readonly Clock = Clock;
+  readonly Pencil = Pencil;
 
-    return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+  dayNumber(date: string): string {
+    return this.formatPart(date, 'dd', '--');
   }
 
-  isNewMonth(index: number): boolean {
-    if (index === 0)
-      return true;
-
-    const currentTask = this.tasks[index];
-    const previousTask = this.tasks[index - 1];
-
-    return this.monthKey(currentTask.date) !== this.monthKey(previousTask.date);
+  monthLabel(date: string): string {
+    return this.formatPart(date, 'MMM', '');
   }
 
-  private monthKey(date: string): string {
-    return date.substring(0, yearMonthKeyLength);
+  entryMeta(task: EditableTask): string {
+    const weekday = this.formatPart(task.date, 'EEE', '');
+    const description = task.description?.trim() || 'No description';
+
+    if (!weekday)
+      return description;
+
+    return `${weekday} · ${description}`;
+  }
+
+  fullDate(date: string): string {
+    return this.formatPart(date, 'MMM d, yyyy', date);
+  }
+
+  private formatPart(date: string, pattern: string, fallback: string): string {
+    const parsed = parseISO(date);
+
+    if (!isValid(parsed))
+      return fallback;
+
+    return format(parsed, pattern);
   }
 }

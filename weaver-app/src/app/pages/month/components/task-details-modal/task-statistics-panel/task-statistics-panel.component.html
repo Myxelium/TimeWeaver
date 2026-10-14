@@ -1,87 +1,61 @@
-<div class="mb-6">
-    <h3 class="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">All-Time Statistics</h3>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="card-panel !p-3">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="text-xs text-muted-foreground mb-1">Total Hours</p>
-                    <p class="text-xl font-bold text-foreground">{{ statistics.totalHours }}</p>
-                </div>
-
-                <div class="p-1.5 rounded-lg bg-primary/10">
-                    <lucide-icon
-                        [img]="Clock"
-                        [size]="18"
-                        class="text-primary"
-                    />
-                </div>
-            </div>
+<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="card-panel flex h-full items-center gap-3 !p-3">
+        <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-secondary">
+            <lucide-icon
+                [img]="Clock"
+                [size]="18"
+                class="text-foreground"
+            />
         </div>
 
-        <div class="card-panel !p-3">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="text-xs text-muted-foreground mb-1">Items</p>
-                    <p class="text-xl font-bold text-foreground">{{ statistics.totalItems }}</p>
-                </div>
-
-                <div class="p-1.5 rounded-lg bg-purple-500/10">
-                    <lucide-icon
-                        [img]="BarChart3"
-                        [size]="18"
-                        class="text-purple-600 dark:text-purple-400"
-                    />
-                </div>
-            </div>
-        </div>
-
-        <div class="card-panel !p-3">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="text-xs text-muted-foreground mb-1">Avg Hours/Day</p>
-                    <p class="text-xl font-bold text-foreground">{{ statistics.averageHoursPerDay }}</p>
-                </div>
-
-                <div class="p-1.5 rounded-lg bg-green-500/10">
-                    <lucide-icon
-                        [img]="TrendingUp"
-                        [size]="18"
-                        class="text-green-600 dark:text-green-400"
-                    />
-                </div>
-            </div>
-        </div>
-
-        <div class="card-panel !p-3">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="text-xs text-muted-foreground mb-1">Days</p>
-                    <p class="text-xl font-bold text-foreground">{{ statistics.calculatedDays }}</p>
-                </div>
-
-                <div class="p-1.5 rounded-lg bg-blue-500/10">
-                    <lucide-icon
-                        [img]="Calendar"
-                        [size]="18"
-                        class="text-blue-600 dark:text-blue-400"
-                    />
-                </div>
-            </div>
+        <div class="min-w-0">
+            <p class="text-xs text-muted-foreground">Total time</p>
+            <p class="text-xl font-bold leading-tight text-foreground">{{ statistics.totalHours | number: '1.0-2' }} h</p>
         </div>
     </div>
 
-    @if (statistics.dateRange.start && statistics.dateRange.end) {
-        <div class="card-panel !p-3 mt-3">
-            <div class="text-center">
-                <p class="text-xs text-muted-foreground mb-1">Date Range</p>
-
-                <p class="text-sm font-semibold text-foreground">
-                    {{ statistics.dateRange.start }}
-                    <span class="text-muted-foreground mx-2">to</span>
-                    {{ statistics.dateRange.end }}
-                </p>
-            </div>
+    <div class="card-panel flex h-full items-center gap-3 !p-3">
+        <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-secondary">
+            <lucide-icon
+                [img]="List"
+                [size]="18"
+                class="text-foreground"
+            />
         </div>
-    }
+
+        <div class="min-w-0">
+            <p class="text-xs text-muted-foreground">Entries</p>
+            <p class="text-xl font-bold leading-tight text-foreground">{{ statistics.totalTasks }}</p>
+        </div>
+    </div>
+
+    <div class="card-panel flex h-full items-center gap-3 !p-3">
+        <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-secondary">
+            <lucide-icon
+                [img]="TrendingUp"
+                [size]="18"
+                class="text-foreground"
+            />
+        </div>
+
+        <div class="min-w-0">
+            <p class="text-xs text-muted-foreground">Avg. hours / active day</p>
+            <p class="text-xl font-bold leading-tight text-foreground">{{ statistics.averageHoursPerDay | number: '1.0-2' }} h</p>
+        </div>
+    </div>
+
+    <div class="card-panel flex h-full items-center gap-3 !p-3">
+        <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-secondary">
+            <lucide-icon
+                [img]="Calendar"
+                [size]="18"
+                class="text-foreground"
+            />
+        </div>
+
+        <div class="min-w-0">
+            <p class="text-xs text-muted-foreground">Active days</p>
+            <p class="text-xl font-bold leading-tight text-foreground">{{ statistics.uniqueDays }}</p>
+        </div>
+    </div>
 </div>

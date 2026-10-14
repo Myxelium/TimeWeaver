@@ -1,19 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import {
-  BarChart3,
   Calendar,
   Clock,
+  List,
   LucideAngularModule,
   TrendingUp
 } from 'lucide-angular';
 
 export interface TaskStatisticSummary {
   totalHours: number;
-  totalItems: number;
-  calculatedDays: number;
+  totalTasks: number;
   averageHoursPerDay: number;
-  dateRange: { start: string | null; end: string | null };
+  uniqueDays: number;
 }
 
 @Component({
@@ -26,7 +25,7 @@ export class TaskStatisticsPanelComponent {
   @Input({ required: true }) statistics!: TaskStatisticSummary;
 
   readonly Clock = Clock;
-  readonly BarChart3 = BarChart3;
+  readonly List = List;
   readonly TrendingUp = TrendingUp;
   readonly Calendar = Calendar;
 }

@@ -1,6 +1,20 @@
 @if (show) {
     <div>
-        <h3 class="panel-heading">Tasks</h3>
+        <div class="mb-4 flex items-center justify-between gap-2">
+            <h3 class="text-lg font-medium">Tasks</h3>
+
+            @if (canFitToMax) {
+                <button
+                    (click)="fitToMax.emit()"
+                    type="button"
+                    class="icon-btn text-muted-foreground hover:text-foreground"
+                    aria-label="Fit tasks into the day's max hours"
+                    title="Fit tasks into the day's max hours"
+                >
+                    <lucide-icon [img]="Shrink" class="w-4 h-4" />
+                </button>
+            }
+        </div>
 
         @if (tasks.length > 0) {
             <div class="space-y-3 max-h-96 overflow-y-auto">

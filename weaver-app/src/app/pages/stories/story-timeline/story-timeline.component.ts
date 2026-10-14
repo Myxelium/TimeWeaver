@@ -8,7 +8,8 @@ import { StoryTimelineRowComponent } from './story-timeline-row/story-timeline-r
   selector: 'app-story-timeline',
   standalone: true,
   imports: [CommonModule, StoryTimelineRowComponent],
-  templateUrl: './story-timeline.component.html'
+  templateUrl: './story-timeline.component.html',
+  host: { style: 'display: block' }
 })
 export class StoryTimelineComponent {
   rows = input<StoryYearRow[]>([]);

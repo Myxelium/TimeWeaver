@@ -103,8 +103,10 @@
                             <app-day-tasks-list
                                 (edit)="editTask($event)"
                                 (delete)="deleteTask($event)"
+                                (fitToMax)="fitTasksToMaxHours()"
                                 [show]="!singleTaskMode"
                                 [tasks]="getDayTasks()"
+                                [canFitToMax]="canFitTasksToMax()"
                             />
 
                             @if (!singleTaskMode && suggestionsForDate(selectedDate).length) {

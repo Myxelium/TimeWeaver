@@ -5,6 +5,7 @@ import {
   Input,
   Output
 } from '@angular/core';
+import { LucideAngularModule, Shrink } from 'lucide-angular';
 
 import { AdoTitleComponent } from '../../../../../shared/ado-title/ado-title.component';
 import { Task } from '../../../../../shared/models';
@@ -12,7 +13,11 @@ import { Task } from '../../../../../shared/models';
 @Component({
   selector: 'app-day-tasks-list',
   standalone: true,
-  imports: [CommonModule, AdoTitleComponent],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    AdoTitleComponent
+  ],
   templateUrl: './day-tasks-list.component.html'
 })
 export class DayTasksListComponent {
@@ -20,6 +25,11 @@ export class DayTasksListComponent {
 
   @Input() tasks: Task[] = [];
 
+  @Input() canFitToMax = false;
+
   @Output() edit = new EventEmitter<Task>();
   @Output() delete = new EventEmitter<number>();
+  @Output() fitToMax = new EventEmitter<void>();
+
+  readonly Shrink = Shrink;
 }

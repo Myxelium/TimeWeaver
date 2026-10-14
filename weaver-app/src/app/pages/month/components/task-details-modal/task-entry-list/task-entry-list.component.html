@@ -1,92 +1,155 @@
-<div class="space-y-3">
-    <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Task Entries</h3>
-    </div>
+<div class="space-y-2">
+    @for (group of groups; track group.key) {
+        <section class="overflow-hidden rounded-lg border border-border">
+            <button
+                (click)="toggleMonth.emit(group.key)"
+                [attr.aria-expanded]="group.expanded"
+                type="button"
+                class="flex w-full items-center gap-3 bg-muted/40 px-3 py-2.5 text-left hover:bg-accent/60"
+            >
+                <lucide-icon
+                    [img]="group.expanded ? ChevronDown : ChevronRight"
+                    [size]="16"
+                    class="flex-shrink-0 text-muted-foreground"
+                />
 
-    <div class="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground">
-        <div class="col-span-3">Date</div>
-        <div class="col-span-5">Title & Description</div>
-        <div class="col-span-2 text-right">Hours</div>
-        <div class="col-span-2">Actions</div>
-    </div>
+                <span class="text-sm font-medium text-foreground">{{ group.label }}</span>
 
-    <div>
-        @for (task of tasks; let index = $index; track task.id ?? index) {
-            @if (isNewMonth(index)) {
-                <div [class.pt-0]="index === 0" class="flex items-center gap-3 py-3">
-                    <div class="flex-1 h-px bg-border"></div>
+                <span class="text-xs text-muted-foreground">
+                    {{ group.entryCount }} {{ group.entryCount === 1 ? 'entry' : 'entries' }}
+                </span>
 
-                    <span class="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
-                        {{ formatMonthLabel(task.date) }}
-                    </span>
+                <span class="hidden text-xs text-muted-foreground sm:inline">{{ group.totalHours | number: '1.0-2' }} h total</span>
 
-                    <div class="flex-1 h-px bg-border"></div>
-                </div>
-            }
-
-            <div class="grid grid-cols-12 gap-2 py-2 items-start border-b border-border/50 last:border-b-0">
-                <div class="col-span-3">
-                    <input
-                        [(ngModel)]="task.date"
-                        [disabled]="!task.editing"
-                        type="date"
-                        class="input-base w-full text-xs"
+                <span class="ml-auto flex flex-shrink-0 items-center gap-1 text-sm font-semibold text-foreground">
+                    <lucide-icon
+                        [img]="Clock"
+                        [size]="14"
+                        class="text-muted-foreground"
                     />
-                </div>
+                    {{ group.totalHours | number: '1.0-2' }} h
+                </span>
+            </button>
 
-                <div class="col-span-5 space-y-1">
-                    <input
-                        [(ngModel)]="task.title"
-                        [disabled]="!task.editing"
-                        class="input-base w-full text-xs"
-                    />
+            @if (group.expanded) {
+                @for (task of group.tasks; track task.id ?? $index) {
+                    @if (task.editing) {
+                        <div class="border-t border-border bg-muted/30 px-3 py-3">
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_7rem]">
+                                <div>
+                                    <label [attr.for]="'entry-date-' + (task.id ?? $index)" class="mb-1 block text-xs font-medium text-muted-foreground">
+                                        Date
+                                    </label>
 
-                    <textarea
-                        [(ngModel)]="task.description"
-                        [disabled]="!task.editing"
-                        class="textarea-base w-full text-xs min-h-[40px]"
-                    >
-                    </textarea>
-                </div>
+                                    <input
+                                        [(ngModel)]="task.date"
+                                        [id]="'entry-date-' + (task.id ?? $index)"
+                                        type="date"
+                                        class="input-base text-sm"
+                                    />
+                                </div>
 
-                <div class="col-span-2">
-                    <input
-                        [(ngModel)]="task.hours"
-                        [disabled]="!task.editing"
-                        type="number"
-                        step="0.25"
-                        class="input-base w-full text-xs text-right"
-                    />
-                </div>
+                                <div>
+                                    <label [attr.for]="'entry-title-' + (task.id ?? $index)" class="mb-1 block text-xs font-medium text-muted-foreground">
+                                        Title
+                                    </label>
 
-                <div class="col-span-2 flex items-center space-x-2">
-                    @if (!task.editing) {
-                        <button
-                            (click)="enableEdit.emit(index)"
-                            type="button"
-                            class="btn-secondary px-2 py-1 text-xs"
-                        >
-                            Edit
-                        </button>
+                                    <input
+                                        [(ngModel)]="task.title"
+                                        [id]="'entry-title-' + (task.id ?? $index)"
+                                        type="text"
+                                        placeholder="Entry title"
+                                        class="input-base text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label [attr.for]="'entry-hours-' + (task.id ?? $index)" class="mb-1 block text-xs font-medium text-muted-foreground">
+                                        Hours
+                                    </label>
+
+                                    <div class="flex overflow-hidden rounded-md border border-input focus-within:ring-2 focus-within:ring-ring">
+                                        <input
+                                            [(ngModel)]="task.hours"
+                                            [id]="'entry-hours-' + (task.id ?? $index)"
+                                            type="number"
+                                            min="0"
+                                            step="0.25"
+                                            placeholder="0"
+                                            class="w-full border-0 bg-background px-3 py-2 text-right text-sm text-foreground focus:outline-none"
+                                        />
+
+                                        <span class="flex items-center border-l border-input bg-muted px-2 text-sm text-muted-foreground">h</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label [attr.for]="'entry-description-' + (task.id ?? $index)" class="mb-1 block text-xs font-medium text-muted-foreground">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    [(ngModel)]="task.description"
+                                    [id]="'entry-description-' + (task.id ?? $index)"
+                                    rows="2"
+                                    placeholder="Add details about this entry..."
+                                    class="textarea-base resize-y text-sm"
+                                >
+                                </textarea>
+                            </div>
+
+                            <div class="mt-3 flex items-center justify-end gap-2">
+                                <button
+                                    (click)="cancelEdit.emit(task)"
+                                    type="button"
+                                    class="btn-outline px-3 py-1.5 text-sm"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    (click)="saveTask.emit(task)"
+                                    type="button"
+                                    class="btn-primary px-3 py-1.5 text-sm"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
                     } @else {
-                        <button
-                            (click)="saveTask.emit(index)"
-                            type="button"
-                            class="btn-primary px-2 py-1 text-xs"
-                        >
-                            Save
-                        </button>
+                        <div class="flex flex-wrap items-center gap-3 border-t border-border px-3 py-2.5">
+                            <div class="flex min-w-0 flex-1 items-center gap-3">
+                                <div [title]="fullDate(task.date)" class="w-11 flex-shrink-0 rounded-md bg-muted py-1 text-center">
+                                    <div class="text-base font-semibold leading-none text-foreground">{{ dayNumber(task.date) }}</div>
+                                    <div class="mt-0.5 text-xs uppercase text-muted-foreground">{{ monthLabel(task.date) }}</div>
+                                </div>
 
-                        <button
-                            (click)="cancelEdit.emit(index)"
-                            type="button"
-                            class="btn-outline px-2 py-1 text-xs"
-                        >
-                            Cancel
-                        </button>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium text-foreground">{{ task.title || 'Untitled' }}</p>
+                                    <p class="truncate text-xs text-muted-foreground">{{ entryMeta(task) }}</p>
+                                </div>
+                            </div>
+
+                            <div class="ml-auto flex flex-shrink-0 items-center gap-1">
+                                <span class="rounded-full bg-secondary px-2.5 py-1 text-sm font-semibold tabular-nums text-foreground">
+                                    {{ (task.hours || 0) | number: '1.0-2' }} h
+                                </span>
+
+                                <button
+                                    (click)="enableEdit.emit(task)"
+                                    type="button"
+                                    class="icon-btn"
+                                    aria-label="Edit entry"
+                                    title="Edit"
+                                >
+                                    <lucide-icon [img]="Pencil" [size]="16" />
+                                </button>
+                            </div>
+                        </div>
                     }
-                </div>
-            </div>
-        }
-    </div>
+                }
+            }
+        </section>
+    }
 </div>
