@@ -36,7 +36,9 @@ import { selectFirstDayOfWeek } from '../../../../store/settings/settings.select
 import {
   selectHolidayCountry,
   selectIgnoreWeekends,
-  selectMaxHoursPerDay
+  selectMaxHoursPerDay,
+  selectSkipHolidaysOnSelect,
+  selectSkipWeekendsOnSelect
 } from '../../../../store/settings/settings.selectors';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectAdoSuggestions, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
@@ -128,6 +130,8 @@ export class MonthlyOverviewComponent {
 
   private firstDayOfWeekSignal = toSignal(this.store.select(selectFirstDayOfWeek), { initialValue: 1 });
   private ignoreWeekendsSignal = toSignal(this.store.select(selectIgnoreWeekends), { initialValue: true });
+  private skipWeekendsOnSelectSignal = toSignal(this.store.select(selectSkipWeekendsOnSelect), { initialValue: false });
+  private skipHolidaysOnSelectSignal = toSignal(this.store.select(selectSkipHolidaysOnSelect), { initialValue: false });
   private maxHoursPerDaySignal = toSignal(this.store.select(selectMaxHoursPerDay), { initialValue: 8 });
   private monthlyDataSignal = toSignal(this.store.select(selectMonthlyData), { initialValue: [] as DaySummary[] });
   private adoSuggestionsSignal = toSignal(this.store.select(selectAdoSuggestions), { initialValue: [] as AdoSuggestion[] });
@@ -473,10 +477,18 @@ export class MonthlyOverviewComponent {
     const from = start.getTime() <= end.getTime() ? start : end;
     const to = start.getTime() <= end.getTime() ? end : start;
     const month = this.currentDate();
+    const skipWeekends = this.skipWeekendsOnSelectSignal();
+    const skipHolidays = this.skipHolidaysOnSelectSignal();
 
     return eachDayOfInterval({ start: from, end: to })
       .filter(day => isSameMonth(day, month))
+      .filter(day => !skipWeekends || !this.isWeekend(day))
+      .filter(day => !skipHolidays || !this.holidayService.getHolidayInfo(day).isHoliday)
       .map(day => format(day, 'yyyy-MM-dd'));
+  }
+
+  private isWeekend(day: Date): boolean {
+    return day.getDay() === 0 || day.getDay() === saturdayIndex;
   }
 
   private datesFromKeys(keys: string[]): Date[] {

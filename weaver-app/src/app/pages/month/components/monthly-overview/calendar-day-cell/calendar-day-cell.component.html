@@ -51,7 +51,11 @@
                     [class.text-primary-foreground]="day.isToday"
                     class="truncate"
                 >
-                    {{ task.title }}
+                    <app-ado-title
+                        [adoWorkItemId]="task.adoWorkItemId ?? null"
+                        [showAzureIcon]="false"
+                        [title]="task.title"
+                    />
                 </div>
             }
 

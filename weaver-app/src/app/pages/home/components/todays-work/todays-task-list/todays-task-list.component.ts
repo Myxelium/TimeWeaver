@@ -8,12 +8,13 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { AdoTitleComponent } from '../../../../../shared/ado-title/ado-title.component';
 import { Task } from '../../../../../shared/models';
 
 @Component({
   selector: 'app-todays-task-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AdoTitleComponent],
   templateUrl: './todays-task-list.component.html'
 })
 export class TodaysTaskListComponent {

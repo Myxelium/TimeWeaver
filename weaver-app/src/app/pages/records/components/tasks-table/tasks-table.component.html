@@ -32,8 +32,8 @@
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
                         >
                             <lucide-icon [img]="Calendar" [size]="16" />
-                                Date
-                                <lucide-icon [img]="getSortIcon('date')" [size]="16" />
+                            Date
+                            <lucide-icon [img]="getSortIcon('date')" [size]="16" />
                         </button>
                     </th>
 
@@ -44,16 +44,16 @@
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
                         >
                             <lucide-icon [img]="FileText" [size]="16" />
-                                Title
-                                <lucide-icon [img]="getSortIcon('title')" [size]="16" />
+                            Title
+                            <lucide-icon [img]="getSortIcon('title')" [size]="16" />
                         </button>
                     </th>
 
                     <th class="text-left py-3 px-4 hidden md:table-cell">
                         <span class="flex items-center gap-2 font-semibold text-foreground">
                             <lucide-icon [img]="AlignLeft" [size]="16" />
-                                Description
-                            </span>
+                            Description
+                        </span>
                     </th>
 
                     <th class="text-right py-3 px-4">
@@ -63,8 +63,8 @@
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors ml-auto"
                         >
                             <lucide-icon [img]="Clock" [size]="16" />
-                                Hours
-                                <lucide-icon [img]="getSortIcon('hours')" [size]="16" />
+                            Hours
+                            <lucide-icon [img]="getSortIcon('hours')" [size]="16" />
                         </button>
                     </th>
                 </tr>
@@ -74,26 +74,28 @@
                 @for (task of filteredAndSortedTasks(); track trackByTaskId($index, task)) {
                     <tr (click)="openEditModal(task)" class="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer">
                         <td class="py-3 px-4 text-foreground">
-                                {{ task.date }}
-                            </td>
+                            {{ task.date }}
+                        </td>
 
                         <td class="py-3 px-4">
-                            <div class="font-medium text-foreground">{{ task.title }}</div>
+                            <div class="font-medium text-foreground">
+                                <app-ado-title [adoWorkItemId]="task.adoWorkItemId ?? null" [title]="task.title" />
+                            </div>
 
                             @if (task.description) {
                                 <div class="text-sm text-muted-foreground mt-1 md:hidden">
-                                        {{ task.description }}
-                                    </div>
+                                    {{ task.description }}
+                                </div>
                             }
                         </td>
 
                         <td class="py-3 px-4 text-muted-foreground hidden md:table-cell">
-                                {{ task.description || '-' }}
-                            </td>
+                            {{ task.description || '-' }}
+                        </td>
 
                         <td class="py-3 px-4 text-right font-semibold text-foreground">
-                                {{ task.hours || 0 }}
-                            </td>
+                            {{ task.hours || 0 }}
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -110,10 +112,10 @@
 
             <p class="text-muted-foreground">
                 @if (searchTerm()) {
-                        No tasks found matching "{{ searchTerm() }}"
-                    } @else {
-                        No tasks recorded yet
-                    }
+                    No tasks found matching "{{ searchTerm() }}"
+                } @else {
+                    No tasks recorded yet
+                }
             </p>
         </div>
     }

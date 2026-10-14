@@ -12,7 +12,9 @@
                 @for (task of day.tasks; track task.id) {
                     <div class="task-row-compact">
                         <div class="flex-1">
-                            <p class="font-medium text-sm">{{ task.title }}</p>
+                            <p class="font-medium text-sm">
+                                <app-ado-title [adoWorkItemId]="task.adoWorkItemId ?? null" [title]="task.title" />
+                            </p>
 
                             @if (task.description) {
                                 <p class="text-xs text-muted-foreground">{{ task.description }}</p>

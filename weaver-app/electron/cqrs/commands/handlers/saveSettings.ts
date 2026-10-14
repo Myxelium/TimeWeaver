@@ -18,6 +18,13 @@ export async function handleSaveSettings(command: SaveSettingsCommand, dataSourc
   settings.monthlyCost = command.payload.monthlyCost;
   settings.darkMode = command.payload.darkMode;
   settings.ignoreWeekends = command.payload.ignoreWeekends;
+
+  if (typeof command.payload.skipWeekendsOnSelect === 'boolean')
+    settings.skipWeekendsOnSelect = command.payload.skipWeekendsOnSelect;
+
+  if (typeof command.payload.skipHolidaysOnSelect === 'boolean')
+    settings.skipHolidaysOnSelect = command.payload.skipHolidaysOnSelect;
+
   settings.maxHoursPerDay = command.payload.maxHoursPerDay;
   settings.maxHoursEnabled = command.payload.maxHoursEnabled;
   settings.holidayCountry = command.payload.holidayCountry ?? null;

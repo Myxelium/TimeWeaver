@@ -1,6 +1,6 @@
 <div class="group grid grid-cols-[12rem_1fr] gap-x-3 items-center h-2 overflow-hidden transition-[height] duration-300 ease-out hover:h-10">
     <div [title]="row().title" class="truncate text-sm leading-none text-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        {{ row().title }}
+        <app-ado-title [adoWorkItemId]="row().adoId" [title]="row().title" />
     </div>
 
     <div class="relative h-full">

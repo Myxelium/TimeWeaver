@@ -4,7 +4,9 @@ import { Store } from '@ngrx/store';
 
 import { HeaderComponent } from './layout/header/header.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
+import { TaskDetailsModalComponent } from './pages/month/components/task-details-modal/task-details-modal.component';
 import { PopupOverlayComponent } from './pages/overlay/popup-overlay.component';
+import { TaskDetailsService } from './shared/services';
 import { loadSettings } from './store/settings/settings.actions';
 import { TasksActions } from './store/tasks/tasks.actions';
 
@@ -23,7 +25,8 @@ function overlayLaunchActive(): boolean {
     RouterOutlet,
     HeaderComponent,
     SidebarComponent,
-    PopupOverlayComponent
+    PopupOverlayComponent,
+    TaskDetailsModalComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
@@ -35,6 +38,7 @@ export class AppComponent {
 
   readonly overlayFromRoute = /\/overlay\/(time-log|reminder)\//.test(window.location.pathname);
 
+  readonly taskDetails = inject(TaskDetailsService);
   private store = inject(Store);
 
   constructor() {

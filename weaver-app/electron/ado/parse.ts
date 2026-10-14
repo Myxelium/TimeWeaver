@@ -36,6 +36,14 @@ export function loggingTitle(adoId: number, title: string): string {
   return `#${adoId} ${title.trim()}`;
 }
 
+export function workItemPageUrl(organization: string, adoId: number): string {
+  return `https://dev.azure.com/${encodeURIComponent(organizationName(organization))}/_workitems/edit/${adoId}`;
+}
+
+export function isWorkItemPageUrl(url: string): boolean {
+  return /^https:\/\/dev\.azure\.com\/[A-Za-z0-9][A-Za-z0-9-]{0,62}\/_workitems\/edit\/\d+$/i.test(url);
+}
+
 export function organizationName(input: string): string {
   const trimmed = input.trim().replace(/\/+$/, '');
   const fromUrl = ORGANIZATION_URL.exec(trimmed);

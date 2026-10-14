@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
 
+import { AdoTitleComponent } from '../../../../shared/ado-title/ado-title.component';
 import { StoryYearRow } from '../../story-year.model';
 
 @Component({
   selector: 'app-story-timeline-row',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AdoTitleComponent],
   templateUrl: './story-timeline-row.component.html'
 })
 export class StoryTimelineRowComponent {

@@ -6,6 +6,7 @@ export interface CqrsAPI {
   runCommand: <T = unknown>(command: Command) => Promise<T>;
   runQuery: <T = unknown>(query: Query) => Promise<T>;
   onAdoSynced: (listener: () => void) => () => void;
+  openExternal: (url: string) => Promise<void>;
 }
 
 export interface PopupEntryPayload {
@@ -38,6 +39,7 @@ export interface PopupAPI {
 const cqrsAPI: CqrsAPI = {
   runCommand: <T = unknown>(command: Command): Promise<T> => ipcRenderer.invoke('cqrs:command', command) as Promise<T>,
   runQuery: <T = unknown>(query: Query): Promise<T> => ipcRenderer.invoke('cqrs:query', query) as Promise<T>,
+  openExternal: (url: string): Promise<void> => ipcRenderer.invoke('shell:open-external', url),
   onAdoSynced: (listener: () => void): (() => void) => {
     const wrapped = (): void => listener();
 

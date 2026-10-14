@@ -29,7 +29,10 @@
 
                 @if (row.tasks.length) {
                     @for (task of row.tasks; track task.id) {
-                        <p class="text-xs text-muted-foreground truncate">{{ task.title }} · {{ task.hours | number: '1.1-1' }}h</p>
+                        <p class="text-xs text-muted-foreground truncate">
+                            <app-ado-title [adoWorkItemId]="task.adoWorkItemId ?? null" [title]="task.title" />
+                            · {{ task.hours | number: '1.1-1' }}h
+                        </p>
                     }
                 } @else {
                     <p class="text-xs text-muted-foreground italic">No time yet</p>

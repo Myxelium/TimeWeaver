@@ -15,5 +15,13 @@
                 <router-outlet />
             </main>
         </div>
+
+        <app-task-details-modal
+            (closed)="taskDetails.closeDetails()"
+            (saveTask)="taskDetails.saveTask($event)"
+            [isOpen]="taskDetails.isOpen()"
+            [taskList]="taskDetails.detailedTasks()"
+            [title]="taskDetails.title()"
+        />
     </div>
 }

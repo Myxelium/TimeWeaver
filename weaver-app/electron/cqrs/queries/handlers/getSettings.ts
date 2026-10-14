@@ -21,6 +21,8 @@ export async function handleGetSettings(dataSource: DataSource): Promise<Setting
     monthlyCost: settings.monthlyCost ?? 0,
     darkMode: !!settings.darkMode,
     ignoreWeekends: settings.ignoreWeekends !== false,
+    skipWeekendsOnSelect: !!settings.skipWeekendsOnSelect,
+    skipHolidaysOnSelect: !!settings.skipHolidaysOnSelect,
     maxHoursPerDay: settings.maxHoursPerDay ?? defaultMaxHoursPerDay,
     maxHoursEnabled: settings.maxHoursEnabled !== false,
     holidayCountry: settings.holidayCountry ?? undefined,

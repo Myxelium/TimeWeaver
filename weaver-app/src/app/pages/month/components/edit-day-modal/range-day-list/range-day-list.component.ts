@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 
 import { AdoSuggestionTableComponent } from '../../../../../shared/ado-suggestion-table/ado-suggestion-table.component';
+import { AdoTitleComponent } from '../../../../../shared/ado-title/ado-title.component';
 import { AdoSuggestion, Task } from '../../../../../shared/models';
 
 export interface RangeDayRowView {
@@ -22,7 +23,11 @@ export interface RangeDayRowView {
 @Component({
   selector: 'app-range-day-list',
   standalone: true,
-  imports: [CommonModule, AdoSuggestionTableComponent],
+  imports: [
+    CommonModule,
+    AdoSuggestionTableComponent,
+    AdoTitleComponent
+  ],
   templateUrl: './range-day-list.component.html'
 })
 export class RangeDayListComponent {

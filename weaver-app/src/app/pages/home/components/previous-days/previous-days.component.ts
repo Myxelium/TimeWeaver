@@ -12,6 +12,7 @@ import { format, subDays } from 'date-fns';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
+import { AdoTitleComponent } from '../../../../shared/ado-title/ado-title.component';
 import { Task } from '../../../../shared/models';
 import { DateChangeDetectionService } from '../../../../shared/services';
 import { DatabaseService } from '../../../../shared/services/database.service';
@@ -22,7 +23,7 @@ const daysInTheWindow = 7;
 @Component({
   selector: 'app-previous-days',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AdoTitleComponent],
   templateUrl: './previous-days.component.html'
 })
 export class PreviousDaysComponent implements OnInit, OnDestroy {

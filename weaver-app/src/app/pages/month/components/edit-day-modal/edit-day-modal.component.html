@@ -29,8 +29,7 @@
                             <h2 class="section-heading mb-0">Edit Day - Date range</h2>
 
                             <p class="text-sm text-muted-foreground mt-1">
-                                {{ rangeStartDate | date: 'MMM d, y' }} - {{ rangeEndDate | date: 'MMM d, y' }}
-                                · {{ rangeDates!.length }} days
+                                {{ rangeStartDate | date: 'MMM d, y' }} - {{ rangeEndDate | date: 'MMM d, y' }} · {{ rangeDates!.length }} days
                             </p>
                         } @else {
                             <h2 class="section-heading mb-0">Edit Day - {{ selectedDate | date: 'EEEE, MMMM d, y' }}</h2>

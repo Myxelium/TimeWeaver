@@ -6,6 +6,7 @@ import {
   Output
 } from '@angular/core';
 
+import { AdoTitleComponent } from '../../../../../shared/ado-title/ado-title.component';
 import { AdoSuggestion, DaySummary } from '../../../../../shared/models';
 
 export interface CalendarDayView {
@@ -20,7 +21,7 @@ export interface CalendarDayView {
 @Component({
   selector: 'app-calendar-day-cell',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AdoTitleComponent],
   templateUrl: './calendar-day-cell.component.html'
 })
 export class CalendarDayCellComponent {

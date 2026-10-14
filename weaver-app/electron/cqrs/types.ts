@@ -48,6 +48,8 @@ export interface SaveSettingsCommand {
     monthlyCost: number;
     darkMode: boolean;
     ignoreWeekends: boolean;
+    skipWeekendsOnSelect?: boolean;
+    skipHolidaysOnSelect?: boolean;
     maxHoursPerDay: number;
     maxHoursEnabled: boolean;
     holidayCountry?: string;
@@ -137,6 +139,8 @@ export interface SettingsDTO {
   monthlyCost: number;
   darkMode: boolean;
   ignoreWeekends: boolean;
+  skipWeekendsOnSelect: boolean;
+  skipHolidaysOnSelect: boolean;
   maxHoursPerDay: number;
   maxHoursEnabled: boolean;
   holidayCountry?: string;

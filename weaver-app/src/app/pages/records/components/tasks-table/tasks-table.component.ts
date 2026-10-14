@@ -22,6 +22,7 @@ import {
   Search
 } from 'lucide-angular';
 
+import { AdoTitleComponent } from '../../../../shared/ado-title/ado-title.component';
 import { DaySummary, Task } from '../../../../shared/models';
 import { TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
@@ -37,7 +38,8 @@ type SortDirection = 'asc' | 'desc';
     CommonModule,
     FormsModule,
     LucideAngularModule,
-    EditDayModalComponent
+    EditDayModalComponent,
+    AdoTitleComponent
   ],
   templateUrl: './tasks-table.component.html'
 })

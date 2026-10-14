@@ -110,6 +110,15 @@
     .btn-xs-link {
         @apply text-xs text-primary hover:text-primary/80 font-medium;
     }
+    .ado-title {
+        @apply inline-flex items-center gap-1.5 max-w-full align-middle;
+    }
+    .ado-title-text {
+        @apply appearance-none min-w-0 truncate text-left bg-transparent p-0 border-0 text-inherit cursor-pointer hover:opacity-80;
+    }
+    .ado-title-icon {
+        @apply appearance-none flex-shrink-0 inline-flex items-center justify-center p-0.5 rounded hover:bg-accent;
+    }
 
     /* Suggestion dropdown */
     .suggestions-dropdown {

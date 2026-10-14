@@ -16,6 +16,7 @@ import { loggingTitle } from './ado/parse';
 import { AdoWorkItem } from './entities/AdoWorkItem';
 import { Setting } from './entities/Setting';
 import { Task } from './entities/Task';
+import { routeExternalLinks } from './open-external';
 import {
   dailyTargetHours,
   formatLocalDate,
@@ -275,6 +276,7 @@ function showPopup(rule: PopupRule): void {
     }
   });
 
+  routeExternalLinks(win);
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 

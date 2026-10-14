@@ -1,5 +1,5 @@
 <div class="card-panel">
-    <h3 class="panel-heading">{{ isRangeMode ? 'Add time' : (editingTask ? 'Edit Task' : 'Add New Task') }}</h3>
+    <h3 class="panel-heading">{{ isRangeMode ? 'Add time' : editingTask ? 'Edit Task' : 'Add New Task' }}</h3>
 
     <form
         (ngSubmit)="submitForm.emit()"
@@ -12,7 +12,8 @@
 
         @if (allowDateChange) {
             <div>
-                <label for="modalTaskDate" class="form-label">Date</label>
+                <label for="modalTaskDate" class="form-label">Date</label
+                >
 
                 <input
                     type="date"
@@ -24,7 +25,8 @@
         }
 
         <div>
-            <label for="modalTaskTitle" class="form-label">Task Title</label>
+            <label for="modalTaskTitle" class="form-label">Task Title</label
+            >
 
             <div class="relative">
                 <input
@@ -55,7 +57,8 @@
         </div>
 
         <div>
-            <label for="modalTaskDescription" class="form-label">Description (Optional)</label>
+            <label for="modalTaskDescription" class="form-label">Description (Optional)</label
+            >
 
             <textarea
                 formControlName="description"
@@ -68,7 +71,8 @@
         </div>
 
         <div>
-            <label for="modalTaskHours" class="form-label">Hours</label>
+            <label for="modalTaskHours" class="form-label">Hours</label
+            >
 
             <div class="flex gap-2">
                 <input
@@ -97,7 +101,7 @@
                 type="submit"
                 class="flex-1 btn-primary py-2 px-4"
             >
-                {{ isRangeMode ? 'Add to all days' : (editingTask ? 'Update Task' : 'Add Task') }}
+                {{ isRangeMode ? 'Add to all days' : editingTask ? 'Update Task' : 'Add Task' }}
             </button>
 
             @if (editingTask) {

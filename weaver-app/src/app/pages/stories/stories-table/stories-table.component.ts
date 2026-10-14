@@ -17,6 +17,7 @@ import {
   Search
 } from 'lucide-angular';
 
+import { AdoTitleComponent } from '../../../shared/ado-title/ado-title.component';
 import { StoryYearRow } from '../story-year.model';
 
 type SortField = 'started' | 'title' | 'ended' | 'days' | 'hours';
@@ -25,7 +26,11 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-stories-table',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    AdoTitleComponent
+  ],
   templateUrl: './stories-table.component.html'
 })
 export class StoriesTableComponent {

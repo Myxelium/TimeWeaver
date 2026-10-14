@@ -8,6 +8,8 @@ export const selectSettingsState = createFeatureSelector<SettingsState>(settings
 export const selectSettings = createSelector(selectSettingsState, state => state.settings);
 export const selectDarkMode = createSelector(selectSettings, settings => settings?.darkMode ?? false);
 export const selectIgnoreWeekends = createSelector(selectSettings, settings => settings?.ignoreWeekends ?? true);
+export const selectSkipWeekendsOnSelect = createSelector(selectSettings, settings => settings?.skipWeekendsOnSelect ?? false);
+export const selectSkipHolidaysOnSelect = createSelector(selectSettings, settings => settings?.skipHolidaysOnSelect ?? false);
 export const selectMonthlyIncome = createSelector(selectSettings, settings => settings?.monthlyIncome ?? 0);
 export const selectMonthlyCost = createSelector(selectSettings, settings => settings?.monthlyCost ?? 0);
 export const selectMaxHoursPerDay = createSelector(selectSettings, settings => settings?.maxHoursPerDay ?? defaultMaxHoursPerDay);
@@ -15,5 +17,6 @@ export const selectMaxHoursEnabled = createSelector(selectSettings, settings => 
 export const selectHolidayCountry = createSelector(selectSettings, settings => settings?.holidayCountry);
 export const selectFirstDayOfWeek = createSelector(selectSettings, settings => settings?.firstDayOfWeek ?? 1);
 export const selectOvertimeRate = createSelector(selectSettings, settings => settings?.overtimeRate ?? 0);
+export const selectAdoOrganization = createSelector(selectSettings, settings => settings?.adoOrganization ?? '');
 export const selectLastSaveSuccessAt = createSelector(selectSettingsState, state => state.lastSaveSuccessAt);
 export const selectLastImportResult = createSelector(selectSettingsState, state => state.lastImportResult);

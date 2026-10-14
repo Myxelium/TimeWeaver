@@ -26,6 +26,7 @@ import {
   Task,
   TimeEntry
 } from './entities';
+import { openInDefaultBrowser, routeExternalLinks } from './open-external';
 import { settings } from './settings';
 import {
   attachMainWindow,
@@ -119,6 +120,7 @@ async function createWindow(): Promise<void> {
   }
 
   loadRenderer(mainWindow);
+  routeExternalLinks(mainWindow);
   mainWindow.webContents.once('did-finish-load', () => {
     void runScheduledAdoSync();
   });
@@ -231,6 +233,10 @@ function setupIpcHandlers(): void {
     }
 
     return handler(query);
+  });
+
+  ipcMain.handle('shell:open-external', (_evt, url: string) => {
+    openInDefaultBrowser(typeof url === 'string' ? url : '');
   });
 }
 

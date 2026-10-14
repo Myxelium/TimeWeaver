@@ -13,7 +13,9 @@
     <tbody>
         @for (item of suggestions; track item.adoId) {
             <tr class="border-t border-border">
-                <td class="py-1 pr-3 align-top">{{ item.title }}</td>
+                <td class="py-1 pr-3 align-top">
+                    <app-ado-title [adoWorkItemId]="item.adoId" [title]="item.title" />
+                </td>
 
                 <td class="py-1 align-top whitespace-nowrap">
                     {{ item.spentTimeIsZero ? 'Spent time is 0' : 'Time logged' }}

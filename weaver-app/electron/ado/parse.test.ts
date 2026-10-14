@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import {
   activityRanges,
+  isWorkItemPageUrl,
   laterDay,
   localDay,
   organizationName,
@@ -10,7 +11,8 @@ import {
   readRevisions,
   readWorkItemIds,
   readWorkItems,
-  SuggestionSpan
+  SuggestionSpan,
+  workItemPageUrl
 } from './parse';
 
 const user = {
@@ -24,6 +26,14 @@ function testOrganizationName(): void {
   assert.equal(organizationName('https://dev.azure.com/fabrikam/'), 'fabrikam');
   assert.throws(() => organizationName('https://evil.example/fabrikam'), /organization name/);
   assert.throws(() => organizationName(''), /organization name/);
+}
+
+function testWorkItemPageUrl(): void {
+  const workItemId = 1000;
+
+  assert.equal(workItemPageUrl('fabrikam', workItemId), `https://dev.azure.com/fabrikam/_workitems/edit/${workItemId}`);
+  assert.equal(isWorkItemPageUrl(`https://dev.azure.com/fabrikam/_workitems/edit/${workItemId}`), true);
+  assert.equal(isWorkItemPageUrl(`https://evil.example/fabrikam/_workitems/edit/${workItemId}`), false);
 }
 
 function testConnectionUserDropsExtraFields(): void {
@@ -230,6 +240,7 @@ function testLaterDay(): void {
 }
 
 testOrganizationName();
+testWorkItemPageUrl();
 testConnectionUserDropsExtraFields();
 testQueryKeepsIdsOnly();
 testWorkItemKeepsTitleIdAndPullRequests();

@@ -52,6 +52,8 @@ interface SettingsFormValue {
   monthlyCost: number | null;
   darkMode: boolean | null;
   ignoreWeekends: boolean | null;
+  skipWeekendsOnSelect: boolean | null;
+  skipHolidaysOnSelect: boolean | null;
   maxHoursPerDay: number | null;
   maxHoursEnabled: boolean | null;
   holidayCountry: string | null;
@@ -122,7 +124,7 @@ export class SettingsComponent implements OnInit {
     {
       id: 'general',
       label: 'General',
-      description: 'Income, overtime, and how days are counted.',
+      description: 'Income, overtime, and how days are counted and selected.',
       icon: SlidersHorizontal
     },
     {
@@ -180,6 +182,8 @@ export class SettingsComponent implements OnInit {
     monthlyCost: [0, [Validators.min(0)]],
     darkMode: [false],
     ignoreWeekends: [true],
+    skipWeekendsOnSelect: [false],
+    skipHolidaysOnSelect: [false],
     maxHoursPerDay: [defaultMaxHoursPerDay, [Validators.min(minimumHoursPerDay), Validators.max(hoursInADay)]],
     maxHoursEnabled: [true],
     holidayCountry: [''],
@@ -592,6 +596,8 @@ export class SettingsComponent implements OnInit {
       monthlyCost,
       darkMode,
       ignoreWeekends,
+      skipWeekendsOnSelect,
+      skipHolidaysOnSelect,
       maxHoursPerDay,
       maxHoursEnabled,
       holidayCountry,
@@ -609,6 +615,8 @@ export class SettingsComponent implements OnInit {
       monthlyCost: monthlyCost as number,
       darkMode: darkMode as boolean,
       ignoreWeekends: ignoreWeekends as boolean,
+      skipWeekendsOnSelect: !!skipWeekendsOnSelect,
+      skipHolidaysOnSelect: !!skipHolidaysOnSelect,
       maxHoursPerDay: maxHoursPerDay as number,
       maxHoursEnabled: maxHoursEnabled as boolean,
       holidayCountry: (holidayCountry ?? undefined) as string | undefined,

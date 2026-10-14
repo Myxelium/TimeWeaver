@@ -113,6 +113,8 @@ export interface Settings {
   monthlyCost: number;
   darkMode: boolean;
   ignoreWeekends: boolean;
+  skipWeekendsOnSelect?: boolean;
+  skipHolidaysOnSelect?: boolean;
   maxHoursPerDay: number;
   maxHoursEnabled: boolean;
   holidayCountry?: string; // ISO-3166-1 alpha-2, e.g., SE

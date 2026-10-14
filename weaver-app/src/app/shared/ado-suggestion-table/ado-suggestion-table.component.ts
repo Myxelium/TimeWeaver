@@ -7,12 +7,17 @@ import {
 } from '@angular/core';
 import { LucideAngularModule, Plus } from 'lucide-angular';
 
+import { AdoTitleComponent } from '../ado-title/ado-title.component';
 import { AdoSuggestion } from '../models';
 
 @Component({
   selector: 'app-ado-suggestion-table',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    AdoTitleComponent
+  ],
   templateUrl: './ado-suggestion-table.component.html'
 })
 export class AdoSuggestionTableComponent {

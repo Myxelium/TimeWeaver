@@ -1,6 +1,12 @@
-<div [formGroup]="form" class="bg-card border border-border rounded-lg p-4 space-y-4">
+<div
+    [formGroup]="form"
+    class="bg-card border border-border rounded-lg p-4 space-y-4"
+>
     <div>
-        <label class="form-label" for="monthlyIncome">Monthly Income (What I earn)</label
+        <label
+            class="form-label"
+            for="monthlyIncome"
+            >Monthly Income (What I earn)</label
         >
 
         <div class="relative">
@@ -19,13 +25,19 @@
                 type="button"
                 class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
             >
-                <lucide-icon [img]="showIncome ? eyeOff : eye" class="w-4 h-4" />
+                <lucide-icon
+                    [img]="showIncome ? eyeOff : eye"
+                    class="w-4 h-4"
+                />
             </button>
         </div>
     </div>
 
     <div>
-        <label class="form-label" for="monthlyCost">Monthly Cost (Business pays)</label
+        <label
+            class="form-label"
+            for="monthlyCost"
+            >Monthly Cost (Business pays)</label
         >
 
         <div class="relative">
@@ -44,13 +56,19 @@
                 type="button"
                 class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
             >
-                <lucide-icon [img]="showCost ? eyeOff : eye" class="w-4 h-4" />
+                <lucide-icon
+                    [img]="showCost ? eyeOff : eye"
+                    class="w-4 h-4"
+                />
             </button>
         </div>
     </div>
 
     <div>
-        <label class="form-label" for="overtimeRate">Overtime Income (per hour)</label
+        <label
+            class="form-label"
+            for="overtimeRate"
+            >Overtime Income (per hour)</label
         >
 
         <div class="relative">
@@ -69,7 +87,10 @@
                 type="button"
                 class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
             >
-                <lucide-icon [img]="showOvertime ? eyeOff : eye" class="w-4 h-4" />
+                <lucide-icon
+                    [img]="showOvertime ? eyeOff : eye"
+                    class="w-4 h-4"
+                />
             </button>
         </div>
     </div>
@@ -82,7 +103,10 @@
             class="h-4 w-4"
         />
 
-        <label for="darkMode" class="text-sm">Dark Mode</label
+        <label
+            for="darkMode"
+            class="text-sm"
+            >Dark Mode</label
         >
     </div>
 
@@ -94,8 +118,50 @@
             class="h-4 w-4"
         />
 
-        <label for="ignoreWeekends" class="text-sm">Ignore Weekends (exclude from working day stats)</label
+        <label
+            for="ignoreWeekends"
+            class="text-sm"
+            >Ignore Weekends (exclude from working day stats)</label
         >
+    </div>
+
+    <div class="space-y-2 border-t border-border pt-3">
+        <span class="form-label">Dragging a range</span>
+
+        <p class="text-xs text-muted-foreground">
+            Leave these days out when you drag across the month calendar. Clicking a single day still opens it. Holidays follow the country and types
+            in Holidays.
+        </p>
+
+        <div class="flex items-center space-x-2">
+            <input
+                id="skipWeekendsOnSelect"
+                type="checkbox"
+                formControlName="skipWeekendsOnSelect"
+                class="h-4 w-4"
+            />
+
+            <label
+                for="skipWeekendsOnSelect"
+                class="text-sm"
+                >Skip weekends</label
+            >
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <input
+                id="skipHolidaysOnSelect"
+                type="checkbox"
+                formControlName="skipHolidaysOnSelect"
+                class="h-4 w-4"
+            />
+
+            <label
+                for="skipHolidaysOnSelect"
+                class="text-sm"
+                >Skip holidays</label
+            >
+        </div>
     </div>
 
     <div class="flex items-center space-x-2">
@@ -106,13 +172,19 @@
             class="h-4 w-4"
         />
 
-        <label for="maxHoursEnabled" class="text-sm">Enable Maximum Hours Per Day</label
+        <label
+            for="maxHoursEnabled"
+            class="text-sm"
+            >Enable Maximum Hours Per Day</label
         >
     </div>
 
     @if (form.get('maxHoursEnabled')?.value) {
         <div>
-            <label class="form-label" for="maxHoursPerDay">Maximum Hours Per Day</label
+            <label
+                class="form-label"
+                for="maxHoursPerDay"
+                >Maximum Hours Per Day</label
             >
 
             <input
@@ -128,7 +200,10 @@
     }
 
     <div>
-        <label class="form-label" for="firstDayOfWeek">First day of week</label
+        <label
+            class="form-label"
+            for="firstDayOfWeek"
+            >First day of week</label
         >
 
         <select

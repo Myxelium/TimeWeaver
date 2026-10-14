@@ -1,0 +1,28 @@
+<button
+    (click)="openTaskDetails($event)"
+    (pointerdown)="$event.stopPropagation()"
+    type="button"
+    class="ado-title-text"
+    title="Task details"
+>
+    {{ title() }}
+</button>
+
+@if (showAzureIcon()) {
+    @if (workItemUrl(); as url) {
+    <button
+        (click)="openWorkItem($event, url)"
+        (pointerdown)="$event.stopPropagation()"
+        type="button"
+        class="ado-title-icon"
+        title="Open in Azure DevOps"
+        aria-label="Open in Azure DevOps"
+    >
+        <img
+            alt=""
+            src="assets/azure.png"
+            class="w-3.5 h-3.5"
+        />
+    </button>
+    }
+}

@@ -3,8 +3,7 @@
         <h3 class="text-base font-semibold">Import tasks CSV</h3>
 
         <p class="text-xs text-muted-foreground">
-            Import a CSV previously exported (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can
-            be overwritten.
+            Import a CSV previously exported (Date,Title,Description,Hours,Created At). Existing tasks matched by Date+Title can be overwritten.
         </p>
 
         <input
@@ -41,8 +40,8 @@
 
         @if (importResult) {
             <div class="text-sm text-muted-foreground">
-                Imported {{ importResult.imported }} new, Updated {{ importResult.updated }}, Skipped
-                {{ importResult.skipped }} (Total lines: {{ importResult.total }})
+                Imported {{ importResult.imported }} new, Updated {{ importResult.updated }}, Skipped {{ importResult.skipped }} (Total lines:
+                {{ importResult.total }})
             </div>
         }
 

@@ -3,7 +3,9 @@
         @for (task of tasks; track task.id) {
             <div class="task-row">
                 <div class="flex-1">
-                    <p class="font-medium">{{ task.title }}</p>
+                    <p class="font-medium">
+                        <app-ado-title [adoWorkItemId]="task.adoWorkItemId ?? null" [title]="task.title" />
+                    </p>
 
                     @if (task.description) {
                         <p class="text-sm text-muted-foreground">

@@ -22,6 +22,12 @@ export class Setting {
   @Column({ type: 'boolean', default: true })
   ignoreWeekends!: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  skipWeekendsOnSelect!: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  skipHolidaysOnSelect!: boolean;
+
   @Column({ type: 'real', default: 8 })
   maxHoursPerDay!: number;
 
