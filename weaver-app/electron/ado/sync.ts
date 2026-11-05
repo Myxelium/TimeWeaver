@@ -1,7 +1,12 @@
-import { DataSource, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  Repository
+} from 'typeorm';
 
 import { AdoWorkItem } from '../entities/AdoWorkItem';
 import { Setting } from '../entities/Setting';
+import { Task } from '../entities/Task';
 import { azureCliAccessToken } from './azure-cli';
 import { AdoClient } from './client';
 import {
@@ -10,7 +15,8 @@ import {
   organizationName,
   ParsedWorkItem,
   PullRequestRef,
-  todayLocal
+  todayLocal,
+  workItemIdFromTitle
 } from './parse';
 
 export interface AdoSyncResult {
@@ -159,7 +165,25 @@ async function replaceWorkItems(dataSource: DataSource, rows: AdoWorkItem[]): Pr
 
     for (let index = 0; index < stale.length; index += DELETE_CHUNK)
       await repository.delete(stale.slice(index, index + DELETE_CHUNK));
+
+    await linkTasksByHashtag(manager, keep);
   });
+}
+
+async function linkTasksByHashtag(manager: EntityManager, ids: Set<number>): Promise<void> {
+  const repository = manager.getRepository(Task);
+  const tasks = await repository.find();
+  const linked = tasks.flatMap(task => {
+    const adoId = workItemIdFromTitle(task.title ?? '');
+
+    if (adoId == null || !ids.has(adoId) || task.adoWorkItemId === adoId)
+      return [];
+
+    return [{ ...task, adoWorkItemId: adoId }];
+  });
+
+  if (linked.length)
+    await repository.save(linked);
 }
 
 async function collectWorkItems(

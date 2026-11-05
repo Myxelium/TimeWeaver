@@ -98,6 +98,19 @@ export interface WorkItemRevision {
   assignedToMe: boolean | null;
 }
 
+const HASH_ID = /^#(\d+)(?:\s|$)/;
+
+export function workItemIdFromTitle(title: string): number | null {
+  const match = HASH_ID.exec(title.trim());
+
+  if (!match)
+    return null;
+
+  const id = Number(match[1]);
+
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 export function loggingTitle(adoId: number, title: string): string {
   return `#${adoId} ${title.trim()}`;
 }

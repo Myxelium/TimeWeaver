@@ -24,7 +24,10 @@
                     <tr class="border-b border-border">
                         <td class="py-3 px-4">
                             <div class="font-medium text-foreground">
-                                <app-ado-title [adoWorkItemId]="row.adoId" [title]="row.title" />
+                                <app-ado-title
+                                    [adoWorkItemId]="row.adoId"
+                                    [title]="row.title"
+                                />
                             </div>
 
                             <div class="mt-1 text-sm text-muted-foreground sm:hidden">Logged {{ row.loggedHours | number: '1.0-2' }}h</div>
@@ -38,8 +41,11 @@
                                 }
                             </div>
 
-                            <div class="text-sm text-muted-foreground sm:hidden">
-                                {{ row.workItemType || 'Work item' }}@if (row.state) {, {{ row.state }}}
+                            <div class="mt-1 flex flex-wrap items-center gap-2 sm:hidden">
+                                <app-work-item-kind [type]="row.workItemType" />
+                                @if (row.state) {
+                                    <span class="text-sm text-muted-foreground">{{ row.state }}</span>
+                                }
                             </div>
 
                             <span
@@ -47,18 +53,32 @@
                                 [class.dark:text-amber-300]="row.timeGap === 'mismatch'"
                                 class="mt-1 flex w-full items-center gap-1 text-sm font-medium sm:hidden"
                             >
-                                <lucide-icon [img]="Clock" [size]="14" />
+                                <lucide-icon
+                                    [img]="Clock"
+                                    [size]="14"
+                                />
                                 {{ gapLabel(row) }}
                             </span>
 
-                            <div class="mt-1 hidden text-sm text-muted-foreground sm:block md:hidden">
-                                {{ row.workItemType || 'Work item' }}@if (row.state) {, {{ row.state }}}
+                            <div class="mt-1 hidden flex-wrap items-center gap-2 sm:flex md:hidden">
+                                <app-work-item-kind [type]="row.workItemType" />
+                                @if (row.state) {
+                                    <span class="text-sm text-muted-foreground">{{ row.state }}</span>
+                                }
                             </div>
                         </td>
 
-                        <td class="py-3 px-4 text-muted-foreground hidden md:table-cell">{{ row.workItemType || '-' }}</td>
+                        <td class="py-3 px-4 hidden md:table-cell">
+                            @if (row.workItemType) {
+                                <app-work-item-kind [type]="row.workItemType" />
+                            } @else {
+                                <span class="text-muted-foreground">-</span>
+                            }
+                        </td>
                         <td class="py-3 px-4 text-muted-foreground hidden sm:table-cell">{{ row.state || '-' }}</td>
-                        <td class="hidden py-3 px-4 text-right font-semibold text-foreground sm:table-cell">{{ row.loggedHours | number: '1.0-2' }}h</td>
+                        <td class="hidden py-3 px-4 text-right font-semibold text-foreground sm:table-cell">
+                            {{ row.loggedHours | number: '1.0-2' }}h
+                        </td>
 
                         <td class="py-3 px-4 text-right text-foreground hidden sm:table-cell">
                             @if (row.completedWork === null) {
@@ -74,7 +94,10 @@
                                 [class.dark:text-amber-300]="row.timeGap === 'mismatch'"
                                 class="inline-flex items-center gap-1 text-sm font-medium"
                             >
-                                <lucide-icon [img]="Clock" [size]="14" />
+                                <lucide-icon
+                                    [img]="Clock"
+                                    [size]="14"
+                                />
                                 {{ gapLabel(row) }}
                             </span>
                         </td>

@@ -25,7 +25,7 @@ import {
 } from 'lucide-angular';
 
 import { AdoSuggestionTableComponent } from '../../../../shared/ado-suggestion-table/ado-suggestion-table.component';
-import { suggestionsOnDay } from '../../../../shared/ado-titles.model';
+import { suggestionsOnDay, ticketKey } from '../../../../shared/ado-titles.model';
 import {
   AdoSuggestion,
   CreateTaskRequest,
@@ -515,17 +515,17 @@ export class MonthlyOverviewComponent {
       if (!selected.has(date))
         continue;
 
-      const existingTitles = new Set((day.summary?.tasks ?? []).map(task => task.title.trim()));
+      const existingTitles = new Set((day.summary?.tasks ?? []).map(task => ticketKey(task.title)));
       const existingIds = new Set((day.summary?.tasks ?? []).flatMap(task => task.adoWorkItemId == null ? [] : [task.adoWorkItemId]));
       const pending: CreateTaskRequest[] = [];
 
       for (const item of day.suggestions) {
         const title = item.title.trim();
 
-        if (!title || existingTitles.has(title) || existingIds.has(item.adoId))
+        if (!title || existingTitles.has(ticketKey(title)) || existingIds.has(item.adoId))
           continue;
 
-        existingTitles.add(title);
+        existingTitles.add(ticketKey(title));
         existingIds.add(item.adoId);
         pending.push({ title, date, hours: 0 });
       }

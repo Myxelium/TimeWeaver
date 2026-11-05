@@ -1,4 +1,4 @@
-import { suggestionRanges } from '../../shared/ado-titles.model';
+import { suggestionRanges, workItemIdFromTitle } from '../../shared/ado-titles.model';
 import {
   AdoSuggestion,
   AdoSuggestionRange,
@@ -15,6 +15,7 @@ export interface StoryYearBar {
 export interface StoryYearRow {
   adoId: number;
   title: string;
+  workItemType: string;
   started: string;
   ended: string;
   days: number;
@@ -59,6 +60,7 @@ export function storyRowsForYear(suggestions: AdoSuggestion[], tasks: Task[], ye
     rows.push({
       adoId: suggestion.adoId,
       title: suggestion.title.trim(),
+      workItemType: suggestion.workItemType.trim(),
       started,
       ended,
       days: ranges.reduce((sum, range) => sum + daysInsideYear(range, year), 0),
@@ -112,7 +114,9 @@ function hoursInYear(tasks: Task[], suggestion: AdoSuggestion, year: number): nu
   let total = 0;
 
   for (const task of tasks) {
-    const sameStory = task.adoWorkItemId === suggestion.adoId || task.title.trim() === title;
+    const sameStory = task.adoWorkItemId === suggestion.adoId
+      || workItemIdFromTitle(task.title) === suggestion.adoId
+      || task.title.trim() === title;
 
     if (!task.date.startsWith(prefix) || !sameStory)
       continue;

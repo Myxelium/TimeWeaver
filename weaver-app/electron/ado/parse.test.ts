@@ -15,6 +15,7 @@ import {
   readWorkItems,
   SuggestionSpan,
   timeGapFor,
+  workItemIdFromTitle,
   workItemPageUrl
 } from './parse';
 
@@ -29,6 +30,17 @@ function testOrganizationName(): void {
   assert.equal(organizationName('https://dev.azure.com/fabrikam/'), 'fabrikam');
   assert.throws(() => organizationName('https://evil.example/fabrikam'), /organization name/);
   assert.throws(() => organizationName(''), /organization name/);
+}
+
+function testWorkItemIdFromTitle(): void {
+  const workItemId = 1000;
+
+  assert.equal(workItemIdFromTitle(`#${workItemId} My app`), workItemId);
+  assert.equal(workItemIdFromTitle(`#${workItemId} My same app`), workItemId);
+  assert.equal(workItemIdFromTitle(`  #${workItemId} My perfect app`), workItemId);
+  assert.equal(workItemIdFromTitle(`#${workItemId}`), workItemId);
+  assert.equal(workItemIdFromTitle(`#${workItemId}My app`), null);
+  assert.equal(workItemIdFromTitle('My app'), null);
 }
 
 function testWorkItemPageUrl(): void {
@@ -299,6 +311,7 @@ function testSyncStaysReadOnly(): void {
 }
 
 testOrganizationName();
+testWorkItemIdFromTitle();
 testWorkItemPageUrl();
 testConnectionUserDropsExtraFields();
 testQueryKeepsIdsOnly();

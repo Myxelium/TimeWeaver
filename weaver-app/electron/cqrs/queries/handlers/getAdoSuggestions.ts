@@ -1,6 +1,10 @@
 import { DataSource } from 'typeorm';
 
-import { loggingTitle, timeGapFor } from '../../../ado/parse';
+import {
+  loggingTitle,
+  timeGapFor,
+  workItemIdFromTitle
+} from '../../../ado/parse';
 import { AdoWorkItem } from '../../../entities/AdoWorkItem';
 import { Task } from '../../../entities/Task';
 import { AdoSuggestionDTO, AdoSuggestionRangeDTO } from '../../types';
@@ -60,8 +64,9 @@ function loggedHoursFor(item: AdoWorkItem, tasks: Task[], titleCount: Map<string
     const linked = task.adoWorkItemId === item.adoId;
     const sameTitle = titleIsUnique && taskTitle === title;
     const formatted = taskTitle === shownTitle;
+    const sameHashtag = workItemIdFromTitle(taskTitle) === item.adoId;
 
-    if (!linked && !sameTitle && !formatted)
+    if (!linked && !sameTitle && !formatted && !sameHashtag)
       continue;
 
     total += Number(task.hours) || 0;

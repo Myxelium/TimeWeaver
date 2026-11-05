@@ -1,0 +1,14 @@
+@if (kind(); as kind) {
+    <span
+        [style.background-color]="kind.wash"
+        [style.border-color]="kind.border"
+        [style.color]="kind.color"
+        class="inline-flex max-w-full items-center gap-1.5 rounded-lg border px-2 py-0.5 text-xs font-medium leading-4"
+    >
+        <span
+            [style.background-color]="kind.color"
+            class="h-2 w-2 shrink-0 rounded-full"
+        ></span>
+        <span class="truncate">{{ kind.label }}</span>
+    </span>
+}

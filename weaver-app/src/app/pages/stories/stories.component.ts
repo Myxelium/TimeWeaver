@@ -63,6 +63,7 @@ export class StoriesComponent implements OnInit {
 
     return this.yearRows().filter(row =>
       row.title.toLowerCase().includes(search) ||
+      row.workItemType.toLowerCase().includes(search) ||
       row.started.includes(search) ||
       row.ended.includes(search)
     );
