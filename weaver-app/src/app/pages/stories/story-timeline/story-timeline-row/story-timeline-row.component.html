@@ -1,6 +1,13 @@
-<div class="group grid grid-cols-[12rem_1fr] gap-x-3 items-center h-2 overflow-hidden transition-[height] duration-300 ease-out hover:h-10">
-    <div [title]="row().title" class="truncate text-sm leading-none text-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <app-ado-title [adoWorkItemId]="row().adoId" [title]="row().title" />
+<div class="group grid grid-cols-[20rem_1fr] gap-x-3 items-center h-2 overflow-hidden transition-[height] duration-300 ease-out hover:h-10">
+    <div
+        class="flex min-w-0 items-center gap-2 text-sm leading-none text-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+    >
+        <app-work-item-kind [type]="row().workItemType" />
+        <app-ado-title
+            [adoWorkItemId]="row().adoId"
+            [title]="row().title"
+            class="min-w-0"
+        />
     </div>
 
     <div class="relative h-full">
@@ -13,12 +20,12 @@
         @for (bar of row().bars; track bar.activeOn + bar.rangeEnd) {
             <div
                 [title]="barTitle(bar.activeOn, bar.rangeEnd)"
+                [style.background-color]="barColor()"
                 [style.left.%]="bar.left"
                 [style.width.%]="bar.width"
                 [class.opacity-40]="row().hours <= 0"
-                class="absolute top-px bottom-px rounded-sm min-w-1 bg-primary transition-[top,bottom] duration-300 ease-out group-hover:top-1.5 group-hover:bottom-1.5"
-            >
-            </div>
+                class="absolute top-px bottom-px rounded-sm min-w-1 transition-[top,bottom] duration-300 ease-out group-hover:top-1.5 group-hover:bottom-1.5"
+            ></div>
         }
     </div>
 </div>

@@ -3,6 +3,25 @@ import { AdoSuggestion, AdoSuggestionRange } from './models';
 const ORGANIZATION_NAME = /^[A-Za-z0-9][A-Za-z0-9-]{0,62}$/;
 const ORGANIZATION_URL = /^https:\/\/dev\.azure\.com\/([A-Za-z0-9][A-Za-z0-9-]{0,62})(?:\/|$)/i;
 const PREFIXED_WORK_ITEM = /^#(\d+)(\s[\s\S]*)?$/;
+const HASH_ID = /^#(\d+)(?:\s|$)/;
+
+export function workItemIdFromTitle(title: string): number | null {
+  const match = HASH_ID.exec(title.trim());
+
+  if (!match)
+    return null;
+
+  const id = Number(match[1]);
+
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+export function ticketKey(title: string): string {
+  const trimmed = title.trim();
+  const id = workItemIdFromTitle(trimmed);
+
+  return id == null ? trimmed : `#${id}`;
+}
 
 export function syncedWorkItemId(
   title: string,
@@ -82,10 +101,16 @@ export function titlesForLogging(taskTitles: string[], suggestions: AdoSuggestio
     .map(item => item.title.trim())
     .filter(title => title.length > 0);
   const titles: string[] = [];
+  const seen = new Set<string>();
 
   for (const title of [...unreported, ...taskTitles]) {
-    if (title && !titles.includes(title))
-      titles.push(title);
+    const key = ticketKey(title);
+
+    if (!title || seen.has(key))
+      continue;
+
+    seen.add(key);
+    titles.push(title);
   }
 
   return titles;

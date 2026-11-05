@@ -21,9 +21,13 @@ import {
   Search
 } from 'lucide-angular';
 
-import { Task } from '../../../../shared/models';
+import { syncedWorkItemId } from '../../../../shared/ado-titles.model';
+import { AdoSuggestion, Task } from '../../../../shared/models';
+import { WorkItemKindComponent } from '../../../../shared/work-item-kind/work-item-kind.component';
+import { workItemKind } from '../../../../shared/work-item-kind/work-item-kind.model';
 import {
   calculateTaskStatistics,
+  selectAdoSuggestions,
   selectError,
   selectIsLoading,
   TaskStatistics
@@ -51,7 +55,8 @@ type EntrySortOrder = 'newest' | 'oldest';
     CommonModule,
     LucideAngularModule,
     TaskStatisticsPanelComponent,
-    TaskEntryListComponent
+    TaskEntryListComponent,
+    WorkItemKindComponent
   ],
   templateUrl: './task-details-modal.component.html'
 })
@@ -82,6 +87,7 @@ export class TaskDetailsModalComponent {
 
   loading = toSignal(this.store.select(selectIsLoading), { initialValue: false });
   loadError = toSignal(this.store.select(selectError), { initialValue: null as string | null });
+  private suggestions = toSignal(this.store.select(selectAdoSuggestions), { initialValue: [] as AdoSuggestion[] });
 
   private open = false;
   private sectionsReady = false;
@@ -114,6 +120,36 @@ export class TaskDetailsModalComponent {
       this.collapseOlderMonths();
       this.sectionsReady = true;
     }
+  }
+
+  get workItemType(): string {
+    const title = this.title?.trim() ?? '';
+
+    if (!title)
+      return '';
+
+    const suggestions = this.suggestions();
+    const adoId = syncedWorkItemId(title, null, suggestions);
+
+    return suggestions.find(item => item.adoId === adoId)?.workItemType ?? '';
+  }
+
+  get workItemColor(): string {
+    return workItemKind(this.workItemType)?.color ?? '';
+  }
+
+  get workItemAccent(): string | null {
+    if (!this.workItemColor)
+      return null;
+
+    return `linear-gradient(to top, ${this.workItemColor} 3px, hsl(var(--border)) 3px)`;
+  }
+
+  get dialogClipClass(): string {
+    if (!this.workItemColor)
+      return 'rounded-[calc(var(--radius)-1px)]';
+
+    return 'rounded-t-[calc(var(--radius)-1px)] rounded-b-[calc(var(--radius)-3px)]';
   }
 
   get reportingPeriod(): string {

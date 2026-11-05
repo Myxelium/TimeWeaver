@@ -39,7 +39,7 @@ import {
 import { DatabaseService, HolidayService } from '../../shared/services';
 import { loadSettings, SettingsActions } from '../../store/settings/settings.actions';
 import { selectLastImportResult, selectSettings } from '../../store/settings/settings.selectors';
-import { TasksActions } from '../../store/tasks/tasks.actions';
+import { loadAllTasks, TasksActions } from '../../store/tasks/tasks.actions';
 import { selectIsLoading } from '../../store/tasks/tasks.selectors';
 import { SettingsAzureComponent } from './sections/settings-azure/settings-azure.component';
 import { SettingsDataComponent } from './sections/settings-data/settings-data.component';
@@ -221,6 +221,7 @@ export class SettingsComponent implements OnInit {
     this.adoSyncing = false;
     this.adoFormError = result.error ?? '';
     this.store.dispatch(loadSettings());
+    this.store.dispatch(loadAllTasks());
     this.store.dispatch(TasksActions.loadAdoSuggestions());
   };
 

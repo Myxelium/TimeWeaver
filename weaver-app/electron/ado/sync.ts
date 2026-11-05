@@ -1,7 +1,12 @@
-import { DataSource, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  Repository
+} from 'typeorm';
 
 import { AdoWorkItem } from '../entities/AdoWorkItem';
 import { Setting } from '../entities/Setting';
+import { Task } from '../entities/Task';
 import { azureCliAccessToken } from './azure-cli';
 import { AdoClient } from './client';
 import {
@@ -10,7 +15,8 @@ import {
   organizationName,
   ParsedWorkItem,
   PullRequestRef,
-  todayLocal
+  todayLocal,
+  workItemIdFromTitle
 } from './parse';
 
 export interface AdoSyncResult {
@@ -159,7 +165,25 @@ async function replaceWorkItems(dataSource: DataSource, rows: AdoWorkItem[]): Pr
 
     for (let index = 0; index < stale.length; index += DELETE_CHUNK)
       await repository.delete(stale.slice(index, index + DELETE_CHUNK));
+
+    await linkTasksByHashtag(manager, keep);
   });
+}
+
+async function linkTasksByHashtag(manager: EntityManager, ids: Set<number>): Promise<void> {
+  const repository = manager.getRepository(Task);
+  const tasks = await repository.find();
+  const linked = tasks.flatMap(task => {
+    const adoId = workItemIdFromTitle(task.title ?? '');
+
+    if (adoId == null || !ids.has(adoId) || task.adoWorkItemId === adoId)
+      return [];
+
+    return [{ ...task, adoWorkItemId: adoId }];
+  });
+
+  if (linked.length)
+    await repository.save(linked);
 }
 
 async function collectWorkItems(
@@ -172,12 +196,30 @@ async function collectWorkItems(
   const user = await client.currentUser();
   const assigned = await client.assignedWorkItems();
   const needsHistory = assigned.filter(item => !canReuse(existing.get(item.adoId), item.changedOn));
-  const pullRequests = await client.pullRequestsFor(needsHistory.map(item => item.adoId));
-  const built = await mapWithLimit(assigned, SYNC_CONCURRENCY, item =>
-    buildWorkItem(client, item, existing.get(item.adoId), pullRequests.get(item.adoId) ?? [], user, syncDate)
-  );
+  const detailed = await client.expandedWorkItems(needsHistory.map(item => item.adoId));
+  const detailedById = new Map(detailed.map(item => [item.adoId, item]));
+  const built = await mapWithLimit(assigned, SYNC_CONCURRENCY, item => {
+    const detail = detailedById.get(item.adoId);
+    const source = detail ? mergeWorkItem(item, detail) : item;
+    const pullRequests = detail?.pullRequests ?? [];
+    const stored = existing.get(item.adoId);
+
+    return buildWorkItem(client, source, stored, pullRequests, user, syncDate);
+  });
 
   return built.flatMap(row => row ? [row] : []);
+}
+
+function mergeWorkItem(item: ParsedWorkItem, detail: ParsedWorkItem): ParsedWorkItem {
+  return {
+    adoId: item.adoId,
+    title: detail.title || item.title,
+    workItemType: detail.workItemType || item.workItemType,
+    state: detail.state || item.state,
+    changedOn: detail.changedOn || item.changedOn,
+    completedWork: detail.completedWork,
+    pullRequests: detail.pullRequests
+  };
 }
 
 function canReuse(stored: AdoWorkItem | undefined, changedOn: string): boolean {

@@ -34,7 +34,12 @@ import {
 } from 'rxjs';
 
 import { AdoSuggestionTableComponent } from '../../../../shared/ado-suggestion-table/ado-suggestion-table.component';
-import { suggestionsOnDay, titlesForLogging } from '../../../../shared/ado-titles.model';
+import {
+  suggestionsOnDay,
+  ticketKey,
+  titlesForLogging,
+  workItemIdFromTitle
+} from '../../../../shared/ado-titles.model';
 import { ConfirmService } from '../../../../shared/confirm/confirm.service';
 import {
   AdoSuggestion,
@@ -560,15 +565,21 @@ export class EditDayModalComponent implements OnChanges {
 
   private suggestionIsLogged(dateKey: string, tasks: Task[], item: AdoSuggestion): boolean {
     const title = item.title.trim();
-    const onDay = tasks.some(task => task.adoWorkItemId === item.adoId || task.title.trim() === title);
+    const onDay = tasks.some(task => this.sameLoggedTicket(task, item.adoId, title));
     const pending = this.pendingSuggestionHours.get(dateKey) ?? [];
 
     return onDay || pending.some(entry => entry.adoId === item.adoId);
   }
 
+  private sameLoggedTicket(task: Task, adoId: number, title: string): boolean {
+    return task.adoWorkItemId === adoId
+      || workItemIdFromTitle(task.title) === adoId
+      || task.title.trim() === title;
+  }
+
   private pendingHours(dateKey: string, tasks: Task[]): number {
     const pending = (this.pendingSuggestionHours.get(dateKey) ?? [])
-      .filter(entry => !tasks.some(task => task.adoWorkItemId === entry.adoId || task.title.trim() === entry.title));
+      .filter(entry => !tasks.some(task => this.sameLoggedTicket(task, entry.adoId, entry.title)));
 
     this.pendingSuggestionHours.set(dateKey, pending);
 
@@ -606,13 +617,18 @@ export class EditDayModalComponent implements OnChanges {
   }
 
   private detailsTitle(tasks: Task[]): string | null {
-    const titles = [...new Set(tasks.map(task => this.taskKey(task.title)).filter(title => title.length > 0))];
+    const keys = [...new Set(tasks.map(task => this.taskKey(task.title)).filter(title => title.length > 0))];
 
-    return titles.length === 1 ? titles[0] : null;
+    if (keys.length !== 1)
+      return null;
+
+    const titles = tasks.map(task => (task.title || '').trim()).filter(title => title.length > 0);
+
+    return titles.sort((left, right) => right.length - left.length)[0] ?? keys[0];
   }
 
   private taskKey(title: string | null | undefined): string {
-    return (title || '').trim();
+    return ticketKey(title || '');
   }
 
   private mergeTaskRecords(stored: Task[], fromDay: Task[]): Task[] {

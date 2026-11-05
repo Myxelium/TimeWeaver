@@ -31,9 +31,15 @@
                             type="button"
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
                         >
-                            <lucide-icon [img]="Calendar" [size]="16" />
+                            <lucide-icon
+                                [img]="Calendar"
+                                [size]="16"
+                            />
                             Started
-                            <lucide-icon [img]="sortIcon('started')" [size]="16" />
+                            <lucide-icon
+                                [img]="sortIcon('started')"
+                                [size]="16"
+                            />
                         </button>
                     </th>
 
@@ -43,9 +49,15 @@
                             type="button"
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
                         >
-                            <lucide-icon [img]="FileText" [size]="16" />
+                            <lucide-icon
+                                [img]="FileText"
+                                [size]="16"
+                            />
                             Title
-                            <lucide-icon [img]="sortIcon('title')" [size]="16" />
+                            <lucide-icon
+                                [img]="sortIcon('title')"
+                                [size]="16"
+                            />
                         </button>
                     </th>
 
@@ -55,9 +67,15 @@
                             type="button"
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
                         >
-                            <lucide-icon [img]="Calendar" [size]="16" />
+                            <lucide-icon
+                                [img]="Calendar"
+                                [size]="16"
+                            />
                             Ended
-                            <lucide-icon [img]="sortIcon('ended')" [size]="16" />
+                            <lucide-icon
+                                [img]="sortIcon('ended')"
+                                [size]="16"
+                            />
                         </button>
                     </th>
 
@@ -68,7 +86,10 @@
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors ml-auto"
                         >
                             Days
-                            <lucide-icon [img]="sortIcon('days')" [size]="16" />
+                            <lucide-icon
+                                [img]="sortIcon('days')"
+                                [size]="16"
+                            />
                         </button>
                     </th>
 
@@ -78,9 +99,15 @@
                             type="button"
                             class="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors ml-auto"
                         >
-                            <lucide-icon [img]="Clock" [size]="16" />
+                            <lucide-icon
+                                [img]="Clock"
+                                [size]="16"
+                            />
                             Hours
-                            <lucide-icon [img]="sortIcon('hours')" [size]="16" />
+                            <lucide-icon
+                                [img]="sortIcon('hours')"
+                                [size]="16"
+                            />
                         </button>
                     </th>
                 </tr>
@@ -92,8 +119,12 @@
                         <td class="py-3 px-4 text-foreground">{{ row.started }}</td>
 
                         <td class="py-3 px-4">
-                            <div class="font-medium text-foreground">
-                                <app-ado-title [adoWorkItemId]="row.adoId" [title]="row.title" />
+                            <div class="flex min-w-0 flex-wrap items-center gap-2 font-medium text-foreground">
+                                <app-ado-title
+                                    [adoWorkItemId]="row.adoId"
+                                    [title]="row.title"
+                                />
+                                <app-work-item-kind [type]="row.workItemType" />
                             </div>
 
                             <div class="text-sm text-muted-foreground mt-1 md:hidden">Ended {{ row.ended }}</div>

@@ -4,7 +4,7 @@
     @if (rows().length > 0) {
         <div class="overflow-x-auto">
             <div class="min-w-[720px]">
-                <div class="grid grid-cols-[12rem_1fr] gap-x-3 mb-2">
+                <div class="grid grid-cols-[20rem_1fr] gap-x-3 mb-2">
                     <div></div>
 
                     <div class="grid grid-cols-12 text-xs text-muted-foreground">
@@ -16,7 +16,10 @@
 
                 <div class="max-h-[32rem] overflow-y-auto">
                     @for (row of rows(); track row.adoId) {
-                        <app-story-timeline-row [row]="row" [months]="months" />
+                        <app-story-timeline-row
+                            [row]="row"
+                            [months]="months"
+                        />
                     }
                 </div>
             </div>

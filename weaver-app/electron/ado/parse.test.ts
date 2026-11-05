@@ -7,6 +7,7 @@ import {
   laterDay,
   localDay,
   organizationName,
+  readAdoErrorMessage,
   readConnectionUser,
   readPullRequestCommits,
   readRevisions,
@@ -14,6 +15,7 @@ import {
   readWorkItems,
   SuggestionSpan,
   timeGapFor,
+  workItemIdFromTitle,
   workItemPageUrl
 } from './parse';
 
@@ -28,6 +30,17 @@ function testOrganizationName(): void {
   assert.equal(organizationName('https://dev.azure.com/fabrikam/'), 'fabrikam');
   assert.throws(() => organizationName('https://evil.example/fabrikam'), /organization name/);
   assert.throws(() => organizationName(''), /organization name/);
+}
+
+function testWorkItemIdFromTitle(): void {
+  const workItemId = 1000;
+
+  assert.equal(workItemIdFromTitle(`#${workItemId} My app`), workItemId);
+  assert.equal(workItemIdFromTitle(`#${workItemId} My same app`), workItemId);
+  assert.equal(workItemIdFromTitle(`  #${workItemId} My perfect app`), workItemId);
+  assert.equal(workItemIdFromTitle(`#${workItemId}`), workItemId);
+  assert.equal(workItemIdFromTitle(`#${workItemId}My app`), null);
+  assert.equal(workItemIdFromTitle('My app'), null);
 }
 
 function testWorkItemPageUrl(): void {
@@ -279,6 +292,15 @@ function testTimeGapForDoneWork(): void {
   assert.equal(timeGapFor('done', nearlyTheSameHours, loggedHours), null);
 }
 
+function testAdoErrorMessage(): void {
+  const missingField = 'TF51535: Cannot find field Microsoft.VSTS.Scheduling.CompletedWork.';
+
+  assert.equal(readAdoErrorMessage({ message: missingField }), missingField);
+  assert.equal(readAdoErrorMessage({ value: { Message: 'The query is not valid.' } }), 'The query is not valid.');
+  assert.equal(readAdoErrorMessage('<html>sign in</html>'), null);
+  assert.equal(readAdoErrorMessage(null), null);
+}
+
 function testSyncStaysReadOnly(): void {
   assert.doesNotThrow(() => assertReadOnlyRequest('GET', '/_apis/wit/workItems/1/updates?$top=200'));
   assert.doesNotThrow(() => assertReadOnlyRequest('POST', '/_apis/wit/wiql'));
@@ -289,6 +311,7 @@ function testSyncStaysReadOnly(): void {
 }
 
 testOrganizationName();
+testWorkItemIdFromTitle();
 testWorkItemPageUrl();
 testConnectionUserDropsExtraFields();
 testQueryKeepsIdsOnly();
@@ -305,6 +328,7 @@ testEarlierCommitDoesNotEndTheNextStretch();
 testCommitDateUsesOnlyThisUser();
 testLaterDay();
 testTimeGapForDoneWork();
+testAdoErrorMessage();
 testSyncStaysReadOnly();
 
 console.log('ado parse tests passed');

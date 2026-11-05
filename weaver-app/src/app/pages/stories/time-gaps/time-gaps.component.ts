@@ -8,6 +8,7 @@ import { Clock, LucideAngularModule } from 'lucide-angular';
 
 import { AdoTitleComponent } from '../../../shared/ado-title/ado-title.component';
 import { AdoSuggestion } from '../../../shared/models';
+import { WorkItemKindComponent } from '../../../shared/work-item-kind/work-item-kind.component';
 import { timeGapLabel, timeGapsToFill } from '../time-gap.model';
 
 @Component({
@@ -16,7 +17,8 @@ import { timeGapLabel, timeGapsToFill } from '../time-gap.model';
   imports: [
     CommonModule,
     LucideAngularModule,
-    AdoTitleComponent
+    AdoTitleComponent,
+    WorkItemKindComponent
   ],
   templateUrl: './time-gaps.component.html',
   host: { style: 'display: block' }

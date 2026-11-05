@@ -18,6 +18,7 @@ import {
 } from 'lucide-angular';
 
 import { AdoTitleComponent } from '../../../shared/ado-title/ado-title.component';
+import { WorkItemKindComponent } from '../../../shared/work-item-kind/work-item-kind.component';
 import { StoryYearRow } from '../story-year.model';
 
 type SortField = 'started' | 'title' | 'ended' | 'days' | 'hours';
@@ -29,7 +30,8 @@ type SortDirection = 'asc' | 'desc';
   imports: [
     CommonModule,
     LucideAngularModule,
-    AdoTitleComponent
+    AdoTitleComponent,
+    WorkItemKindComponent
   ],
   templateUrl: './stories-table.component.html',
   host: { style: 'display: block' }

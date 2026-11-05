@@ -8,7 +8,7 @@ import { TaskDetailsModalComponent } from './pages/month/components/task-details
 import { PopupOverlayComponent } from './pages/overlay/popup-overlay.component';
 import { TaskDetailsService } from './shared/services';
 import { loadSettings } from './store/settings/settings.actions';
-import { TasksActions } from './store/tasks/tasks.actions';
+import { loadAllTasks, TasksActions } from './store/tasks/tasks.actions';
 
 function overlayLaunchActive(): boolean {
   const overlay = new URLSearchParams(window.location.search).get('overlay');
@@ -53,6 +53,7 @@ export class AppComponent {
 
     api?.onAdoSynced?.(() => {
       this.store.dispatch(loadSettings());
+      this.store.dispatch(loadAllTasks());
       this.store.dispatch(TasksActions.loadAdoSuggestions());
     });
   }

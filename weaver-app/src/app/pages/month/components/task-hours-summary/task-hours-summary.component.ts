@@ -11,6 +11,7 @@ import {
   takeUntil
 } from 'rxjs';
 
+import { ticketKey } from '../../../../shared/ado-titles.model';
 import { DaySummary, Task } from '../../../../shared/models';
 import { loadAllTasks, TasksActions } from '../../../../store/tasks/tasks.actions';
 import { selectAllTasks, selectMonthlyData } from '../../../../store/tasks/tasks.selectors';
@@ -42,11 +43,11 @@ export class TaskHoursSummaryComponent implements OnDestroy {
   chartData$ = this.monthlyData$.pipe(
     map(days => {
       return Object.entries(this.calculateTaskHours(days))
-        .map(([taskTitle, stats]) => ({
-          taskTitle,
+        .map(([key, stats]) => ({
+          taskTitle: stats.label,
           totalHours: stats.totalHours,
           taskCount: stats.taskCount,
-          color: this.titleToColor(taskTitle)
+          color: this.titleToColor(key)
         }))
         .sort((itemA, itemB) => itemB.totalHours - itemA.totalHours);
     })
@@ -104,19 +105,25 @@ export class TaskHoursSummaryComponent implements OnDestroy {
     return `hsl(${hue} ${saturation}% ${lightness}%)`;
   }
 
-  calculateTaskHours(daySummary: DaySummary[]): Record<string, { totalHours: number; taskCount: number }> {
-    const aggregate: Record<string, { totalHours: number; taskCount: number }> = {};
+  calculateTaskHours(daySummary: DaySummary[]): Record<string, { label: string; totalHours: number; taskCount: number }> {
+    const aggregate: Record<string, { label: string; totalHours: number; taskCount: number }> = {};
 
     daySummary.forEach(day => {
       (day.tasks || []).forEach((task: Task) => {
         const key = this.taskKey(task.title);
+        const label = (task.title || '').trim() || key;
+        const current = aggregate[key];
 
-        if (!aggregate[key]) {
-          aggregate[key] = { totalHours: 0, taskCount: 0 };
+        if (!current) {
+          aggregate[key] = { label, totalHours: task.hours || 0, taskCount: 1 };
+          return;
         }
 
-        aggregate[key].totalHours += task.hours || 0;
-        aggregate[key].taskCount += 1;
+        current.totalHours += task.hours || 0;
+        current.taskCount += 1;
+
+        if (label.length > current.label.length)
+          current.label = label;
       });
     });
 
@@ -167,7 +174,7 @@ export class TaskHoursSummaryComponent implements OnDestroy {
   }
 
   private taskKey(title: string | null | undefined): string {
-    return (title || '').trim() || 'Untitled';
+    return ticketKey(title || '') || 'Untitled';
   }
 
   private mergeTasks(stored: Task[], fromMonth: Task[]): Task[] {

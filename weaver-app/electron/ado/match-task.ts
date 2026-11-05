@@ -1,8 +1,7 @@
 import { DataSource } from 'typeorm';
 
 import { AdoWorkItem } from '../entities/AdoWorkItem';
-
-const PREFIXED_WORK_ITEM = /^#(\d+)\s+\S/;
+import { workItemIdFromTitle } from './parse';
 
 export async function adoWorkItemIdForTitle(dataSource: DataSource, title: string): Promise<number | null> {
   const trimmed = title.trim();
@@ -10,11 +9,10 @@ export async function adoWorkItemIdForTitle(dataSource: DataSource, title: strin
   if (!trimmed)
     return null;
 
-  const prefixed = PREFIXED_WORK_ITEM.exec(trimmed);
   const repository = dataSource.getRepository(AdoWorkItem);
+  const adoId = workItemIdFromTitle(trimmed);
 
-  if (prefixed) {
-    const adoId = Number(prefixed[1]);
+  if (adoId != null) {
     const linked = await repository.findOne({ where: { adoId } });
 
     if (linked)

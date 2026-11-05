@@ -9,7 +9,7 @@ import { Store } from '@ngrx/store';
 
 import { loadAllTasks, TasksActions } from '../../store/tasks/tasks.actions';
 import { selectAdoSuggestions, selectAllTasks } from '../../store/tasks/tasks.selectors';
-import { syncedWorkItemId } from '../ado-titles.model';
+import { syncedWorkItemId, workItemIdFromTitle } from '../ado-titles.model';
 import { AdoSuggestion, Task } from '../models';
 
 @Injectable({
@@ -69,13 +69,13 @@ export class TaskDetailsService {
 
   private sameStory(task: Task, title: string, adoId: number | null): boolean {
     const taskTitle = (task.title || '').trim();
+    const taskHashtag = workItemIdFromTitle(taskTitle);
+    const titleHashtag = workItemIdFromTitle(title);
+    const sharedId = adoId ?? titleHashtag;
 
-    if (taskTitle === title)
+    if (sharedId != null && (task.adoWorkItemId === sharedId || taskHashtag === sharedId))
       return true;
 
-    if (adoId == null)
-      return false;
-
-    return task.adoWorkItemId === adoId || taskTitle === `#${adoId}` || taskTitle.startsWith(`#${adoId} `);
+    return taskTitle === title;
   }
 }
