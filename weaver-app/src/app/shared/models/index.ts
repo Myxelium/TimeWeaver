@@ -140,6 +140,8 @@ export interface AdoSuggestionRange {
   rangeEnd: string;
 }
 
+export type AdoTimeGap = 'missing' | 'mismatch';
+
 export interface AdoSuggestion {
   adoId: number;
   title: string;
@@ -147,6 +149,11 @@ export interface AdoSuggestion {
   rangeEnd: string | null;
   ranges?: AdoSuggestionRange[];
   spentTimeIsZero: boolean;
+  workItemType: string;
+  state: string;
+  completedWork: number | null;
+  loggedHours: number;
+  timeGap: AdoTimeGap | null;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -172,6 +179,6 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/stories',
     icon: 'stories',
     label: 'Stories',
-    title: 'User stories'
+    title: 'Stories and bugs'
   }
 ];

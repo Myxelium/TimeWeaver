@@ -2,6 +2,37 @@ const ORGANIZATION_NAME = /^[A-Za-z0-9][A-Za-z0-9-]{0,62}$/;
 const ORGANIZATION_URL = /^https:\/\/dev\.azure\.com\/([A-Za-z0-9][A-Za-z0-9-]{0,62})$/i;
 const PULL_REQUEST_LINK = /^vstfs:\/\/\/Git\/PullRequestId\/([^/]+)\/([^/]+)\/(\d+)$/i;
 const ACTIVE_STATE = 'active';
+const HOURS_TOLERANCE = 0.05;
+
+export const TRACKED_WORK_ITEM_TYPE_NAMES = [
+  'User Story',
+  'Feature',
+  'Bug'
+];
+
+const TRACKED_WORK_ITEM_TYPES = new Set(TRACKED_WORK_ITEM_TYPE_NAMES.map(name => name.toLowerCase()));
+const DONE_STATES = new Set([
+  'done',
+  'closed',
+  'resolved',
+  'completed'
+]);
+
+export type TimeGap = 'missing' | 'mismatch';
+
+const READ_QUERY_PATHS = new Set(['/_apis/wit/wiql', '/_apis/wit/workitemsbatch']);
+
+export function assertReadOnlyRequest(method: string, path: string): void {
+  const route = path.split('?')[0];
+
+  if (method === 'GET')
+    return;
+
+  if (method === 'POST' && READ_QUERY_PATHS.has(route))
+    return;
+
+  throw new Error('Azure DevOps sync is read-only.');
+}
 
 export interface AdoUser {
   id: string;
@@ -18,6 +49,10 @@ export interface PullRequestRef {
 export interface ParsedWorkItem {
   adoId: number;
   title: string;
+  workItemType: string;
+  state: string;
+  changedOn: string;
+  completedWork: number | null;
   pullRequests: PullRequestRef[];
 }
 
@@ -284,6 +319,25 @@ export function readPullRequestCommits(body: unknown, user: AdoUser): string | n
   return latestIso ? localDay(latestIso) : null;
 }
 
+export function isDoneState(state: string): boolean {
+  return DONE_STATES.has(state.trim().toLowerCase());
+}
+
+export function timeGapFor(state: string, completedWork: number | null, loggedHours: number): TimeGap | null {
+  if (!isDoneState(state))
+    return null;
+
+  if (completedWork == null || completedWork <= 0)
+    return 'missing';
+
+  const logged = Number.isFinite(loggedHours) ? loggedHours : 0;
+
+  if (Math.abs(completedWork - logged) > HOURS_TOLERANCE)
+    return 'mismatch';
+
+  return null;
+}
+
 export function laterDay(current: string | null, next: string | null): string | null {
   if (!next)
     return current;
@@ -382,19 +436,35 @@ function readWorkItem(item: unknown): ParsedWorkItem | null {
   const fields = asRecord(entry.fields);
   const adoId = Number(entry.id ?? fields['System.Id']);
   const title = readText(fields['System.Title']).trim();
-  const type = readText(fields['System.WorkItemType']).toLowerCase();
+  const workItemType = readText(fields['System.WorkItemType']).trim();
 
   if (!Number.isInteger(adoId) || adoId <= 0 || !title)
     return null;
 
-  if (type !== 'user story' && type !== 'feature')
+  if (!TRACKED_WORK_ITEM_TYPES.has(workItemType.toLowerCase()))
     return null;
 
   return {
     adoId,
     title,
+    workItemType,
+    state: readText(fields['System.State']).trim(),
+    changedOn: readText(fields['System.ChangedDate']).trim(),
+    completedWork: readHours(fields['Microsoft.VSTS.Scheduling.CompletedWork']),
     pullRequests: readPullRequests(entry.relations)
   };
+}
+
+function readHours(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value))
+    return value;
+
+  if (typeof value !== 'string' || !value.trim())
+    return null;
+
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function readPullRequests(relations: unknown): PullRequestRef[] {

@@ -1,0 +1,92 @@
+<div class="card-panel overflow-x-auto">
+    <h2 class="section-heading">Needs time</h2>
+
+    <p class="text-sm text-muted-foreground mb-4">
+        Done, Closed, Resolved, or Completed stories, features, and bugs whose completed work in Azure DevOps is missing or differs from the hours
+        logged here. Open the work item and fill the time in yourself. Sync only reads Azure DevOps.
+    </p>
+
+    @if (gaps().length > 0) {
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-border">
+                    <th class="text-left py-3 px-4 font-semibold text-foreground">Work item</th>
+                    <th class="text-left py-3 px-4 font-semibold text-foreground hidden md:table-cell">Type</th>
+                    <th class="text-left py-3 px-4 font-semibold text-foreground hidden sm:table-cell">State</th>
+                    <th class="text-right py-3 px-4 font-semibold text-foreground hidden sm:table-cell">Logged here</th>
+                    <th class="text-right py-3 px-4 font-semibold text-foreground hidden sm:table-cell">Completed work</th>
+                    <th class="text-left py-3 px-4 font-semibold text-foreground hidden sm:table-cell">Needs</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (row of gaps(); track row.adoId) {
+                    <tr class="border-b border-border">
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-foreground">
+                                <app-ado-title [adoWorkItemId]="row.adoId" [title]="row.title" />
+                            </div>
+
+                            <div class="mt-1 text-sm text-muted-foreground sm:hidden">Logged {{ row.loggedHours | number: '1.0-2' }}h</div>
+
+                            <div class="text-sm text-muted-foreground sm:hidden">
+                                Completed work
+                                @if (row.completedWork === null) {
+                                    -
+                                } @else {
+                                    {{ row.completedWork | number: '1.0-2' }}h
+                                }
+                            </div>
+
+                            <div class="text-sm text-muted-foreground sm:hidden">
+                                {{ row.workItemType || 'Work item' }}@if (row.state) {, {{ row.state }}}
+                            </div>
+
+                            <span
+                                [class.text-amber-700]="row.timeGap === 'mismatch'"
+                                [class.dark:text-amber-300]="row.timeGap === 'mismatch'"
+                                class="mt-1 flex w-full items-center gap-1 text-sm font-medium sm:hidden"
+                            >
+                                <lucide-icon [img]="Clock" [size]="14" />
+                                {{ gapLabel(row) }}
+                            </span>
+
+                            <div class="mt-1 hidden text-sm text-muted-foreground sm:block md:hidden">
+                                {{ row.workItemType || 'Work item' }}@if (row.state) {, {{ row.state }}}
+                            </div>
+                        </td>
+
+                        <td class="py-3 px-4 text-muted-foreground hidden md:table-cell">{{ row.workItemType || '-' }}</td>
+                        <td class="py-3 px-4 text-muted-foreground hidden sm:table-cell">{{ row.state || '-' }}</td>
+                        <td class="hidden py-3 px-4 text-right font-semibold text-foreground sm:table-cell">{{ row.loggedHours | number: '1.0-2' }}h</td>
+
+                        <td class="py-3 px-4 text-right text-foreground hidden sm:table-cell">
+                            @if (row.completedWork === null) {
+                                -
+                            } @else {
+                                {{ row.completedWork | number: '1.0-2' }}h
+                            }
+                        </td>
+
+                        <td class="hidden py-3 px-4 sm:table-cell">
+                            <span
+                                [class.text-amber-700]="row.timeGap === 'mismatch'"
+                                [class.dark:text-amber-300]="row.timeGap === 'mismatch'"
+                                class="inline-flex items-center gap-1 text-sm font-medium"
+                            >
+                                <lucide-icon [img]="Clock" [size]="14" />
+                                {{ gapLabel(row) }}
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mt-4 text-sm text-muted-foreground">{{ gaps().length }} work item(s) still need time filled in on Azure DevOps.</div>
+    } @else if (suggestions().length) {
+        <p class="text-sm text-muted-foreground">No done stories, features, or bugs need time filled in.</p>
+    } @else {
+        <p class="text-sm text-muted-foreground">Sync Azure DevOps from Settings to list done stories, features, and bugs that still need time.</p>
+    }
+</div>

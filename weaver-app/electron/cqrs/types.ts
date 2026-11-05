@@ -169,4 +169,9 @@ export interface AdoSuggestionDTO {
   rangeEnd: string | null;
   ranges: AdoSuggestionRangeDTO[];
   spentTimeIsZero: boolean;
+  workItemType: string;
+  state: string;
+  completedWork: number | null;
+  loggedHours: number;
+  timeGap: 'missing' | 'mismatch' | null;
 }

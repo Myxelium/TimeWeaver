@@ -78,7 +78,7 @@ export function suggestionsOnDay(suggestions: AdoSuggestion[], dayKey: string): 
 
 export function titlesForLogging(taskTitles: string[], suggestions: AdoSuggestion[]): string[] {
   const unreported = suggestions
-    .filter(item => item.spentTimeIsZero)
+    .filter(item => item.spentTimeIsZero && suggestionRanges(item).length > 0)
     .map(item => item.title.trim())
     .filter(title => title.length > 0);
   const titles: string[] = [];

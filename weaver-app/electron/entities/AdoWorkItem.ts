@@ -20,4 +20,16 @@ export class AdoWorkItem {
 
   @Column({ type: 'text', nullable: true })
   ranges!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  workItemType!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  state!: string | null;
+
+  @Column({ type: 'float', nullable: true })
+  completedWork!: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  changedOn!: string | null;
 }
