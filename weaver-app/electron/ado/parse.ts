@@ -22,6 +22,37 @@ export type TimeGap = 'missing' | 'mismatch';
 
 const READ_QUERY_PATHS = new Set(['/_apis/wit/wiql', '/_apis/wit/workitemsbatch']);
 
+export function readAdoErrorMessage(body: unknown): string | null {
+  if (typeof body === 'string')
+    return plainErrorText(body);
+
+  const record = asRecord(body);
+  const direct = readText(record['message']).trim() || readText(record['Message']).trim();
+
+  if (direct)
+    return clipErrorText(direct);
+
+  const value = asRecord(record['value']);
+  const nested = readText(value['Message']).trim() || readText(value['message']).trim();
+
+  return nested ? clipErrorText(nested) : null;
+}
+
+function plainErrorText(value: string): string | null {
+  const trimmed = value.trim();
+
+  if (!trimmed || trimmed.startsWith('<'))
+    return null;
+
+  return clipErrorText(trimmed);
+}
+
+function clipErrorText(value: string): string {
+  const limit = 300;
+
+  return value.length > limit ? `${value.slice(0, limit)}...` : value;
+}
+
 export function assertReadOnlyRequest(method: string, path: string): void {
   const route = path.split('?')[0];
 
