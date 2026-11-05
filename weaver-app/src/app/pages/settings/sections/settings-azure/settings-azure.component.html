@@ -1,8 +1,14 @@
 <div [formGroup]="form" class="bg-card border border-border rounded-lg p-4 space-y-3">
     <p class="text-xs text-muted-foreground">
-        Reads user stories and features assigned to you. A stretch runs from the day it becomes Active until your last commit on a linked pull
-        request, so days spent waiting to merge are skipped. With no commit yet, it runs through today while it stays Active. Closed, Resolved, or New
-        also ends it, and Active again starts another.
+        Reads bugs, user stories, and features assigned to you. A stretch runs from the day it becomes Active until your last commit on a linked pull
+        request, so days spent waiting to merge are skipped. With no commit yet, it runs through today while it stays Active. Done, Closed, Resolved,
+        or New also ends it, and Active again starts another.
+    </p>
+
+    <p class="text-xs text-muted-foreground">
+        The Stories page lists Done, Closed, Resolved, or Completed items whose completed work is missing or differs from the hours logged here. Fill
+        that in on the work item yourself. Sync only reads Azure DevOps, and those reads are included with your organization. The first sync reads
+        each work item's history. Later syncs skip work items that have not changed.
     </p>
 
     <div class="flex items-center space-x-2">
@@ -83,7 +89,7 @@
     } @else {
         <p class="text-xs text-muted-foreground">
             Uses the Azure CLI session on this computer. Run az login in a terminal first. At sync, Weaver asks Azure CLI for a one-hour token and
-            does not save it. The work item id, title, and Active stretches are the only data kept.
+            does not save it. The work item id, title, type, state, completed work, and Active stretches are the only data kept.
         </p>
     }
 

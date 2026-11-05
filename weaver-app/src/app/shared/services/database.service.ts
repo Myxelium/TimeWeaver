@@ -253,23 +253,61 @@ export class DatabaseService {
   private mockAdoSuggestions(): AdoSuggestion[] {
     const today = new Date();
     const start = subDays(today, 2);
+    const startKey = format(start, 'yyyy-MM-dd');
+    const todayKey = format(today, 'yyyy-MM-dd');
 
     return [
       {
         adoId: 1001,
         title: '#1001 Sample user story',
-        activeOn: format(start, 'yyyy-MM-dd'),
-        rangeEnd: format(today, 'yyyy-MM-dd'),
-        ranges: [{ activeOn: format(start, 'yyyy-MM-dd'), rangeEnd: format(today, 'yyyy-MM-dd') }],
-        spentTimeIsZero: true
+        activeOn: startKey,
+        rangeEnd: todayKey,
+        ranges: [{ activeOn: startKey, rangeEnd: todayKey }],
+        spentTimeIsZero: true,
+        workItemType: 'User Story',
+        state: 'Active',
+        completedWork: null,
+        loggedHours: 0,
+        timeGap: null
       },
       {
         adoId: 1002,
         title: '#1002 Another sample story',
-        activeOn: format(today, 'yyyy-MM-dd'),
-        rangeEnd: format(today, 'yyyy-MM-dd'),
-        ranges: [{ activeOn: format(today, 'yyyy-MM-dd'), rangeEnd: format(today, 'yyyy-MM-dd') }],
-        spentTimeIsZero: false
+        activeOn: todayKey,
+        rangeEnd: todayKey,
+        ranges: [{ activeOn: todayKey, rangeEnd: todayKey }],
+        spentTimeIsZero: false,
+        workItemType: 'Feature',
+        state: 'Active',
+        completedWork: 4,
+        loggedHours: 4,
+        timeGap: null
+      },
+      {
+        adoId: 1003,
+        title: '#1003 Fix login timeout',
+        activeOn: startKey,
+        rangeEnd: todayKey,
+        ranges: [{ activeOn: startKey, rangeEnd: todayKey }],
+        spentTimeIsZero: true,
+        workItemType: 'Bug',
+        state: 'Done',
+        completedWork: null,
+        loggedHours: 0,
+        timeGap: 'missing'
+      },
+      {
+        adoId: 1004,
+        title: '#1004 Closed billing story',
+        activeOn: startKey,
+        rangeEnd: todayKey,
+        ranges: [{ activeOn: startKey, rangeEnd: todayKey }],
+        spentTimeIsZero: false,
+        workItemType: 'User Story',
+        state: 'Closed',
+        completedWork: 3,
+        loggedHours: 8,
+        timeGap: 'mismatch'
       }
     ];
   }

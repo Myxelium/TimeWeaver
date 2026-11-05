@@ -20,6 +20,7 @@ import { selectAdoSuggestions, selectAllTasks } from '../../store/tasks/tasks.se
 import { StoriesTableComponent } from './stories-table/stories-table.component';
 import { StoryTimelineComponent } from './story-timeline/story-timeline.component';
 import { storyRowsForYear } from './story-year.model';
+import { TimeGapsComponent } from './time-gaps/time-gaps.component';
 
 @Component({
   selector: 'app-stories',
@@ -28,7 +29,8 @@ import { storyRowsForYear } from './story-year.model';
     CommonModule,
     LucideAngularModule,
     StoryTimelineComponent,
-    StoriesTableComponent
+    StoriesTableComponent,
+    TimeGapsComponent
   ],
   templateUrl: './stories.component.html'
 })
@@ -38,7 +40,7 @@ export class StoriesComponent implements OnInit {
 
   private store = inject(Store);
 
-  private suggestions = toSignal(this.store.select(selectAdoSuggestions), { initialValue: [] as AdoSuggestion[] });
+  suggestions = toSignal(this.store.select(selectAdoSuggestions), { initialValue: [] as AdoSuggestion[] });
   private tasks = toSignal(this.store.select(selectAllTasks), { initialValue: [] as Task[] });
 
   year = signal(new Date().getFullYear());

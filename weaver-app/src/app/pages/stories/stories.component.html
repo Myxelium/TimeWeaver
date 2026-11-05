@@ -2,7 +2,7 @@
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold text-foreground">Stories</h1>
-            <p class="text-muted-foreground mt-2">Synced user stories, when they started, and the time logged against them</p>
+            <p class="text-muted-foreground mt-2">Synced stories, features, and bugs, when they were active, and the time logged against them</p>
         </div>
 
         <div class="flex items-center space-x-2">
@@ -28,6 +28,7 @@
         </div>
     </div>
 
+    <app-time-gaps [suggestions]="suggestions()" />
     <app-story-timeline [rows]="filteredRows()" />
     <app-stories-table [(searchTerm)]="searchTerm" [rows]="filteredRows()" />
 </div>

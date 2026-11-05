@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import {
   activityRanges,
+  assertReadOnlyRequest,
   isWorkItemPageUrl,
   laterDay,
   localDay,
@@ -12,6 +13,7 @@ import {
   readWorkItemIds,
   readWorkItems,
   SuggestionSpan,
+  timeGapFor,
   workItemPageUrl
 } from './parse';
 
@@ -64,7 +66,7 @@ function testQueryKeepsIdsOnly(): void {
 }
 
 function testWorkItemKeepsTitleIdAndPullRequests(): void {
-  const [item] = readWorkItems({
+  const items = readWorkItems({
     value: [
       {
         id: 42,
@@ -74,6 +76,9 @@ function testWorkItemKeepsTitleIdAndPullRequests(): void {
           'System.Id': 42,
           'System.Title': 'Pay invoices',
           'System.WorkItemType': 'User Story',
+          'System.State': 'Active',
+          'System.ChangedDate': '2026-10-01T12:00:00Z',
+          'Microsoft.VSTS.Scheduling.CompletedWork': 4,
           'System.Description': 'do not keep'
         },
         relations: [
@@ -93,15 +98,36 @@ function testWorkItemKeepsTitleIdAndPullRequests(): void {
       {
         id: 43,
         fields: { 'System.Id': 43, 'System.Title': 'A task', 'System.WorkItemType': 'Task' }
+      },
+      {
+        id: 44,
+        fields: {
+          'System.Id': 44,
+          'System.Title': 'Fix login',
+          'System.WorkItemType': 'Bug',
+          'System.State': 'Done',
+          'System.ChangedDate': '2026-10-02T12:00:00Z',
+          'Microsoft.VSTS.Scheduling.CompletedWork': '0'
+        }
       }
     ]
   });
 
-  assert.deepEqual(item, {
+  assert.deepEqual(items.map(entry => entry.workItemType), ['User Story', 'Bug']);
+  assert.deepEqual(items[0], {
     adoId: 42,
     title: 'Pay invoices',
+    workItemType: 'User Story',
+    state: 'Active',
+    changedOn: '2026-10-01T12:00:00Z',
+    completedWork: 4,
     pullRequests: [{ projectId: 'project-1', repositoryId: 'repo-1', pullRequestId: 7 }]
   });
+
+  assert.equal(items[1].workItemType, 'Bug');
+  assert.equal(items[1].state, 'Done');
+  assert.equal(items[1].completedWork, 0);
+  assert.equal(items[1].changedOn, '2026-10-02T12:00:00Z');
 }
 
 const me = { id: 'user-1', uniqueName: 'ada@example.com', displayName: 'Ada Lovelace' };
@@ -239,6 +265,29 @@ function testLaterDay(): void {
   assert.equal(laterDay('2026-10-10', null), '2026-10-10');
 }
 
+function testTimeGapForDoneWork(): void {
+  const loggedHours = 1;
+  const completedHours = 1;
+  const nearlyTheSameHours = 1.02;
+
+  assert.equal(timeGapFor('Active', null, 0), null);
+  assert.equal(timeGapFor('New', 0, 0), null);
+  assert.equal(timeGapFor('Done', null, 0), 'missing');
+  assert.equal(timeGapFor('Closed', 0, loggedHours), 'missing');
+  assert.equal(timeGapFor('Resolved', completedHours, 0), 'mismatch');
+  assert.equal(timeGapFor('Completed', completedHours, loggedHours), null);
+  assert.equal(timeGapFor('done', nearlyTheSameHours, loggedHours), null);
+}
+
+function testSyncStaysReadOnly(): void {
+  assert.doesNotThrow(() => assertReadOnlyRequest('GET', '/_apis/wit/workItems/1/updates?$top=200'));
+  assert.doesNotThrow(() => assertReadOnlyRequest('POST', '/_apis/wit/wiql'));
+  assert.doesNotThrow(() => assertReadOnlyRequest('POST', '/_apis/wit/workitemsbatch'));
+  assert.throws(() => assertReadOnlyRequest('PATCH', '/_apis/wit/workItems/1'), /read-only/);
+  assert.throws(() => assertReadOnlyRequest('POST', '/_apis/wit/workItems/1'), /read-only/);
+  assert.throws(() => assertReadOnlyRequest('DELETE', '/_apis/wit/workItems/1'), /read-only/);
+}
+
 testOrganizationName();
 testWorkItemPageUrl();
 testConnectionUserDropsExtraFields();
@@ -255,5 +304,7 @@ testCommitEndsTheStretchBeforeMerge();
 testEarlierCommitDoesNotEndTheNextStretch();
 testCommitDateUsesOnlyThisUser();
 testLaterDay();
+testTimeGapForDoneWork();
+testSyncStaysReadOnly();
 
 console.log('ado parse tests passed');

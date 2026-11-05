@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 
-import { loggingTitle } from '../../../ado/parse';
+import { loggingTitle, timeGapFor } from '../../../ado/parse';
 import { AdoWorkItem } from '../../../entities/AdoWorkItem';
 import { Task } from '../../../entities/Task';
 import { AdoSuggestionDTO, AdoSuggestionRangeDTO } from '../../types';
@@ -15,8 +15,6 @@ export async function handleGetAdoSuggestions(dataSource: DataSource): Promise<A
       adoWorkItemId: true
     }
   });
-  const hoursById = new Map<number, number>();
-  const hoursByTitle = new Map<string, number>();
   const titleCount = new Map<string, number>();
 
   for (const item of items) {
@@ -25,35 +23,63 @@ export async function handleGetAdoSuggestions(dataSource: DataSource): Promise<A
     titleCount.set(title, (titleCount.get(title) ?? 0) + 1);
   }
 
+  return items.map(item => toSuggestion(item, tasks, titleCount));
+}
+
+function toSuggestion(item: AdoWorkItem, tasks: Task[], titleCount: Map<string, number>): AdoSuggestionDTO {
+  const title = item.title.trim();
+  const shownTitle = loggingTitle(item.adoId, title);
+  const loggedHours = loggedHoursFor(item, tasks, titleCount, shownTitle);
+  const ranges = readStoredRanges(item);
+  const latest = ranges[ranges.length - 1];
+  const completedWork = readCompletedWork(item.completedWork);
+
+  return {
+    adoId: item.adoId,
+    title: shownTitle,
+    activeOn: latest?.activeOn ?? item.activeOn,
+    rangeEnd: latest?.rangeEnd ?? item.rangeEnd,
+    ranges,
+    spentTimeIsZero: loggedHours <= 0,
+    workItemType: item.workItemType ?? '',
+    state: item.state ?? '',
+    completedWork,
+    loggedHours,
+    timeGap: timeGapFor(item.state ?? '', completedWork, loggedHours)
+  };
+}
+
+function loggedHoursFor(item: AdoWorkItem, tasks: Task[], titleCount: Map<string, number>, shownTitle: string): number {
+  const title = item.title.trim();
+  const titleIsUnique = (titleCount.get(title) ?? 0) === 1;
+
+  let total = 0;
+
   for (const task of tasks) {
-    const hours = Number(task.hours) || 0;
-    const title = task.title?.trim() ?? '';
+    const taskTitle = task.title?.trim() ?? '';
+    const linked = task.adoWorkItemId === item.adoId;
+    const sameTitle = titleIsUnique && taskTitle === title;
+    const formatted = taskTitle === shownTitle;
 
-    if (task.adoWorkItemId != null)
-      hoursById.set(task.adoWorkItemId, (hoursById.get(task.adoWorkItemId) ?? 0) + hours);
+    if (!linked && !sameTitle && !formatted)
+      continue;
 
-    if (title)
-      hoursByTitle.set(title, (hoursByTitle.get(title) ?? 0) + hours);
+    total += Number(task.hours) || 0;
   }
 
-  return items.map(item => {
-    const title = item.title.trim();
-    const shownTitle = loggingTitle(item.adoId, title);
-    const linkedHours = hoursById.get(item.adoId) ?? 0;
-    const titleHours = (titleCount.get(title) ?? 0) === 1 ? (hoursByTitle.get(title) ?? 0) : 0;
-    const formattedHours = hoursByTitle.get(shownTitle) ?? 0;
-    const ranges = readStoredRanges(item);
-    const latest = ranges[ranges.length - 1];
+  return Math.round(total * 100) / 100;
+}
 
-    return {
-      adoId: item.adoId,
-      title: shownTitle,
-      activeOn: latest?.activeOn ?? item.activeOn,
-      rangeEnd: latest?.rangeEnd ?? item.rangeEnd,
-      ranges,
-      spentTimeIsZero: linkedHours <= 0 && titleHours <= 0 && formattedHours <= 0
-    };
-  });
+function readCompletedWork(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value))
+    return value;
+
+  if (typeof value !== 'string' || !value.trim())
+    return null;
+
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function readStoredRanges(item: AdoWorkItem): AdoSuggestionRangeDTO[] {

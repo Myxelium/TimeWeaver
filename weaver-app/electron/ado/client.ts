@@ -1,6 +1,7 @@
 import {
   activityRanges,
   AdoUser,
+  assertReadOnlyRequest,
   ParsedWorkItem,
   PullRequestRef,
   readConnectionUser,
@@ -10,6 +11,7 @@ import {
   readWorkItemIds,
   readWorkItems,
   SuggestionSpan,
+  TRACKED_WORK_ITEM_TYPE_NAMES,
   withAccountsFromUpdates,
   WorkItemRevision
 } from './parse';
@@ -18,16 +20,28 @@ const API_VERSION = '7.1';
 const CONNECTION_DATA_VERSION = '7.1-preview.1';
 const PAGE_SIZE = 200;
 const MAX_PAGES = 50;
+const MAX_ATTEMPTS = 3;
+const MAX_RETRY_SECONDS = 15;
 const HTTP_REDIRECT = 300;
 const HTTP_CLIENT_ERROR = 400;
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
 const HTTP_NOT_FOUND = 404;
-const ASSIGNED_STORIES_QUERY = [
+const HTTP_TOO_MANY = 429;
+const MILLISECONDS_PER_SECOND = 1000;
+const WORK_ITEM_FIELDS = [
+  'System.Id',
+  'System.Title',
+  'System.WorkItemType',
+  'System.State',
+  'System.ChangedDate',
+  'Microsoft.VSTS.Scheduling.CompletedWork'
+];
+const ASSIGNED_WORK_ITEMS_QUERY = [
   'SELECT [System.Id]',
   'FROM WorkItems',
   'WHERE [System.AssignedTo] = @Me',
-  "AND [System.WorkItemType] IN ('User Story', 'Feature')",
+  `AND [System.WorkItemType] IN (${TRACKED_WORK_ITEM_TYPE_NAMES.map(name => `'${name}'`).join(', ')})`,
   "AND [System.State] <> 'Removed'"
 ].join(' ');
 
@@ -56,35 +70,39 @@ export class AdoClient {
   }
 
   async assignedWorkItems(): Promise<ParsedWorkItem[]> {
-    const queried = await this.sendAdoRequest('POST', '/_apis/wit/wiql', { query: ASSIGNED_STORIES_QUERY });
+    const queried = await this.sendAdoRequest('POST', '/_apis/wit/wiql', { query: ASSIGNED_WORK_ITEMS_QUERY });
     const ids = readWorkItemIds(queried);
     const items: ParsedWorkItem[] = [];
 
     for (let index = 0; index < ids.length; index += PAGE_SIZE) {
-      const idsInPage = ids.slice(index, index + PAGE_SIZE);
       const batch = await this.sendAdoRequest('POST', '/_apis/wit/workitemsbatch', {
-        ids: idsInPage,
-        fields: [
-          'System.Id',
-          'System.Title',
-          'System.WorkItemType'
-        ],
+        ids: ids.slice(index, index + PAGE_SIZE),
+        fields: WORK_ITEM_FIELDS,
         errorPolicy: 'omit'
       });
-      const linked = await this.sendAdoRequest('POST', '/_apis/wit/workitemsbatch', {
-        ids: idsInPage,
-        $expand: 'relations',
-        errorPolicy: 'omit'
-      });
-      const pullRequests = readPullRequestsById(linked);
 
-      for (const item of readWorkItems(batch)) {
-        item.pullRequests = pullRequests.get(item.adoId) ?? [];
-        items.push(item);
-      }
+      items.push(...readWorkItems(batch));
     }
 
     return items;
+  }
+
+  async pullRequestsFor(ids: number[]): Promise<Map<number, PullRequestRef[]>> {
+    const pullRequests = new Map<number, PullRequestRef[]>();
+
+    for (let index = 0; index < ids.length; index += PAGE_SIZE) {
+      const linked = await this.sendAdoRequest('POST', '/_apis/wit/workitemsbatch', {
+        ids: ids.slice(index, index + PAGE_SIZE),
+        fields: ['System.Id'],
+        $expand: 'relations',
+        errorPolicy: 'omit'
+      });
+
+      for (const [adoId, refs] of readPullRequestsById(linked))
+        pullRequests.set(adoId, refs);
+    }
+
+    return pullRequests;
   }
 
   async workItemRanges(workItemId: number, pullRequests: PullRequestRef[], user: AdoUser, syncDate: string): Promise<SuggestionSpan[]> {
@@ -183,6 +201,26 @@ export class AdoClient {
     payload?: unknown,
     apiVersion = API_VERSION
   ): Promise<Response> {
+    assertReadOnlyRequest(method, path);
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      const response = await this.fetchResponse(method, path, payload, apiVersion);
+
+      if (response.status !== HTTP_TOO_MANY || attempt === MAX_ATTEMPTS)
+        return response;
+
+      await waitForRetry(response, attempt);
+    }
+
+    throw new AdoRequestError('Azure DevOps could not be read.');
+  }
+
+  private async fetchResponse(
+    method: 'GET' | 'POST',
+    path: string,
+    payload?: unknown,
+    apiVersion = API_VERSION
+  ): Promise<Response> {
     const headers: Record<string, string> = {
       Authorization: this.authorization,
       Accept: 'application/json',
@@ -253,5 +291,22 @@ function messageForStatus(status: number): string {
   if (status === HTTP_NOT_FOUND)
     return 'Azure DevOps organization was not found.';
 
+  if (status === HTTP_TOO_MANY)
+    return 'Azure DevOps asked for a short pause. Sync again in a moment.';
+
   return `Azure DevOps could not be read (HTTP ${status}).`;
+}
+
+async function waitForRetry(response: Response, attempt: number): Promise<void> {
+  const header = Number(response.headers.get('retry-after'));
+  const seconds = Number.isFinite(header) && header > 0 ? header : attempt;
+
+  await discardResponseBody(response);
+  await waitForMilliseconds(Math.min(seconds, MAX_RETRY_SECONDS) * MILLISECONDS_PER_SECOND);
+}
+
+function waitForMilliseconds(milliseconds: number): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, milliseconds);
+  });
 }
