@@ -172,12 +172,30 @@ async function collectWorkItems(
   const user = await client.currentUser();
   const assigned = await client.assignedWorkItems();
   const needsHistory = assigned.filter(item => !canReuse(existing.get(item.adoId), item.changedOn));
-  const pullRequests = await client.pullRequestsFor(needsHistory.map(item => item.adoId));
-  const built = await mapWithLimit(assigned, SYNC_CONCURRENCY, item =>
-    buildWorkItem(client, item, existing.get(item.adoId), pullRequests.get(item.adoId) ?? [], user, syncDate)
-  );
+  const detailed = await client.expandedWorkItems(needsHistory.map(item => item.adoId));
+  const detailedById = new Map(detailed.map(item => [item.adoId, item]));
+  const built = await mapWithLimit(assigned, SYNC_CONCURRENCY, item => {
+    const detail = detailedById.get(item.adoId);
+    const source = detail ? mergeWorkItem(item, detail) : item;
+    const pullRequests = detail?.pullRequests ?? [];
+    const stored = existing.get(item.adoId);
+
+    return buildWorkItem(client, source, stored, pullRequests, user, syncDate);
+  });
 
   return built.flatMap(row => row ? [row] : []);
+}
+
+function mergeWorkItem(item: ParsedWorkItem, detail: ParsedWorkItem): ParsedWorkItem {
+  return {
+    adoId: item.adoId,
+    title: detail.title || item.title,
+    workItemType: detail.workItemType || item.workItemType,
+    state: detail.state || item.state,
+    changedOn: detail.changedOn || item.changedOn,
+    completedWork: detail.completedWork,
+    pullRequests: detail.pullRequests
+  };
 }
 
 function canReuse(stored: AdoWorkItem | undefined, changedOn: string): boolean {

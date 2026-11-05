@@ -4,9 +4,9 @@ import {
   assertReadOnlyRequest,
   ParsedWorkItem,
   PullRequestRef,
+  readAdoErrorMessage,
   readConnectionUser,
   readPullRequestCommitDays,
-  readPullRequestsById,
   readRevisions,
   readWorkItemIds,
   readWorkItems,
@@ -34,8 +34,7 @@ const WORK_ITEM_FIELDS = [
   'System.Title',
   'System.WorkItemType',
   'System.State',
-  'System.ChangedDate',
-  'Microsoft.VSTS.Scheduling.CompletedWork'
+  'System.ChangedDate'
 ];
 const ASSIGNED_WORK_ITEMS_QUERY = [
   'SELECT [System.Id]',
@@ -71,7 +70,7 @@ export class AdoClient {
 
   async assignedWorkItems(): Promise<ParsedWorkItem[]> {
     const queried = await this.sendAdoRequest('POST', '/_apis/wit/wiql', { query: ASSIGNED_WORK_ITEMS_QUERY });
-    const ids = readWorkItemIds(queried);
+    const ids = uniqueIds(readWorkItemIds(queried));
     const items: ParsedWorkItem[] = [];
 
     for (let index = 0; index < ids.length; index += PAGE_SIZE) {
@@ -87,22 +86,25 @@ export class AdoClient {
     return items;
   }
 
-  async pullRequestsFor(ids: number[]): Promise<Map<number, PullRequestRef[]>> {
-    const pullRequests = new Map<number, PullRequestRef[]>();
+  async expandedWorkItems(ids: number[]): Promise<ParsedWorkItem[]> {
+    const items: ParsedWorkItem[] = [];
 
     for (let index = 0; index < ids.length; index += PAGE_SIZE) {
+      const page = uniqueIds(ids.slice(index, index + PAGE_SIZE));
+
+      if (!page.length)
+        continue;
+
       const linked = await this.sendAdoRequest('POST', '/_apis/wit/workitemsbatch', {
-        ids: ids.slice(index, index + PAGE_SIZE),
-        fields: ['System.Id'],
+        ids: page,
         $expand: 'relations',
         errorPolicy: 'omit'
       });
 
-      for (const [adoId, refs] of readPullRequestsById(linked))
-        pullRequests.set(adoId, refs);
+      items.push(...readWorkItems(linked));
     }
 
-    return pullRequests;
+    return items;
   }
 
   async workItemRanges(workItemId: number, pullRequests: PullRequestRef[], user: AdoUser, syncDate: string): Promise<SuggestionSpan[]> {
@@ -163,10 +165,8 @@ export class AdoClient {
         return days;
       }
 
-      if (!response.ok) {
-        await discardResponseBody(response);
-        throw new AdoRequestError(failureMessageFor(response, this.rejectedMessage));
-      }
+      if (!response.ok)
+        throw await this.failureForResponse(response);
 
       const body: unknown = await response.json();
 
@@ -187,12 +187,20 @@ export class AdoClient {
   private async sendAdoRequest(method: 'GET' | 'POST', path: string, payload?: unknown, apiVersion = API_VERSION): Promise<unknown> {
     const response = await this.requestResponse(method, path, payload, apiVersion);
 
-    if (!response.ok) {
-      await discardResponseBody(response);
-      throw new AdoRequestError(failureMessageFor(response, this.rejectedMessage));
-    }
+    if (!response.ok)
+      throw await this.failureForResponse(response);
 
     return response.json();
+  }
+
+  private async failureForResponse(response: Response): Promise<AdoRequestError> {
+    const statusMessage = failureMessageFor(response, this.rejectedMessage);
+    const detail = readAdoErrorMessage(await readResponseBody(response));
+
+    if (!detail)
+      return new AdoRequestError(statusMessage);
+
+    return new AdoRequestError(`${statusMessage} ${detail}`);
   }
 
   private async requestResponse(
@@ -268,6 +276,23 @@ function failureMessageFor(response: Response, rejectedMessage: string): string 
 
 async function discardResponseBody(response: Response): Promise<void> {
   await response.arrayBuffer().catch(() => undefined);
+}
+
+function uniqueIds(ids: number[]): number[] {
+  return [...new Set(ids)];
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+  const text = await response.text().catch(() => '');
+
+  if (!text.trim())
+    return null;
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
 }
 
 function updateCount(body: unknown): number {

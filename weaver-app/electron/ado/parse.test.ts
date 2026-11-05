@@ -7,6 +7,7 @@ import {
   laterDay,
   localDay,
   organizationName,
+  readAdoErrorMessage,
   readConnectionUser,
   readPullRequestCommits,
   readRevisions,
@@ -279,6 +280,15 @@ function testTimeGapForDoneWork(): void {
   assert.equal(timeGapFor('done', nearlyTheSameHours, loggedHours), null);
 }
 
+function testAdoErrorMessage(): void {
+  const missingField = 'TF51535: Cannot find field Microsoft.VSTS.Scheduling.CompletedWork.';
+
+  assert.equal(readAdoErrorMessage({ message: missingField }), missingField);
+  assert.equal(readAdoErrorMessage({ value: { Message: 'The query is not valid.' } }), 'The query is not valid.');
+  assert.equal(readAdoErrorMessage('<html>sign in</html>'), null);
+  assert.equal(readAdoErrorMessage(null), null);
+}
+
 function testSyncStaysReadOnly(): void {
   assert.doesNotThrow(() => assertReadOnlyRequest('GET', '/_apis/wit/workItems/1/updates?$top=200'));
   assert.doesNotThrow(() => assertReadOnlyRequest('POST', '/_apis/wit/wiql'));
@@ -305,6 +315,7 @@ testEarlierCommitDoesNotEndTheNextStretch();
 testCommitDateUsesOnlyThisUser();
 testLaterDay();
 testTimeGapForDoneWork();
+testAdoErrorMessage();
 testSyncStaysReadOnly();
 
 console.log('ado parse tests passed');
