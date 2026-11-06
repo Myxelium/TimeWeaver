@@ -64,6 +64,15 @@ export class Setting {
   @Column({ type: 'boolean', default: false })
   adoSyncEnabled!: boolean;
 
+  @Column({ type: 'text', default: 'Time spent' })
+  adoTimeSpentField!: string;
+
+  @Column({ type: 'boolean', default: false })
+  adoHideNeedsTime!: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  adoIgnoreHigherAzureTime!: boolean;
+
   @Column({ type: 'text', nullable: true })
   adoLastSyncOn?: string | null;
 

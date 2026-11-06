@@ -199,7 +199,29 @@ export function readPullRequestsById(body: unknown): Map<number, PullRequestRef[
   return pullRequestsById;
 }
 
-export function readWorkItems(body: unknown): ParsedWorkItem[] {
+export const DEFAULT_TIME_SPENT_FIELD = 'Time spent';
+
+export function readTimeSpentReference(body: unknown, fieldName: string): string | null {
+  const wanted = fieldName.trim().toLowerCase();
+  const items = Array.isArray(body) ? body : asRecord(body).value;
+
+  if (!wanted || !Array.isArray(items))
+    return null;
+
+  for (const item of items) {
+    const entry = asRecord(item);
+    const name = readText(entry.name).trim()
+      .toLowerCase();
+    const reference = readText(entry.referenceName).trim();
+
+    if (reference && (name === wanted || reference.toLowerCase() === wanted))
+      return reference;
+  }
+
+  return null;
+}
+
+export function readWorkItems(body: unknown, timeSpentReference: string | null = null): ParsedWorkItem[] {
   const items = Array.isArray(body) ? body : asRecord(body).value;
 
   if (!Array.isArray(items))
@@ -208,7 +230,7 @@ export function readWorkItems(body: unknown): ParsedWorkItem[] {
   const parsed: ParsedWorkItem[] = [];
 
   for (const item of items) {
-    const workItem = readWorkItem(item);
+    const workItem = readWorkItem(item, timeSpentReference);
 
     if (workItem)
       parsed.push(workItem);
@@ -367,7 +389,12 @@ export function isDoneState(state: string): boolean {
   return DONE_STATES.has(state.trim().toLowerCase());
 }
 
-export function timeGapFor(state: string, completedWork: number | null, loggedHours: number): TimeGap | null {
+export function timeGapFor(
+  state: string,
+  completedWork: number | null,
+  loggedHours: number,
+  ignoreHigherAzure = false
+): TimeGap | null {
   if (!isDoneState(state))
     return null;
 
@@ -375,6 +402,9 @@ export function timeGapFor(state: string, completedWork: number | null, loggedHo
     return 'missing';
 
   const logged = Number.isFinite(loggedHours) ? loggedHours : 0;
+
+  if (ignoreHigherAzure && completedWork > logged + HOURS_TOLERANCE)
+    return null;
 
   if (Math.abs(completedWork - logged) > HOURS_TOLERANCE)
     return 'mismatch';
@@ -475,7 +505,7 @@ function textNamesUser(value: string, user: AdoUser): boolean {
   return sameText(value, user.displayName);
 }
 
-function readWorkItem(item: unknown): ParsedWorkItem | null {
+function readWorkItem(item: unknown, timeSpentReference: string | null): ParsedWorkItem | null {
   const entry = asRecord(item);
   const fields = asRecord(entry.fields);
   const adoId = Number(entry.id ?? fields['System.Id']);
@@ -494,7 +524,7 @@ function readWorkItem(item: unknown): ParsedWorkItem | null {
     workItemType,
     state: readText(fields['System.State']).trim(),
     changedOn: readText(fields['System.ChangedDate']).trim(),
-    completedWork: readHours(fields['Microsoft.VSTS.Scheduling.CompletedWork']),
+    completedWork: timeSpentReference ? readHours(fields[timeSpentReference]) : null,
     pullRequests: readPullRequests(entry.relations)
   };
 }

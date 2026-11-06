@@ -63,6 +63,9 @@ export interface SaveSettingsCommand {
     clearAdoPat?: boolean;
     adoAuthMethod?: 'pat' | 'azure-cli';
     adoSyncEnabled?: boolean;
+    adoTimeSpentField?: string;
+    adoHideNeedsTime?: boolean;
+    adoIgnoreHigherAzureTime?: boolean;
   };
 }
 
@@ -153,6 +156,9 @@ export interface SettingsDTO {
   adoPatConfigured: boolean;
   adoAuthMethod: 'pat' | 'azure-cli';
   adoSyncEnabled: boolean;
+  adoTimeSpentField: string;
+  adoHideNeedsTime: boolean;
+  adoIgnoreHigherAzureTime: boolean;
   adoLastSyncOn?: string;
   adoLastSyncError?: string;
 }

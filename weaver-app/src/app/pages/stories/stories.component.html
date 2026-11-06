@@ -12,7 +12,10 @@
                 class="btn-icon"
                 aria-label="Previous year"
             >
-                <lucide-icon [img]="ChevronLeft" class="w-4 h-4" />
+                <lucide-icon
+                    [img]="ChevronLeft"
+                    class="w-4 h-4"
+                />
             </button>
 
             <span class="text-lg font-medium min-w-16 text-center">{{ year() }}</span>
@@ -23,12 +26,20 @@
                 class="btn-icon"
                 aria-label="Next year"
             >
-                <lucide-icon [img]="ChevronRight" class="w-4 h-4" />
+                <lucide-icon
+                    [img]="ChevronRight"
+                    class="w-4 h-4"
+                />
             </button>
         </div>
     </div>
 
-    <app-time-gaps [suggestions]="suggestions()" />
+    @if (!hideNeedsTime()) {
+        <app-time-gaps [suggestions]="suggestions()" />
+    }
     <app-story-timeline [rows]="filteredRows()" />
-    <app-stories-table [(searchTerm)]="searchTerm" [rows]="filteredRows()" />
+    <app-stories-table
+        [(searchTerm)]="searchTerm"
+        [rows]="filteredRows()"
+    />
 </div>

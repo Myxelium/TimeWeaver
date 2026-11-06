@@ -11,6 +11,7 @@ import {
   readConnectionUser,
   readPullRequestCommits,
   readRevisions,
+  readTimeSpentReference,
   readWorkItemIds,
   readWorkItems,
   SuggestionSpan,
@@ -79,6 +80,7 @@ function testQueryKeepsIdsOnly(): void {
 }
 
 function testWorkItemKeepsTitleIdAndPullRequests(): void {
+  const timeSpent = 'Microsoft.VSTS.Scheduling.CompletedWork';
   const items = readWorkItems({
     value: [
       {
@@ -124,7 +126,7 @@ function testWorkItemKeepsTitleIdAndPullRequests(): void {
         }
       }
     ]
-  });
+  }, timeSpent);
 
   assert.deepEqual(items.map(entry => entry.workItemType), ['User Story', 'Bug']);
   assert.deepEqual(items[0], {
@@ -290,6 +292,19 @@ function testTimeGapForDoneWork(): void {
   assert.equal(timeGapFor('Resolved', completedHours, 0), 'mismatch');
   assert.equal(timeGapFor('Completed', completedHours, loggedHours), null);
   assert.equal(timeGapFor('done', nearlyTheSameHours, loggedHours), null);
+  assert.equal(timeGapFor('Closed', completedHours + loggedHours, loggedHours, true), null);
+  assert.equal(timeGapFor('Closed', loggedHours, completedHours + loggedHours, true), 'mismatch');
+}
+
+function testTimeSpentFieldLookup(): void {
+  const reference = 'Custom.TimeSpent';
+  const fields = {
+    value: [{ name: 'Completed Work', referenceName: 'Microsoft.VSTS.Scheduling.CompletedWork' }, { name: 'Time spent', referenceName: reference }]
+  };
+
+  assert.equal(readTimeSpentReference(fields, 'Time spent'), reference);
+  assert.equal(readTimeSpentReference(fields, reference), reference);
+  assert.equal(readTimeSpentReference(fields, 'Missing field'), null);
 }
 
 function testAdoErrorMessage(): void {
@@ -328,6 +343,7 @@ testEarlierCommitDoesNotEndTheNextStretch();
 testCommitDateUsesOnlyThisUser();
 testLaterDay();
 testTimeGapForDoneWork();
+testTimeSpentFieldLookup();
 testAdoErrorMessage();
 testSyncStaysReadOnly();
 

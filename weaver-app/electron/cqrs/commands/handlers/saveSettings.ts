@@ -1,9 +1,25 @@
 import { DataSource } from 'typeorm';
 
-import { organizationName } from '../../../ado/parse';
+import { DEFAULT_TIME_SPENT_FIELD, organizationName } from '../../../ado/parse';
 import { Setting } from '../../../entities/Setting';
 import { mergePopupRules } from '../../../popup-rules';
 import { SaveSettingsCommand } from '../../types';
+
+const fieldNameLimit = 128;
+
+function applyAdoTimeSettings(settings: Setting, payload: SaveSettingsCommand['payload']): void {
+  if (typeof payload.adoTimeSpentField === 'string') {
+    const fieldName = payload.adoTimeSpentField.trim().slice(0, fieldNameLimit);
+
+    settings.adoTimeSpentField = fieldName || DEFAULT_TIME_SPENT_FIELD;
+  }
+
+  if (typeof payload.adoHideNeedsTime === 'boolean')
+    settings.adoHideNeedsTime = payload.adoHideNeedsTime;
+
+  if (typeof payload.adoIgnoreHigherAzureTime === 'boolean')
+    settings.adoIgnoreHigherAzureTime = payload.adoIgnoreHigherAzureTime;
+}
 
 export async function handleSaveSettings(command: SaveSettingsCommand, dataSource: DataSource): Promise<boolean> {
   const repo = dataSource.getRepository(Setting);
@@ -63,6 +79,8 @@ export async function handleSaveSettings(command: SaveSettingsCommand, dataSourc
 
   if (typeof command.payload.adoSyncEnabled === 'boolean')
     settings.adoSyncEnabled = command.payload.adoSyncEnabled;
+
+  applyAdoTimeSettings(settings, command.payload);
 
   await repo.save(settings);
   return true;
