@@ -18,5 +18,6 @@ export const selectHolidayCountry = createSelector(selectSettings, settings => s
 export const selectFirstDayOfWeek = createSelector(selectSettings, settings => settings?.firstDayOfWeek ?? 1);
 export const selectOvertimeRate = createSelector(selectSettings, settings => settings?.overtimeRate ?? 0);
 export const selectAdoOrganization = createSelector(selectSettings, settings => settings?.adoOrganization ?? '');
+export const selectAdoHideNeedsTime = createSelector(selectSettings, settings => !!settings?.adoHideNeedsTime);
 export const selectLastSaveSuccessAt = createSelector(selectSettingsState, state => state.lastSaveSuccessAt);
 export const selectLastImportResult = createSelector(selectSettingsState, state => state.lastImportResult);

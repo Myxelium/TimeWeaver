@@ -6,6 +6,7 @@ import {
   workItemIdFromTitle
 } from '../../../ado/parse';
 import { AdoWorkItem } from '../../../entities/AdoWorkItem';
+import { Setting } from '../../../entities/Setting';
 import { Task } from '../../../entities/Task';
 import { AdoSuggestionDTO, AdoSuggestionRangeDTO } from '../../types';
 
@@ -19,6 +20,8 @@ export async function handleGetAdoSuggestions(dataSource: DataSource): Promise<A
       adoWorkItemId: true
     }
   });
+  const settings = await dataSource.getRepository(Setting).findOne({ where: { id: 1 } });
+  const ignoreHigherAzureTime = !!settings?.adoIgnoreHigherAzureTime;
   const titleCount = new Map<string, number>();
 
   for (const item of items) {
@@ -27,10 +30,10 @@ export async function handleGetAdoSuggestions(dataSource: DataSource): Promise<A
     titleCount.set(title, (titleCount.get(title) ?? 0) + 1);
   }
 
-  return items.map(item => toSuggestion(item, tasks, titleCount));
+  return items.map(item => toSuggestion(item, tasks, titleCount, ignoreHigherAzureTime));
 }
 
-function toSuggestion(item: AdoWorkItem, tasks: Task[], titleCount: Map<string, number>): AdoSuggestionDTO {
+function toSuggestion(item: AdoWorkItem, tasks: Task[], titleCount: Map<string, number>, ignoreHigherAzureTime: boolean): AdoSuggestionDTO {
   const title = item.title.trim();
   const shownTitle = loggingTitle(item.adoId, title);
   const loggedHours = loggedHoursFor(item, tasks, titleCount, shownTitle);
@@ -49,7 +52,7 @@ function toSuggestion(item: AdoWorkItem, tasks: Task[], titleCount: Map<string, 
     state: item.state ?? '',
     completedWork,
     loggedHours,
-    timeGap: timeGapFor(item.state ?? '', completedWork, loggedHours)
+    timeGap: timeGapFor(item.state ?? '', completedWork, loggedHours, ignoreHigherAzureTime)
   };
 }
 

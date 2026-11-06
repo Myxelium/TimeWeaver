@@ -1,4 +1,7 @@
-<div [formGroup]="form" class="bg-card border border-border rounded-lg p-4 space-y-3">
+<div
+    [formGroup]="form"
+    class="bg-card border border-border rounded-lg p-4 space-y-3"
+>
     <p class="text-xs text-muted-foreground">
         Reads bugs, user stories, and features assigned to you. A stretch runs from the day it becomes Active until your last commit on a linked pull
         request, so days spent waiting to merge are skipped. With no commit yet, it runs through today while it stays Active. Done, Closed, Resolved,
@@ -6,9 +9,9 @@
     </p>
 
     <p class="text-xs text-muted-foreground">
-        The Stories page lists Done, Closed, Resolved, or Completed items whose completed work is missing or differs from the hours logged here. Fill
-        that in on the work item yourself. Sync only reads Azure DevOps, and those reads are included with your organization. The first sync reads
-        each work item's history. Later syncs skip work items that have not changed.
+        The Stories page lists Done, Closed, Resolved, or Completed items whose time spent is missing or differs from the hours logged here. Fill that
+        in on the work item yourself. Sync only reads Azure DevOps, and those reads are included with your organization. The first sync reads each
+        work item's history. Later syncs skip work items that have not changed.
     </p>
 
     <div class="flex items-center space-x-2">
@@ -19,12 +22,69 @@
             class="h-4 w-4"
         />
 
-        <label for="adoSyncEnabled" class="text-sm">Enable sync</label
+        <label
+            for="adoSyncEnabled"
+            class="text-sm"
+            >Enable sync</label
         >
     </div>
 
     <div>
-        <label class="form-label" for="adoOrganization">Organization</label
+        <label
+            class="form-label"
+            for="adoTimeSpentField"
+            >Field Name</label
+        >
+
+        <input
+            id="adoTimeSpentField"
+            type="text"
+            formControlName="adoTimeSpentField"
+            class="input-base"
+            autocomplete="off"
+        />
+
+        <p class="text-xs text-muted-foreground">
+            Sync reads time spent from the work item field with this name. If Azure DevOps does not have that field yet, sync still succeeds and time
+            spent stays empty.
+        </p>
+    </div>
+
+    <div class="flex items-center space-x-2">
+        <input
+            id="adoHideNeedsTime"
+            type="checkbox"
+            formControlName="adoHideNeedsTime"
+            class="h-4 w-4"
+        />
+
+        <label
+            for="adoHideNeedsTime"
+            class="text-sm"
+            >Hide Needs time</label
+        >
+    </div>
+
+    <div class="flex items-center space-x-2">
+        <input
+            id="adoIgnoreHigherAzureTime"
+            type="checkbox"
+            formControlName="adoIgnoreHigherAzureTime"
+            class="h-4 w-4"
+        />
+
+        <label
+            for="adoIgnoreHigherAzureTime"
+            class="text-sm"
+            >Ignore a mismatch when Azure DevOps reports more time than Weaver</label
+        >
+    </div>
+
+    <div>
+        <label
+            class="form-label"
+            for="adoOrganization"
+            >Organization</label
         >
 
         <input
@@ -39,7 +99,10 @@
     </div>
 
     <div>
-        <label class="form-label" for="adoAuthMethod">Sign-in</label
+        <label
+            class="form-label"
+            for="adoAuthMethod"
+            >Sign-in</label
         >
 
         <select
@@ -55,7 +118,10 @@
 
     @if (adoAuthMethod === 'pat') {
         <div>
-            <label class="form-label" for="adoToken">Personal access token</label
+            <label
+                class="form-label"
+                for="adoToken"
+                >Personal access token</label
             >
 
             <div class="relative">
@@ -75,7 +141,10 @@
                     type="button"
                     class="icon-btn absolute top-1/2 -translate-y-1/2 right-2"
                 >
-                    <lucide-icon [img]="showAdoToken ? eyeOff : eye" class="w-4 h-4" />
+                    <lucide-icon
+                        [img]="showAdoToken ? eyeOff : eye"
+                        class="w-4 h-4"
+                    />
                 </button>
             </div>
 
@@ -89,7 +158,7 @@
     } @else {
         <p class="text-xs text-muted-foreground">
             Uses the Azure CLI session on this computer. Run az login in a terminal first. At sync, Weaver asks Azure CLI for a one-hour token and
-            does not save it. The work item id, title, type, state, completed work, and Active stretches are the only data kept.
+            does not save it. The work item id, title, type, state, time spent, and Active stretches are the only data kept.
         </p>
     }
 

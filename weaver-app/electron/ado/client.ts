@@ -8,6 +8,7 @@ import {
   readConnectionUser,
   readPullRequestCommitDays,
   readRevisions,
+  readTimeSpentReference,
   readWorkItemIds,
   readWorkItems,
   SuggestionSpan,
@@ -68,25 +69,32 @@ export class AdoClient {
     return user;
   }
 
-  async assignedWorkItems(): Promise<ParsedWorkItem[]> {
+  async timeSpentReference(fieldName: string): Promise<string | null> {
+    const body = await this.sendAdoRequest('GET', '/_apis/wit/fields');
+
+    return readTimeSpentReference(body, fieldName);
+  }
+
+  async assignedWorkItems(timeSpentReference: string | null): Promise<ParsedWorkItem[]> {
     const queried = await this.sendAdoRequest('POST', '/_apis/wit/wiql', { query: ASSIGNED_WORK_ITEMS_QUERY });
     const ids = uniqueIds(readWorkItemIds(queried));
     const items: ParsedWorkItem[] = [];
+    const fields = timeSpentFields(timeSpentReference);
 
     for (let index = 0; index < ids.length; index += PAGE_SIZE) {
       const batch = await this.sendAdoRequest('POST', '/_apis/wit/workitemsbatch', {
         ids: ids.slice(index, index + PAGE_SIZE),
-        fields: WORK_ITEM_FIELDS,
+        fields,
         errorPolicy: 'omit'
       });
 
-      items.push(...readWorkItems(batch));
+      items.push(...readWorkItems(batch, timeSpentReference));
     }
 
     return items;
   }
 
-  async expandedWorkItems(ids: number[]): Promise<ParsedWorkItem[]> {
+  async expandedWorkItems(ids: number[], timeSpentReference: string | null): Promise<ParsedWorkItem[]> {
     const items: ParsedWorkItem[] = [];
 
     for (let index = 0; index < ids.length; index += PAGE_SIZE) {
@@ -101,7 +109,7 @@ export class AdoClient {
         errorPolicy: 'omit'
       });
 
-      items.push(...readWorkItems(linked));
+      items.push(...readWorkItems(linked, timeSpentReference));
     }
 
     return items;
@@ -265,6 +273,13 @@ export class AdoClient {
 
     return `https://dev.azure.com/${encodeURIComponent(this.organization)}${path}${joiner}api-version=${apiVersion}`;
   }
+}
+
+function timeSpentFields(timeSpentReference: string | null): string[] {
+  if (!timeSpentReference || WORK_ITEM_FIELDS.includes(timeSpentReference))
+    return WORK_ITEM_FIELDS;
+
+  return [...WORK_ITEM_FIELDS, timeSpentReference];
 }
 
 function failureMessageFor(response: Response, rejectedMessage: string): string {

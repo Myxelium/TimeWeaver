@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 
+import { DEFAULT_TIME_SPENT_FIELD } from '../../../ado/parse';
 import { Setting } from '../../../entities/Setting';
 import { parsePopupRules } from '../../../popup-rules';
 import { SettingsDTO } from '../../types';
@@ -35,6 +36,9 @@ export async function handleGetSettings(dataSource: DataSource): Promise<Setting
     adoPatConfigured: !!settings.adoPat,
     adoAuthMethod: settings.adoAuthMethod === 'azure-cli' ? 'azure-cli' : 'pat',
     adoSyncEnabled: !!settings.adoSyncEnabled,
+    adoTimeSpentField: settings.adoTimeSpentField?.trim() || DEFAULT_TIME_SPENT_FIELD,
+    adoHideNeedsTime: !!settings.adoHideNeedsTime,
+    adoIgnoreHigherAzureTime: !!settings.adoIgnoreHigherAzureTime,
     adoLastSyncOn: settings.adoLastSyncOn ?? undefined,
     adoLastSyncError: settings.adoLastSyncError ?? undefined
   };

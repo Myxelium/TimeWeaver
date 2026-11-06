@@ -15,6 +15,7 @@ import {
 } from 'lucide-angular';
 
 import { AdoSuggestion, Task } from '../../shared/models';
+import { selectAdoHideNeedsTime } from '../../store/settings/settings.selectors';
 import { loadAllTasks, TasksActions } from '../../store/tasks/tasks.actions';
 import { selectAdoSuggestions, selectAllTasks } from '../../store/tasks/tasks.selectors';
 import { StoriesTableComponent } from './stories-table/stories-table.component';
@@ -41,6 +42,7 @@ export class StoriesComponent implements OnInit {
   private store = inject(Store);
 
   suggestions = toSignal(this.store.select(selectAdoSuggestions), { initialValue: [] as AdoSuggestion[] });
+  hideNeedsTime = toSignal(this.store.select(selectAdoHideNeedsTime), { initialValue: false });
   private tasks = toSignal(this.store.select(selectAllTasks), { initialValue: [] as Task[] });
 
   year = signal(new Date().getFullYear());

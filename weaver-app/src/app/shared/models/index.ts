@@ -127,6 +127,9 @@ export interface Settings {
   adoPatConfigured?: boolean;
   adoAuthMethod?: 'pat' | 'azure-cli';
   adoSyncEnabled?: boolean;
+  adoTimeSpentField?: string;
+  adoHideNeedsTime?: boolean;
+  adoIgnoreHigherAzureTime?: boolean;
   adoLastSyncOn?: string;
   adoLastSyncError?: string;
   adoPat?: string;

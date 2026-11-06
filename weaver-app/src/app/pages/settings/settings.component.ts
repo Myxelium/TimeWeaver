@@ -62,6 +62,9 @@ interface SettingsFormValue {
   overtimeRate: number | null;
   launchAtLogin: boolean | null;
   adoSyncEnabled: boolean | null;
+  adoTimeSpentField: string | null;
+  adoHideNeedsTime: boolean | null;
+  adoIgnoreHigherAzureTime: boolean | null;
   popupRules: PopupRule[] | null;
   overwrite?: boolean | null;
 }
@@ -192,6 +195,9 @@ export class SettingsComponent implements OnInit {
     overtimeRate: [0, [Validators.min(0)]],
     launchAtLogin: [false],
     adoSyncEnabled: [false],
+    adoTimeSpentField: ['Time spent'],
+    adoHideNeedsTime: [false],
+    adoIgnoreHigherAzureTime: [false],
     popupRules: this.formBuilder.array<FormGroup>([]),
     overwrite: [false]
   });
@@ -607,6 +613,9 @@ export class SettingsComponent implements OnInit {
       overtimeRate,
       launchAtLogin,
       adoSyncEnabled,
+      adoTimeSpentField,
+      adoHideNeedsTime,
+      adoIgnoreHigherAzureTime,
       popupRules
     } = formValue;
     const canEnablePopups = !!launchAtLogin;
@@ -626,6 +635,9 @@ export class SettingsComponent implements OnInit {
       overtimeRate: overtimeRate as number,
       launchAtLogin: canEnablePopups,
       adoSyncEnabled: !!adoSyncEnabled,
+      adoTimeSpentField: (adoTimeSpentField ?? '').trim() || 'Time spent',
+      adoHideNeedsTime: !!adoHideNeedsTime,
+      adoIgnoreHigherAzureTime: !!adoIgnoreHigherAzureTime,
       popupRules: (popupRules ?? []).map(rule => ({
         id: rule.id,
         enabled: canEnablePopups && !!rule.enabled,

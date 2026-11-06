@@ -11,6 +11,7 @@ import { azureCliAccessToken } from './azure-cli';
 import { AdoClient } from './client';
 import {
   AdoUser,
+  DEFAULT_TIME_SPENT_FIELD,
   isDoneState,
   organizationName,
   ParsedWorkItem,
@@ -69,7 +70,8 @@ async function runSync(dataSource: DataSource, force: boolean): Promise<AdoSyncR
     const credential = await credentialFor(authMethod, pat);
     const existingRows = await dataSource.getRepository(AdoWorkItem).find();
     const existing = new Map(existingRows.map(row => [row.adoId, row]));
-    const rows = await collectWorkItems(organization, credential, today, existing);
+    const timeSpentField = settings.adoTimeSpentField?.trim() || DEFAULT_TIME_SPENT_FIELD;
+    const rows = await collectWorkItems(organization, credential, today, existing, timeSpentField);
 
     await replaceWorkItems(dataSource, rows);
 
@@ -190,13 +192,15 @@ async function collectWorkItems(
   organization: string,
   credential: { authorization: string; rejectedMessage: string },
   syncDate: string,
-  existing: Map<number, AdoWorkItem>
+  existing: Map<number, AdoWorkItem>,
+  timeSpentField: string
 ): Promise<AdoWorkItem[]> {
   const client = new AdoClient(organization, credential.authorization, credential.rejectedMessage);
   const user = await client.currentUser();
-  const assigned = await client.assignedWorkItems();
+  const timeSpentReference = await client.timeSpentReference(timeSpentField);
+  const assigned = await client.assignedWorkItems(timeSpentReference);
   const needsHistory = assigned.filter(item => !canReuse(existing.get(item.adoId), item.changedOn));
-  const detailed = await client.expandedWorkItems(needsHistory.map(item => item.adoId));
+  const detailed = await client.expandedWorkItems(needsHistory.map(item => item.adoId), timeSpentReference);
   const detailedById = new Map(detailed.map(item => [item.adoId, item]));
   const built = await mapWithLimit(assigned, SYNC_CONCURRENCY, item => {
     const detail = detailedById.get(item.adoId);
@@ -235,7 +239,7 @@ async function buildWorkItem(
   syncDate: string
 ): Promise<AdoWorkItem | null> {
   if (canReuse(stored, item.changedOn) && stored)
-    return copyWorkItem(stored);
+    return { ...copyWorkItem(stored), completedWork: item.completedWork };
 
   const ranges = await client.workItemRanges(item.adoId, pullRequests, user, syncDate);
 
